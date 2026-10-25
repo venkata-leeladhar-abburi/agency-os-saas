@@ -13,6 +13,8 @@ for (const story of stories) {
     test(`${story.title} / ${story.name} (${theme}) has no serious accessibility violations`, async ({
       page,
     }, testInfo) => {
+      // Reduced motion removes transitions, so axe never measures a colour mid-change.
+      await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto(`/iframe.html?id=${story.id}&viewMode=story&globals=theme:${theme}`);
       await expect(page.locator('#storybook-root > *').first()).toBeAttached();
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);

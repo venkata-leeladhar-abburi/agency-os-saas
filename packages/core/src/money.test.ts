@@ -11,7 +11,12 @@ import {
   subtractMoney,
   sumMoney,
 } from './money';
-import { amountInWords, numberToWordsIndian, numberToWordsInternational, rupeesInWords } from './words';
+import {
+  amountInWords,
+  numberToWordsIndian,
+  numberToWordsInternational,
+  rupeesInWords,
+} from './words';
 
 describe('decimal', () => {
   it('rounds half away from zero', () => {
@@ -99,7 +104,9 @@ describe('L. amounts in words', () => {
     expect(amountInWords(1_000_000_000_00n, 'INR')).toBe('Rupees One Hundred Crore Only');
   });
   it('uses millions for other currencies', () => {
-    expect(amountInWords(120_000_050n, 'USD')).toBe('US Dollars One Million Two Hundred Thousand and Fifty Cents Only');
+    expect(amountInWords(120_000_050n, 'USD')).toBe(
+      'US Dollars One Million Two Hundred Thousand and Fifty Cents Only',
+    );
     expect(numberToWordsInternational(2_000_000_000_015n)).toBe('Two Trillion Fifteen');
     expect(amountInWords(1_100n, 'gbp')).toBe('Pounds Sterling Eleven Only');
   });

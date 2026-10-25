@@ -9,7 +9,12 @@ export default defineConfig({
       reporter: ['text-summary', 'text'],
       // docs/04-engineering/testing.md: 100% for tax and money.
       thresholds: {
-        'src/{tax,money,decimal,words}.ts': { lines: 100, functions: 100, branches: 100, statements: 100 },
+        'src/{tax,money,decimal,words}.ts': {
+          lines: 100,
+          functions: 100,
+          branches: 100,
+          statements: 100,
+        },
       },
     },
   },

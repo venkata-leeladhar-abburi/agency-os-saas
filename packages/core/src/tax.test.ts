@@ -6,8 +6,20 @@ import { amountInWords } from './words';
 // Worked cases from docs/04-engineering/tax-test-cases.md. Supplier: Andhra Pradesh (37).
 const AP = '37';
 const items: InvoiceInput['lines'] = [
-  { description: 'Website design and build', sac: '998314', quantity: 1, rateMinor: 3_500_000n, taxRateBp: 1800 },
-  { description: 'CMS setup and training', sac: '998314', quantity: 1, rateMinor: 500_000n, taxRateBp: 1800 },
+  {
+    description: 'Website design and build',
+    sac: '998314',
+    quantity: 1,
+    rateMinor: 3_500_000n,
+    taxRateBp: 1800,
+  },
+  {
+    description: 'CMS setup and training',
+    sac: '998314',
+    quantity: 1,
+    rateMinor: 500_000n,
+    taxRateBp: 1800,
+  },
 ];
 
 describe('A. intra-state tax invoice', () => {
@@ -28,7 +40,9 @@ describe('A. intra-state tax invoice', () => {
     expect(formatMoney(inv.total.amountMinor, 'INR')).toBe('₹47,200.00');
   });
   it('states the total in words', () => {
-    expect(amountInWords(inv.total.amountMinor, 'INR')).toBe('Rupees Forty Seven Thousand Two Hundred Only');
+    expect(amountInWords(inv.total.amountMinor, 'INR')).toBe(
+      'Rupees Forty Seven Thousand Two Hundred Only',
+    );
   });
 });
 
@@ -41,7 +55,11 @@ describe('B. inter-state tax invoice', () => {
       lines: items,
     });
     expect(inv.treatment).toBe('inter');
-    expect([inv.cgst.amountMinor, inv.sgst.amountMinor, inv.igst.amountMinor]).toEqual([0n, 0n, 720_000n]);
+    expect([inv.cgst.amountMinor, inv.sgst.amountMinor, inv.igst.amountMinor]).toEqual([
+      0n,
+      0n,
+      720_000n,
+    ]);
     expect(inv.total.amountMinor).toBe(4_720_000n);
   });
 });
@@ -61,7 +79,9 @@ describe('D. export of services under LUT', () => {
     placeOfSupply: { kind: 'export', country: 'US' },
     hasValidLut: true,
     exchangeRateToInr: '84.20',
-    lines: [{ description: 'Design sprint (5 days)', quantity: 1, rateMinor: 200_000n, taxRateBp: 1800 }],
+    lines: [
+      { description: 'Design sprint (5 days)', quantity: 1, rateMinor: 200_000n, taxRateBp: 1800 },
+    ],
   });
   it('charges no tax and converts to INR', () => {
     expect(inv.treatment).toBe('export_lut');
@@ -83,7 +103,14 @@ describe('E. export without a LUT', () => {
       currency: 'USD',
       supplierStateCode: AP,
       placeOfSupply: { kind: 'export', country: 'US' },
-      lines: [{ description: 'Design sprint (5 days)', quantity: 1, rateMinor: 200_000n, taxRateBp: 1800 }],
+      lines: [
+        {
+          description: 'Design sprint (5 days)',
+          quantity: 1,
+          rateMinor: 200_000n,
+          taxRateBp: 1800,
+        },
+      ],
     });
     expect(inv.igst.amountMinor).toBe(36_000n);
     expect(inv.total.amountMinor).toBe(236_000n);
@@ -173,7 +200,15 @@ describe('H. discount before tax', () => {
       currency: 'INR',
       supplierStateCode: AP,
       placeOfSupply: { kind: 'india', stateCode: '29' },
-      lines: [{ description: 'Retainer', quantity: 1, rateMinor: 5_000_000n, discountMinor: 500_000n, taxRateBp: 1800 }],
+      lines: [
+        {
+          description: 'Retainer',
+          quantity: 1,
+          rateMinor: 5_000_000n,
+          discountMinor: 500_000n,
+          taxRateBp: 1800,
+        },
+      ],
     });
     expect(inv.subtotal.amountMinor).toBe(4_500_000n);
     expect(inv.igst.amountMinor).toBe(810_000n);
@@ -182,19 +217,46 @@ describe('H. discount before tax', () => {
 });
 
 describe('line validation', () => {
-  const base = { currency: 'INR', supplierStateCode: AP, placeOfSupply: { kind: 'india', stateCode: '37' } } as const;
+  const base = {
+    currency: 'INR',
+    supplierStateCode: AP,
+    placeOfSupply: { kind: 'india', stateCode: '37' },
+  } as const;
   it('rejects zero quantity, negative rates and oversized discounts', () => {
-    expect(() => calculateInvoice({ ...base, lines: [{ description: 'a', quantity: 0, rateMinor: 1n, taxRateBp: 0 }] })).toThrow('Quantity');
-    expect(() => calculateInvoice({ ...base, lines: [{ description: 'a', quantity: 1, rateMinor: -1n, taxRateBp: 0 }] })).toThrow('Rate');
     expect(() =>
-      calculateInvoice({ ...base, lines: [{ description: 'a', quantity: 1, rateMinor: 100n, discountMinor: 101n, taxRateBp: 0 }] }),
+      calculateInvoice({
+        ...base,
+        lines: [{ description: 'a', quantity: 0, rateMinor: 1n, taxRateBp: 0 }],
+      }),
+    ).toThrow('Quantity');
+    expect(() =>
+      calculateInvoice({
+        ...base,
+        lines: [{ description: 'a', quantity: 1, rateMinor: -1n, taxRateBp: 0 }],
+      }),
+    ).toThrow('Rate');
+    expect(() =>
+      calculateInvoice({
+        ...base,
+        lines: [
+          { description: 'a', quantity: 1, rateMinor: 100n, discountMinor: 101n, taxRateBp: 0 },
+        ],
+      }),
     ).toThrow('Discount');
     expect(() =>
-      calculateInvoice({ ...base, lines: [{ description: 'a', quantity: 1, rateMinor: 100n, discountMinor: -1n, taxRateBp: 0 }] }),
+      calculateInvoice({
+        ...base,
+        lines: [
+          { description: 'a', quantity: 1, rateMinor: 100n, discountMinor: -1n, taxRateBp: 0 },
+        ],
+      }),
     ).toThrow('Discount');
   });
   it('splits an odd rate between CGST and SGST without losing a basis point', () => {
-    const inv = calculateInvoice({ ...base, lines: [{ description: 'a', quantity: 1, rateMinor: 10_000n, taxRateBp: 5 }] });
+    const inv = calculateInvoice({
+      ...base,
+      lines: [{ description: 'a', quantity: 1, rateMinor: 10_000n, taxRateBp: 5 }],
+    });
     expect([inv.cgst.amountMinor, inv.sgst.amountMinor]).toEqual([2n, 3n]);
   });
 });
@@ -208,9 +270,16 @@ describe('I. partial payments', () => {
       ok: false,
       error: 'This is more than the amount due (₹27,200.00).',
     });
-    expect(applyPayment(4_720_000n, 2_000_000n, 2_720_000n, fmt)).toEqual({ ok: true, status: 'paid', dueMinor: 0n });
+    expect(applyPayment(4_720_000n, 2_000_000n, 2_720_000n, fmt)).toEqual({
+      ok: true,
+      status: 'paid',
+      dueMinor: 0n,
+    });
   });
   it('rejects zero', () => {
-    expect(applyPayment(100n, 0n, 0n, fmt)).toEqual({ ok: false, error: 'Enter an amount more than zero.' });
+    expect(applyPayment(100n, 0n, 0n, fmt)).toEqual({
+      ok: false,
+      error: 'Enter an amount more than zero.',
+    });
   });
 });

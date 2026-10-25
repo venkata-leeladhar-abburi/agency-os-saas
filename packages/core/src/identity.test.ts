@@ -5,21 +5,37 @@ import { formatInvoiceNumber, validateInvoicePrefix } from './numbering';
 
 describe('K. GSTIN validation', () => {
   it('accepts valid GSTINs', () => {
-    expect(validateGstin('37ABCDE1234F1ZZ')).toEqual({ ok: true, gstin: '37ABCDE1234F1ZZ', stateCode: '37' });
+    expect(validateGstin('37ABCDE1234F1ZZ')).toEqual({
+      ok: true,
+      gstin: '37ABCDE1234F1ZZ',
+      stateCode: '37',
+    });
     expect(validateGstin('29ABCDE1234F1ZW')).toMatchObject({ ok: true, stateCode: '29' });
     expect(validateGstin('27AAPFU0939F1ZV')).toMatchObject({ ok: true });
   });
   it('upper-cases and strips spaces', () => {
-    expect(validateGstin(' 37abcde1234f1zz ')).toMatchObject({ ok: true, gstin: '37ABCDE1234F1ZZ' });
+    expect(validateGstin(' 37abcde1234f1zz ')).toMatchObject({
+      ok: true,
+      gstin: '37ABCDE1234F1ZZ',
+    });
   });
   it('explains each problem', () => {
     expect(validateGstin('37ABCDE1234F1ZA')).toEqual({
       ok: false,
       error: "This GSTIN's last character doesn't match. Check for a typo.",
     });
-    expect(validateGstin('37ABCDE1234F1Z')).toEqual({ ok: false, error: 'A GSTIN has 15 characters. This one has 14.' });
-    expect(validateGstin('99ABCDE1234F1ZZ')).toMatchObject({ ok: false, error: expect.stringContaining('state code') });
-    expect(validateGstin('37ABCDE12345FZZ')).toMatchObject({ ok: false, error: expect.stringContaining('pattern') });
+    expect(validateGstin('37ABCDE1234F1Z')).toEqual({
+      ok: false,
+      error: 'A GSTIN has 15 characters. This one has 14.',
+    });
+    expect(validateGstin('99ABCDE1234F1ZZ')).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('state code'),
+    });
+    expect(validateGstin('37ABCDE12345FZZ')).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('pattern'),
+    });
   });
   it('knows the state codes', () => {
     expect(isValidStateCode('01')).toBe(true);
@@ -46,7 +62,10 @@ describe('J. numbering and financial year', () => {
   });
   it('rejects prefixes that make numbers longer than 16 characters', () => {
     expect(validateInvoicePrefix('OSS')).toEqual({ ok: true });
-    expect(validateInvoicePrefix('ONESTOP')).toMatchObject({ ok: false, error: expect.stringContaining('6 characters') });
+    expect(validateInvoicePrefix('ONESTOP')).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('6 characters'),
+    });
     expect(validateInvoicePrefix('OS S')).toMatchObject({ ok: false });
   });
 });
@@ -61,7 +80,9 @@ describe('M. dates', () => {
   });
   it('shows timestamps in India time by default', () => {
     expect(formatDate(new Date('2026-10-24T20:00:00Z'))).toBe('25 Oct 2026');
-    expect(formatDate(Date.UTC(2026, 9, 24, 20), { timeZone: 'Europe/London' })).toBe('24 Oct 2026');
+    expect(formatDate(Date.UTC(2026, 9, 24, 20), { timeZone: 'Europe/London' })).toBe(
+      '24 Oct 2026',
+    );
   });
   it('rejects invalid dates', () => {
     expect(() => formatDate('not a date')).toThrow('Not a date');

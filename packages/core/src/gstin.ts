@@ -19,8 +19,7 @@ export function gstinCheckCharacter(first14: string): string {
 }
 
 export type GstinResult =
-  | { ok: true; gstin: string; stateCode: string }
-  | { ok: false; error: string };
+  { ok: true; gstin: string; stateCode: string } | { ok: false; error: string };
 
 /** Validates a GSTIN. Accepts lower case and spaces; returns it upper-cased. */
 export function validateGstin(input: string): GstinResult {
@@ -38,7 +37,8 @@ export function validateGstin(input: string): GstinResult {
   if (!PATTERN.test(gstin)) {
     return {
       ok: false,
-      error: "This GSTIN doesn't follow the usual pattern (for example 37ABCDE1234F1Z5). Check for a typo.",
+      error:
+        "This GSTIN doesn't follow the usual pattern (for example 37ABCDE1234F1Z5). Check for a typo.",
     };
   }
   if (gstinCheckCharacter(gstin.slice(0, 14)) !== gstin[14]) {

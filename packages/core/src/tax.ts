@@ -72,7 +72,9 @@ export type InvoiceTotals = {
 };
 
 /** Decides how GST applies from the supplier, the place of supply and the LUT. */
-export function taxTreatment(input: Pick<InvoiceInput, 'supplierStateCode' | 'placeOfSupply' | 'hasValidLut'>): TaxTreatment {
+export function taxTreatment(
+  input: Pick<InvoiceInput, 'supplierStateCode' | 'placeOfSupply' | 'hasValidLut'>,
+): TaxTreatment {
   if (!input.supplierStateCode) return 'none';
   if (input.placeOfSupply.kind === 'export') return input.hasValidLut ? 'export_lut' : 'inter';
   return input.placeOfSupply.stateCode === input.supplierStateCode ? 'intra' : 'inter';
@@ -96,12 +98,15 @@ export function calculateInvoice(input: InvoiceInput): InvoiceTotals {
 
   const lines: InvoiceLine[] = input.lines.map((line) => {
     const quantityMilli = parseDecimal(line.quantity, 3);
-    if (quantityMilli <= 0n) throw new RangeError(`Quantity must be more than zero: ${line.description}`);
+    if (quantityMilli <= 0n)
+      throw new RangeError(`Quantity must be more than zero: ${line.description}`);
     if (line.rateMinor < 0n) throw new RangeError(`Rate must not be negative: ${line.description}`);
     const gross = divRoundHalfUp(quantityMilli * line.rateMinor, 1000n);
     const discount = line.discountMinor ?? 0n;
     if (discount < 0n || discount > gross) {
-      throw new RangeError(`Discount must be between zero and the line amount: ${line.description}`);
+      throw new RangeError(
+        `Discount must be between zero and the line amount: ${line.description}`,
+      );
     }
     const taxableMinor = gross - discount;
     const rate = BigInt(line.taxRateBp);
@@ -154,8 +159,7 @@ export function calculateInvoice(input: InvoiceInput): InvoiceTotals {
 }
 
 export type PaymentResult =
-  | { ok: true; status: 'paid' | 'partially_paid'; dueMinor: bigint }
-  | { ok: false; error: string };
+  { ok: true; status: 'paid' | 'partially_paid'; dueMinor: bigint } | { ok: false; error: string };
 
 /** Applies a payment to an invoice; rejects amounts above what is due. */
 export function applyPayment(
