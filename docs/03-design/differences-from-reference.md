@@ -18,3 +18,9 @@ The G1 material lists every place where the coded design system differs from `de
 | Screen titles | 28px in the showcase | `title-xl` (32px) greeting, `title-lg` (24px) page titles | The spec's type scale. |
 
 Raw scale steps used by components, as in the reference bundle: `red-700` (destructive hover), `lime-400` (highlight hover), the avatar tints (`*-100` fill with `*-800` text, `lime-200` with `lime-900`), the progress tones (`green-600`, `red-600`, `lime-500`) and the dialog overlay (`neutral-975` at 55%). They come from `tokens.json`; no colour is written in code.
+
+## Wireframe-level decisions (M4)
+
+- **Top bar New:** primary only on pages without their own primary action (Today, Dashboard); elsewhere secondary, so a page never has two primary buttons. The reference screens had no other primary on the page.
+- **Record tabs:** links (each tab is its own page, as in the URL structure), not ARIA tabs.
+- **Navigation:** Playbook left out of R1 (it's R2). "Sales docs" holds quotes and proposals; the tree test checks the label.

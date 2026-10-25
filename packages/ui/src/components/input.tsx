@@ -70,7 +70,7 @@ export function Input({
             required={required}
             disabled={disabled}
             className={cn(
-              'h-full min-h-[calc(var(--spacing-control-md)-2px)] min-w-0 flex-1 border-0 bg-transparent text-body [color:inherit] outline-none placeholder:text-subtle-foreground focus-visible:outline-none disabled:cursor-not-allowed',
+              'h-full min-h-[calc(var(--spacing-control-md)-2px)] w-full min-w-0 flex-1 border-0 bg-transparent text-body [color:inherit] outline-none placeholder:text-subtle-foreground focus-visible:outline-none disabled:cursor-not-allowed',
               size === 'xl' && 'text-body-lg',
             )}
             {...props}

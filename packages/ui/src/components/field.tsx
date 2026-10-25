@@ -1,3 +1,5 @@
+'use client';
+
 import { WarningCircle } from '@phosphor-icons/react';
 import { useId, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
@@ -41,7 +43,7 @@ export function Field({
   const describedBy = [errorId, hintId].filter(Boolean).join(' ') || undefined;
 
   return (
-    <div className={cn('grid min-w-0 content-start gap-1.5', className)}>
+    <div className={cn('grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-1.5', className)}>
       {label ? (
         <label htmlFor={id} className="text-body-sm font-medium text-foreground">
           {label}

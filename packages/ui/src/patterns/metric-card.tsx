@@ -1,3 +1,5 @@
+'use client';
+
 import { TrendDown, TrendUp, type Icon } from '@phosphor-icons/react';
 import { useId, type ReactNode } from 'react';
 import { Badge } from '../components/badge';

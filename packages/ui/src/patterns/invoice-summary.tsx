@@ -1,3 +1,5 @@
+'use client';
+
 import { amountInWords, formatMoney, type InvoiceTotals } from '@agency-os/core';
 import { Globe } from '@phosphor-icons/react';
 import { Badge, type BadgeProps } from '../components/badge';

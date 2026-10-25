@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowRight, MagnifyingGlass, type Icon } from '@phosphor-icons/react';
-import { Command } from 'cmdk';
+import { Command, useCommandState } from 'cmdk';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Kbd } from '../components/kbd';
@@ -83,10 +83,10 @@ export function CommandMenu({
         />
         <Kbd>{labels?.closeKey ?? 'Esc'}</Kbd>
       </div>
-      <Command.List className="max-h-85 overflow-y-auto p-2">
-        <Command.Empty className="px-3 py-8 text-center text-body text-muted-foreground">
-          {labels?.empty ?? 'Nothing matches. Try a name, an invoice number or an action.'}
-        </Command.Empty>
+      <Command.Empty className="px-5 py-8 text-center text-body text-muted-foreground">
+        {labels?.empty ?? 'Nothing matches. Try a name, an invoice number or an action.'}
+      </Command.Empty>
+      <Results>
         {groups.map((group) => (
           <Command.Group
             key={group.label}
@@ -124,7 +124,7 @@ export function CommandMenu({
             )}
           </Command.Group>
         ))}
-      </Command.List>
+      </Results>
       <div className="flex gap-4 border-t border-border bg-muted px-4 py-2.5 text-caption font-normal text-muted-foreground max-sm:hidden">
         <span className="inline-flex items-center gap-1.5">
           <Kbd>↑↓</Kbd> {labels?.move ?? 'Move'}
@@ -137,6 +137,16 @@ export function CommandMenu({
         </span>
       </div>
     </Command>
+  );
+}
+
+/** The result list, hidden when nothing matches so screen readers don't meet an empty listbox. */
+function Results({ children }: { children: ReactNode }) {
+  const count = useCommandState((state) => state.filtered.count);
+  return (
+    <Command.List hidden={count === 0} className="max-h-85 overflow-y-auto p-2">
+      {children}
+    </Command.List>
   );
 }
 

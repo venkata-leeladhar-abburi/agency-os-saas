@@ -1,3 +1,5 @@
+'use client';
+
 import { CaretDown } from '@phosphor-icons/react';
 import type { ReactNode, SelectHTMLAttributes } from 'react';
 import { cn } from '../lib/cn';
@@ -63,7 +65,7 @@ export function Select({
             disabled={disabled}
             aria-describedby={describedBy}
             aria-invalid={invalid || undefined}
-            className="h-full min-h-[calc(var(--spacing-control-md)-2px)] min-w-0 flex-1 cursor-pointer appearance-none border-0 bg-transparent [color:inherit] outline-none focus-visible:outline-none disabled:cursor-not-allowed"
+            className="h-full min-h-[calc(var(--spacing-control-md)-2px)] w-full min-w-0 flex-1 cursor-pointer appearance-none border-0 bg-transparent [color:inherit] outline-none focus-visible:outline-none disabled:cursor-not-allowed"
             {...props}
           >
             {placeholder ? (

@@ -1,3 +1,5 @@
+'use client';
+
 import { CaretRight, type Icon } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
 import { Avatar } from '../components/avatar';

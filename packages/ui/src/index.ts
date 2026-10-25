@@ -59,7 +59,16 @@ export {
 export { Skeleton, type SkeletonProps } from './components/skeleton';
 export { Spinner, type SpinnerProps } from './components/spinner';
 export { Switch, type SwitchProps } from './components/switch';
-export { Tabs, TabsContent, TabsList, TabsTrigger, type TabsTriggerProps } from './components/tabs';
+export {
+  TabLinks,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  type TabLink,
+  type TabsTriggerProps,
+} from './components/tabs';
+export { Textarea, type TextareaProps } from './components/textarea';
 export {
   dismissToast,
   notify,
