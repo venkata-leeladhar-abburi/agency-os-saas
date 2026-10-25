@@ -14,7 +14,7 @@ export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrim
   return (
     <TabsPrimitive.List
       className={cn(
-        'flex gap-5 overflow-x-auto border-b border-border [scrollbar-width:none]',
+        'flex min-w-0 gap-5 overflow-x-auto border-b border-border [scrollbar-width:none]',
         className,
       )}
       {...props}
@@ -74,7 +74,7 @@ export function TabLinks({
 }) {
   const Anchor = linkAs ?? 'a';
   return (
-    <nav aria-label={label} className={className}>
+    <nav aria-label={label} className={cn('min-w-0', className)}>
       <ul className="flex gap-5 overflow-x-auto border-b border-border p-0 [scrollbar-width:none]">
         {items.map((item) => (
           <li key={item.href} className="shrink-0">

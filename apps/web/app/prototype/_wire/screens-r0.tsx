@@ -9,6 +9,7 @@ import {
   Phone,
   Plus,
   Receipt,
+  UploadSimple,
   UserPlus,
 } from '@phosphor-icons/react';
 import {
@@ -16,6 +17,7 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   Checklist,
   CommandMenu,
   Dialog,
@@ -25,9 +27,11 @@ import {
   Logo,
   PageHeader,
   Select,
+  Skeleton,
   Switch,
 } from '@agency-os/ui';
-import { List, Ph, Row, StateView } from './kit';
+import { Go, List, Row, StateView } from './kit';
+import { LeadsBoard } from './parts';
 import { NO_EMPTY, PUBLIC, STANDARD, type ScreenDef } from './types';
 
 function AuthCard({ children }: { children: React.ReactNode }) {
@@ -73,9 +77,9 @@ export const R0_SCREENS: ScreenDef[] = [
               size="xl"
               error="That code doesn’t match. You have 4 tries left."
             />
-            <Button variant="primary" size="lg" block>
+            <Go to="s02-workspace-setup" variant="primary" size="lg" block>
               Sign in
-            </Button>
+            </Go>
           </form>
         ) : (
           <form className="grid gap-4">
@@ -99,9 +103,17 @@ export const R0_SCREENS: ScreenDef[] = [
               <span className="h-px flex-1 bg-border" />
             </div>
             <Input label="Email" type="email" placeholder="you@agency.in" />
-            <Button variant="primary" size="lg" block icon={Envelope} loading={state === 'loading'}>
+            <Go
+              to="s01-sign-in"
+              state="sent"
+              variant="primary"
+              size="lg"
+              block
+              icon={Envelope}
+              loading={state === 'loading'}
+            >
               Email me a sign-in link
-            </Button>
+            </Go>
             <Button variant="link" icon={Phone}>
               Use my phone number
             </Button>
@@ -136,14 +148,36 @@ export const R0_SCREENS: ScreenDef[] = [
         {state === 'step-2' ? (
           <div className="grid gap-4">
             <h1 className="text-title-md">Your logo and services</h1>
-            <Ph
-              label="Logo upload (PNG or SVG, shown on proposals, invoices and the portal)"
-              h={88}
-            />
-            <Ph
-              label="Services: Website · Landing page · Brand identity · UI/UX design · Mobile app · … (tick the ones you offer)"
-              h={88}
-            />
+            <div className="flex items-center gap-4">
+              <span className="grid size-16 place-items-center rounded-lg border-2 border-dashed border-border-strong text-muted-foreground">
+                <UploadSimple size={22} aria-hidden="true" />
+              </span>
+              <span className="grid gap-1">
+                <Button size="sm" className="justify-self-start">
+                  Upload logo
+                </Button>
+                <span className="text-caption font-normal text-muted-foreground">
+                  PNG or SVG. Shown on proposals, invoices and the portal.
+                </span>
+              </span>
+            </div>
+            <fieldset className="grid gap-2">
+              <legend className="mb-1 text-body-sm font-medium">Services you offer</legend>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  'Website',
+                  'Landing page',
+                  'Brand identity',
+                  'UI/UX design',
+                  'Mobile app',
+                  'Web app or SaaS',
+                  'Online store',
+                  'SEO',
+                ].map((svc, k) => (
+                  <Checkbox key={svc} label={svc} defaultChecked={k < 3 || k === 4} />
+                ))}
+              </div>
+            </fieldset>
           </div>
         ) : state === 'step-3' ? (
           <div className="grid gap-4">
@@ -197,9 +231,14 @@ export const R0_SCREENS: ScreenDef[] = [
         )}
         <div className="flex justify-between gap-2">
           <Button variant="ghost">Skip for now</Button>
-          <Button variant="primary" loading={state === 'loading'}>
+          <Go
+            to={state === 'step-3' ? 's03-onboarding' : 's02-workspace-setup'}
+            state={state === 'step-3' ? undefined : state === 'step-2' ? 'step-3' : 'step-2'}
+            variant="primary"
+            loading={state === 'loading'}
+          >
             Continue
-          </Button>
+          </Go>
         </div>
       </div>
     ),
@@ -247,9 +286,9 @@ export const R0_SCREENS: ScreenDef[] = [
                 label: 'Add your first lead',
                 hint: 'Or load example data to look around.',
                 action: (
-                  <Button size="sm" variant="primary">
+                  <Go to="s15-new-lead" size="sm" variant="primary">
                     Add lead
-                  </Button>
+                  </Go>
                 ),
               },
               { id: '3', label: 'Send a quote', hint: 'GST is added for you.' },
@@ -292,7 +331,34 @@ export const R0_SCREENS: ScreenDef[] = [
       { id: 'member', label: 'Member' },
       { id: 'finance', label: 'Finance' },
     ],
-    render: () => <Ph label="Page content (up to 1280px wide)" h={520} />,
+    render: () => (
+      <>
+        <PageHeader
+          greeting
+          title="Good morning, Kiran"
+          subtitle="Sunday 25 Oct · the shell around every agency page"
+        />
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card title="Sidebar">
+            <p className="text-body text-muted-foreground">
+              Grouped by how you work. Collapses to icons on smaller screens and becomes a menu on
+              phones.
+            </p>
+          </Card>
+          <Card title="Top bar">
+            <p className="text-body text-muted-foreground">
+              Where you are, search with Ctrl K, notifications and New.
+            </p>
+          </Card>
+          <Card title="Roles">
+            <p className="text-body text-muted-foreground">
+              Owner, Project lead, Member and Finance each see only their own items. Switch with the
+              state control.
+            </p>
+          </Card>
+        </div>
+      </>
+    ),
   },
   {
     id: 'S05',
@@ -386,7 +452,18 @@ export const R0_SCREENS: ScreenDef[] = [
             </EmptyState>
           </div>
         ) : state === 'loading' ? (
-          <Ph label="Loading notifications" h={240} />
+          <div
+            role="status"
+            aria-label="Loading"
+            className="grid gap-2 rounded-lg border border-border bg-card p-3"
+          >
+            {[0, 1, 2, 3].map((k) => (
+              <span key={k} className="grid gap-1.5 py-1">
+                <Skeleton width="70%" />
+                <Skeleton width="30%" height={10} />
+              </span>
+            ))}
+          </div>
         ) : (
           <List>
             <Row
@@ -512,10 +589,43 @@ export const R0_SCREENS: ScreenDef[] = [
                 }
               />
             </List>
-            <Ph
-              label="Roles and what they can see (matrix from the information architecture)"
-              h={120}
-            />
+            <Card title="What each role can see" flush>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-body-sm">
+                  <caption className="sr-only">Roles and permissions</caption>
+                  <thead>
+                    <tr className="bg-muted text-caption text-muted-foreground">
+                      {['Area', 'Owner', 'Project lead', 'Member', 'Finance'].map((h) => (
+                        <th key={h} scope="col" className="px-3 py-2 text-left font-medium">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ['Leads, quotes, proposals', 'Edit', 'View', '—', 'View'],
+                      ['Projects and gates', 'Edit, approve', 'Edit own', 'View own', 'View'],
+                      ['Invoices and payments', 'Edit', 'View own projects', '—', 'Edit'],
+                      ['Settings and billing', 'Edit', '—', '—', '—'],
+                    ].map((r) => (
+                      <tr key={r[0]} className="border-t border-border">
+                        {r.map((c, k) => (
+                          <td
+                            key={k}
+                            className={
+                              k === 0 ? 'px-3 py-2 font-medium' : 'px-3 py-2 text-muted-foreground'
+                            }
+                          >
+                            {c}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
           </StateView>
         </div>
       </div>
@@ -549,16 +659,18 @@ export const R0_SCREENS: ScreenDef[] = [
           <div className="grid gap-3">
             <h1 className="text-title-md">You’re already in One Stop Solutions</h1>
             <p className="text-body text-muted-foreground">Open the workspace to carry on.</p>
-            <Button variant="primary">Open workspace</Button>
+            <Go to="s10-today" variant="primary">
+              Open workspace
+            </Go>
           </div>
         ) : (
           <div className="grid gap-4">
             <h1 className="text-title-md">Kiran Rao invited you to One Stop Solutions</h1>
             <p className="text-body text-muted-foreground">You’ll join as a Project lead.</p>
             <Input label="Your name" required />
-            <Button variant="primary" size="lg" block>
+            <Go to="s10-today" variant="primary" size="lg" block>
               Accept invite
-            </Button>
+            </Go>
           </div>
         )}
       </AuthCard>
@@ -580,7 +692,7 @@ export const R0_SCREENS: ScreenDef[] = [
     states: [{ id: 'default', label: 'Default' }],
     render: () => (
       <>
-        <Ph label="Leads board behind the dialog" h={420} />
+        <LeadsBoard />
         <Dialog defaultOpen>
           <DialogContent
             icon={ChartLineUp}
@@ -589,13 +701,32 @@ export const R0_SCREENS: ScreenDef[] = [
             footer={
               <>
                 <Button>Not now</Button>
-                <Button variant="primary">See plans</Button>
+                <Go to="s07-settings" state="limit" variant="primary">
+                  See plans
+                </Go>
               </>
             }
           >
             <div className="grid gap-2">
-              <Ph label="Agency Starter · ₹1,499 a month · 5 members · unlimited leads" h={56} />
-              <Ph label="Agency Growth · ₹3,499 a month · 20 members" h={56} />
+              {[
+                [
+                  'Agency Starter',
+                  '₹1,499 a month',
+                  '5 members · 10 clients with a portal · unlimited leads',
+                ],
+                ['Agency Growth', '₹3,499 a month', '20 members · unlimited clients and leads'],
+              ].map(([plan, price, detail]) => (
+                <div
+                  key={plan}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                >
+                  <span className="grid">
+                    <span className="text-body-medium">{plan}</span>
+                    <span className="text-caption font-normal text-muted-foreground">{detail}</span>
+                  </span>
+                  <span className="text-body font-semibold tabular-nums">{price}</span>
+                </div>
+              ))}
               <p className="text-caption font-normal text-muted-foreground">
                 Prices are proposals until the founder confirms them (open question 5).
               </p>

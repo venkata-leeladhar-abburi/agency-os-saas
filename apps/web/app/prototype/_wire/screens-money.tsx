@@ -1,6 +1,6 @@
 'use client';
 
-import { calculateInvoice } from '@agency-os/core';
+import { calculateInvoice, formatMoney } from '@agency-os/core';
 import {
   Bank,
   ChatCircleDots,
@@ -22,7 +22,6 @@ import {
   Dialog,
   DialogContent,
   EmptyState,
-  GateCard,
   Input,
   InvoiceSummary,
   NeedsYouItem,
@@ -33,7 +32,8 @@ import {
   Switch,
   Textarea,
 } from '@agency-os/ui';
-import { List, Ph, Row, StateView } from './kit';
+import { Go, List, Row, StateView } from './kit';
+import { FileList, InvoicesTable, InvoiceTypeSelect, MessageThread, PortalGate } from './parts2';
 import { PUBLIC, STANDARD, type ScreenDef } from './types';
 
 const intra = calculateInvoice({
@@ -119,9 +119,9 @@ export const MONEY_SCREENS: ScreenDef[] = [
           title="Invoices"
           subtitle="₹1,20,000 pending · ₹38,500 overdue"
           actions={
-            <Button variant="primary" icon={Plus}>
+            <Go to="s33-invoice-builder" variant="primary" icon={Plus}>
               Create invoice
-            </Button>
+            </Go>
           }
         />
         <StateView
@@ -141,44 +141,7 @@ export const MONEY_SCREENS: ScreenDef[] = [
             <Button size="sm">Client: All</Button>
             <Button size="sm">This financial year</Button>
           </div>
-          <List label="Number · Client · Amount · Issued · Due · Status">
-            <Row
-              label="OSS/26-27/014 · Northwind"
-              meta="₹29,500 · due 20 Oct"
-              right={
-                <Badge size="sm" tone="danger" dot>
-                  5 days overdue
-                </Badge>
-              }
-            />
-            <Row
-              label="OSS/26-27/015 · Acme Labs"
-              meta="₹47,200 · due 2 Nov"
-              right={
-                <Badge size="sm" tone="warning" dot>
-                  Due 2 Nov
-                </Badge>
-              }
-            />
-            <Row
-              label="OSS/26-27/016 · Sarah Lewis"
-              meta="$2,000.00 · export under LUT"
-              right={
-                <Badge size="sm" tone="info" dot>
-                  Partly paid
-                </Badge>
-              }
-            />
-            <Row
-              label="OSS/26-27/013 · Saffron Stays"
-              meta="₹45,000"
-              right={
-                <Badge size="sm" tone="success" dot>
-                  Paid
-                </Badge>
-              }
-            />
-          </List>
+          <InvoicesTable />
         </StateView>
       </>
     ),
@@ -224,7 +187,9 @@ export const MONEY_SCREENS: ScreenDef[] = [
             actions={
               <>
                 <Button>Preview PDF</Button>
-                <Button variant="primary">Issue invoice</Button>
+                <Go to="s32-invoices" variant="primary">
+                  Issue invoice
+                </Go>
               </>
             }
           />
@@ -232,16 +197,7 @@ export const MONEY_SCREENS: ScreenDef[] = [
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
               <div className="grid content-start gap-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Select
-                    label="Type"
-                    options={[
-                      'Tax invoice',
-                      'Bill of supply',
-                      'Export under LUT',
-                      'Proforma or advance',
-                    ]}
-                    defaultValue={isExport ? 'Export under LUT' : 'Tax invoice'}
-                  />
+                  <InvoiceTypeSelect value={isExport ? 'Export under LUT' : 'Tax invoice'} />
                   <Select
                     label="Client"
                     options={['Acme Labs', 'Sarah Lewis']}
@@ -267,11 +223,27 @@ export const MONEY_SCREENS: ScreenDef[] = [
                     Add your LUT in Settings, Tax and invoices, to bill exports without IGST.
                   </Alert>
                 ) : null}
-                <List label="Item · SAC · Qty · Rate · GST">
+                <div className="grid gap-3 rounded-lg border border-border bg-card p-3">
                   {totals.lines.map((l) => (
-                    <Row key={l.description} label={l.description} meta={`SAC ${l.sac ?? ''}`} />
+                    <div
+                      key={l.description}
+                      className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_64px_minmax(0,1fr)] gap-2 max-sm:grid-cols-2"
+                    >
+                      <Input label="Item" defaultValue={l.description} />
+                      <Input label="SAC" defaultValue={l.sac} className="font-mono" />
+                      <Input label="Qty" defaultValue={String(l.quantity)} inputMode="decimal" />
+                      <Input
+                        label="Rate"
+                        prefix={totals.currency === 'INR' ? '₹' : '$'}
+                        defaultValue={formatMoney(l.rateMinor, totals.currency).replace(
+                          /[^\d.,]/g,
+                          '',
+                        )}
+                        inputMode="decimal"
+                      />
+                    </div>
                   ))}
-                </List>
+                </div>
                 <div className="flex gap-2">
                   <Button size="sm" icon={Plus}>
                     Add line
@@ -364,9 +336,9 @@ export const MONEY_SCREENS: ScreenDef[] = [
                 <Progress value={42} label="₹20,000 of ₹47,200 paid" showValue />
               ) : null}
               {PAY_METHODS}
-              <Button variant="primary" size="xl" block>
+              <Go to="s34-invoice-pay" state="paid" variant="primary" size="xl" block>
                 Pay {state === 'partly' ? '₹27,200' : '₹47,200'}
-              </Button>
+              </Go>
               <Button variant="link">Download PDF</Button>
             </div>
           </Card>
@@ -409,7 +381,9 @@ export const MONEY_SCREENS: ScreenDef[] = [
             footer={
               <>
                 <Button>Cancel</Button>
-                <Button variant="primary">Record payment</Button>
+                <Go to="s32-invoices" variant="primary">
+                  Record payment
+                </Go>
               </>
             }
           >
@@ -429,11 +403,17 @@ export const MONEY_SCREENS: ScreenDef[] = [
                 defaultValue="Wise"
               />
               <Input label="Reference" optional />
-              <Ph label="FIRA or FIRC (PDF or image) · optional" h={64} className="sm:col-span-2">
-                <Button size="sm" icon={UploadSimple} className="self-start">
-                  Attach file
-                </Button>
-              </Ph>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <span className="text-body-sm font-medium">
+                  FIRA or FIRC <span className="font-normal text-muted-foreground">Optional</span>
+                </span>
+                <div className="flex items-center gap-3 rounded-md border border-dashed border-border-strong px-3 py-3 text-body-sm text-muted-foreground">
+                  <Button size="sm" icon={UploadSimple}>
+                    Attach file
+                  </Button>
+                  PDF or image, for export payments
+                </div>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
@@ -504,7 +484,28 @@ export const PORTAL_SCREENS: ScreenDef[] = [
             <Progress value={45} label="Overall" showValue />
           </div>
         </Card>
-        <Ph label="Latest updates from the team" h={120} />
+        <Card title="Latest" as="h2">
+          <ActivityFeed
+            items={[
+              {
+                id: '1',
+                icon: CheckCircle,
+                tone: 'success',
+                who: 'You',
+                text: 'approved the PRD',
+                when: '14 Oct',
+              },
+              {
+                id: '2',
+                icon: UploadSimple,
+                tone: 'brand',
+                who: 'Ananya',
+                text: 'shared 3 screens',
+                when: 'Today',
+              },
+            ]}
+          />
+        </Card>
       </StateView>
     ),
   },
@@ -527,18 +528,8 @@ export const PORTAL_SCREENS: ScreenDef[] = [
       <>
         <h1 className="text-title-lg">Beere Kesava ERP</h1>
         <PhaseStepper current={3} compact />
-        <GateCard
-          phase="Design"
-          title="Approve the dashboard design"
-          view="client"
-          status={state === 'approved' ? 'approved' : 'waiting'}
-          description="Desktop and phone versions. After you approve, Ananya starts building the pages."
-          files={['Dashboard v2.pdf', 'Phone.pdf']}
-          approver="Srinivas Beere"
-          when={state === 'approved' ? '25 Oct 2026' : 'shared today'}
-          labels={{ approvedBy: 'Approved by' }}
-        />
-        <Ph label="Files shared with you" h={88} />
+        <PortalGate approved={state === 'approved'} />
+        <FileList clientView />
         {state === 'changes' ? (
           <Dialog defaultOpen>
             <DialogContent
@@ -547,7 +538,9 @@ export const PORTAL_SCREENS: ScreenDef[] = [
               footer={
                 <>
                   <Button>Cancel</Button>
-                  <Button variant="primary">Send</Button>
+                  <Go to="s39-portal-project" variant="primary">
+                    Send
+                  </Go>
                 </>
               }
             >
@@ -592,9 +585,9 @@ export const PORTAL_SCREENS: ScreenDef[] = [
           <Card title="Pay ₹47,200 for milestone 2">
             <div className="grid gap-4">
               {PAY_METHODS}
-              <Button variant="primary" size="xl" block>
+              <Go to="s40-portal-invoices" state="success" variant="primary" size="xl" block>
                 Pay ₹47,200
-              </Button>
+              </Go>
             </div>
           </Card>
         ) : (
@@ -608,9 +601,9 @@ export const PORTAL_SCREENS: ScreenDef[] = [
                     Paid
                   </Badge>
                 ) : (
-                  <Button variant="primary" size="sm">
+                  <Go to="s40-portal-invoices" state="paying" variant="primary" size="sm">
                     Pay ₹47,200
-                  </Button>
+                  </Go>
                 )
               }
             />
@@ -652,25 +645,7 @@ export const PORTAL_SCREENS: ScreenDef[] = [
             </EmptyState>
           </div>
         ) : (
-          <ActivityFeed
-            items={[
-              {
-                id: '1',
-                icon: ChatCircleDots,
-                tone: 'brand',
-                who: 'Ananya',
-                text: 'shared the dashboard design. Have a look when you can.',
-                when: 'Today',
-              },
-              {
-                id: '2',
-                icon: ChatCircleDots,
-                who: 'You',
-                text: 'Can the headline be in Telugu?',
-                when: 'Mon',
-              },
-            ]}
-          />
+          <MessageThread asClient />
         )}
         <form className="grid gap-2">
           <Textarea label="Message" rows={3} />
@@ -683,7 +658,12 @@ export const PORTAL_SCREENS: ScreenDef[] = [
             </Button>
           </div>
         </form>
-        <Ph label="Files: everything shared with you, newest first" h={88} />
+        <section aria-labelledby="files" className="grid gap-2">
+          <h2 id="files" className="text-title-sm">
+            Files
+          </h2>
+          <FileList clientView />
+        </section>
       </>
     ),
   },

@@ -147,3 +147,13 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Decision:** the founder approved gate G1 (design system in code and wireframes of all 42 R0/R1 screens) with "Approve G1", with no changes requested.
 - **Note:** the tree test (pass line: first-click success of 80% or more) had not been run at approval. It moves to run alongside usability round R2, before G2; any label that fails is changed before G2. The labels approved for now are "Sales docs" for quotes and proposals, and no Playbook in the R1 navigation.
 - **Consequences:** M4 part 2 (hi-fi prototype on the same `/prototype` routes) can start once G0 is passed or waived (`build-plan.md`: G0 comes before hi-fi).
+
+### G0 waived
+**Status:** Waived by the founder · **Date:** 25 Oct 2026
+- **Decision:** the founder waived G0 in writing ("Waive G0, test at R2") instead of running the interviews and survey first. Hi-fi (M4 part 2) builds on the documented hypotheses in `docs/01-research/`.
+- **Consequences:** usability round R2, before G2, is the real check with owners and clients in India and abroad, together with the tree test moved from G1. Assumptions A1 to A6 stay unvalidated until then; G2's pass lines (task success ≥ 80%, no blockers, SEQ ≥ 5.5) are unchanged.
+
+### D-028 Hi-fi prototype (M4 part 2)
+**Status:** Accepted · **Date:** 25 Oct 2026
+- **Decision:** the hi-fi prototype restyles the same `/prototype` routes: every placeholder replaced by real components and example data (labelled example names only), with money and tax from `packages/core`. A `Go` helper turns buttons into links between screens so the usability tasks can be clicked through; `apps/web/e2e/flows.spec.ts` checks T1 to T10 and T12. The phone-width check now also measures scrolling main areas, not only the page.
+- **Consequences:** wireframe screenshots are replaced by `docs/screenshots/m04-hifi/` (the wireframes stay in git history and PR #4).

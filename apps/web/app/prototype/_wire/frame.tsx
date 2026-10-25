@@ -124,7 +124,10 @@ export function PrototypeScreen({
     );
   }
   const state = screen.states.some((s) => s.id === requested) ? requested : 'default';
-  const content = screen.render({ state });
+  // Room below the content so the prototype controls never cover the last button.
+  const content = (
+    <div className={chrome ? 'pb-28 md:pb-16' : undefined}>{screen.render({ state })}</div>
+  );
   const role: Role =
     screen.id === 'S04' && state in NAV ? (state as Role) : (screen.role ?? 'owner');
 

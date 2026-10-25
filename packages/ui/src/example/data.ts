@@ -239,3 +239,405 @@ export const EXPORT_INVOICE = calculateInvoice({
 });
 
 export const LUT_ARN = 'AD3609260012345';
+
+/* ---------- Lists for the hi-fi prototype ---------- */
+
+export type ExampleLeadRow = {
+  id: string;
+  name: string;
+  contact: string;
+  stage: 'New' | 'Contacted' | 'Proposal' | 'Won' | 'Lost';
+  valueMinor: bigint;
+  source: string;
+  owner: string;
+  followUp: string;
+  overdue?: boolean;
+};
+
+export const LEAD_ROWS: ExampleLeadRow[] = [
+  {
+    id: 'kite',
+    name: 'Kite & Co',
+    contact: 'Kiran (founder)',
+    stage: 'New',
+    valueMinor: 8_000_000n,
+    source: 'Instagram',
+    owner: PEOPLE.owner,
+    followUp: 'Today',
+  },
+  {
+    id: 'lumen',
+    name: 'Lumen Foods',
+    contact: 'Priya, marketing',
+    stage: 'New',
+    valueMinor: 15_000_000n,
+    source: 'Referral',
+    owner: PEOPLE.designer,
+    followUp: 'Mon (overdue)',
+    overdue: true,
+  },
+  {
+    id: 'orbit',
+    name: 'Orbit Fitness',
+    contact: 'Rahul',
+    stage: 'New',
+    valueMinor: 4_500_000n,
+    source: 'Marketplace',
+    owner: PEOPLE.developer,
+    followUp: 'Wed',
+  },
+  {
+    id: 'mitra',
+    name: 'Mitra Clinic',
+    contact: 'Dr. Lakshmi',
+    stage: 'Contacted',
+    valueMinor: 6_000_000n,
+    source: 'Website',
+    owner: PEOPLE.developer,
+    followUp: 'Thu, 11:30 am',
+  },
+  {
+    id: 'tara',
+    name: 'Tara Textiles',
+    contact: 'Venkat',
+    stage: 'Contacted',
+    valueMinor: 11_000_000n,
+    source: 'IndiaMART',
+    owner: PEOPLE.owner,
+    followUp: 'Fri',
+  },
+  {
+    id: 'northwind',
+    name: 'Northwind',
+    contact: PEOPLE.intlClient,
+    stage: 'Proposal',
+    valueMinor: 24_000_000n,
+    source: 'Marketplace',
+    owner: PEOPLE.owner,
+    followUp: 'Fri',
+  },
+  {
+    id: 'saffron',
+    name: 'Saffron Stays',
+    contact: 'Anil',
+    stage: 'Won',
+    valueMinor: 9_000_000n,
+    source: 'Referral',
+    owner: PEOPLE.designer,
+    followUp: '—',
+  },
+];
+
+export type ExampleClient = {
+  id: string;
+  name: string;
+  contact: string;
+  city: string;
+  projects: number;
+  billedMinor: bigint;
+  outstandingMinor: bigint;
+  currency: string;
+  portal: 'Active' | 'Invited' | 'Not invited';
+};
+
+export const CLIENTS: ExampleClient[] = [
+  {
+    id: 'acme',
+    name: 'Acme Labs',
+    contact: PEOPLE.client,
+    city: 'Vijayawada',
+    projects: 2,
+    billedMinor: 18_880_000n,
+    outstandingMinor: 4_720_000n,
+    currency: 'INR',
+    portal: 'Active',
+  },
+  {
+    id: 'northwind',
+    name: 'Northwind',
+    contact: PEOPLE.intlClient,
+    city: 'London',
+    projects: 1,
+    billedMinor: 200_000n,
+    outstandingMinor: 120_000n,
+    currency: 'USD',
+    portal: 'Active',
+  },
+  {
+    id: 'saffron',
+    name: 'Saffron Stays',
+    contact: 'Anil',
+    city: 'Goa',
+    projects: 1,
+    billedMinor: 4_500_000n,
+    outstandingMinor: 0n,
+    currency: 'INR',
+    portal: 'Invited',
+  },
+  {
+    id: 'mitra',
+    name: 'Mitra Clinic',
+    contact: 'Dr. Lakshmi',
+    city: 'Hyderabad',
+    projects: 1,
+    billedMinor: 3_000_000n,
+    outstandingMinor: 0n,
+    currency: 'INR',
+    portal: 'Active',
+  },
+  {
+    id: 'kite',
+    name: 'Kite & Co',
+    contact: 'Kiran',
+    city: 'Bengaluru',
+    projects: 0,
+    billedMinor: 0n,
+    outstandingMinor: 0n,
+    currency: 'INR',
+    portal: 'Not invited',
+  },
+];
+
+export type ExampleProject = {
+  id: string;
+  name: string;
+  client: string;
+  lead: string;
+  phase: number;
+  health: 'On track' | 'At risk' | 'Late';
+  nextGate: string;
+  due: string;
+  progress: number;
+};
+
+export const PROJECTS: ExampleProject[] = [
+  {
+    id: 'acme-web',
+    name: 'Website redesign',
+    client: 'Acme Labs',
+    lead: PEOPLE.designer,
+    phase: 3,
+    health: 'At risk',
+    nextGate: 'Design sign-off · 2 days late',
+    due: '20 Dec 2026',
+    progress: 42,
+  },
+  {
+    id: 'northwind-app',
+    name: 'Mobile app',
+    client: 'Northwind',
+    lead: PEOPLE.developer,
+    phase: 4,
+    health: 'At risk',
+    nextGate: 'Acceptance testing',
+    due: '15 Jan 2027',
+    progress: 68,
+  },
+  {
+    id: 'mitra-booking',
+    name: 'Booking app',
+    client: 'Mitra Clinic',
+    lead: PEOPLE.pm,
+    phase: 2,
+    health: 'On track',
+    nextGate: 'Strategy and scope',
+    due: '28 Feb 2027',
+    progress: 30,
+  },
+  {
+    id: 'saffron-web',
+    name: 'Website',
+    client: 'Saffron Stays',
+    lead: PEOPLE.designer,
+    phase: 1,
+    health: 'On track',
+    nextGate: 'Strategy and scope',
+    due: '31 Jan 2027',
+    progress: 12,
+  },
+  {
+    id: 'beere-erp',
+    name: 'Beere Kesava ERP',
+    client: 'Acme Labs',
+    lead: PEOPLE.designer,
+    phase: 3,
+    health: 'On track',
+    nextGate: 'Dashboard design',
+    due: '31 Mar 2027',
+    progress: 45,
+  },
+];
+
+export type ExampleTask = {
+  id: string;
+  title: string;
+  project: string;
+  assignee: string;
+  due: string;
+  priority: 'Low' | 'Normal' | 'High';
+  status: 'To do' | 'In progress' | 'In review' | 'Done';
+  overdue?: boolean;
+};
+
+export const TASKS: ExampleTask[] = [
+  {
+    id: 't1',
+    title: 'Homepage hero copy',
+    project: 'Acme Labs · Design',
+    assignee: PEOPLE.designer,
+    due: 'Fri 30 Oct',
+    priority: 'High',
+    status: 'In progress',
+  },
+  {
+    id: 't2',
+    title: 'Fix checkout bug',
+    project: 'Northwind · Build',
+    assignee: PEOPLE.developer,
+    due: 'Today',
+    priority: 'High',
+    status: 'To do',
+  },
+  {
+    id: 't3',
+    title: 'QA on Android',
+    project: 'Northwind · Build',
+    assignee: PEOPLE.developer,
+    due: 'Today',
+    priority: 'Normal',
+    status: 'To do',
+  },
+  {
+    id: 't4',
+    title: 'Prepare staging',
+    project: 'Acme Labs · Build',
+    assignee: PEOPLE.developer,
+    due: 'Thu',
+    priority: 'Normal',
+    status: 'In review',
+  },
+  {
+    id: 't5',
+    title: 'Competitor analysis',
+    project: 'Mitra Clinic · Discover',
+    assignee: PEOPLE.pm,
+    due: 'Wed (overdue)',
+    priority: 'Normal',
+    status: 'To do',
+    overdue: true,
+  },
+  {
+    id: 't6',
+    title: 'Brand colours',
+    project: 'Saffron Stays · Design',
+    assignee: PEOPLE.designer,
+    due: 'Mon',
+    priority: 'Low',
+    status: 'Done',
+  },
+  {
+    id: 't7',
+    title: 'Sitemap and scope',
+    project: 'Mitra Clinic · Define',
+    assignee: PEOPLE.pm,
+    due: 'Next week',
+    priority: 'Normal',
+    status: 'In progress',
+  },
+  {
+    id: 't8',
+    title: 'Wireframes for key pages',
+    project: 'Acme Labs · Design',
+    assignee: PEOPLE.designer,
+    due: 'Done 20 Oct',
+    priority: 'Normal',
+    status: 'Done',
+  },
+];
+
+export type ExampleInvoice = {
+  id: string;
+  number: string;
+  client: string;
+  amount: string;
+  issued: string;
+  due: string;
+  status: 'draft' | 'due' | 'overdue' | 'paid' | 'partially_paid';
+  statusText: string;
+};
+
+export const INVOICES: ExampleInvoice[] = [
+  {
+    id: 'i14',
+    number: 'OSS/26-27/014',
+    client: 'Northwind',
+    amount: '₹29,500.00',
+    issued: '13 Oct',
+    due: '20 Oct',
+    status: 'overdue',
+    statusText: '5 days overdue',
+  },
+  {
+    id: 'i15',
+    number: 'OSS/26-27/015',
+    client: 'Acme Labs',
+    amount: '₹47,200.00',
+    issued: '26 Oct',
+    due: '2 Nov',
+    status: 'due',
+    statusText: 'Due 2 Nov',
+  },
+  {
+    id: 'i16',
+    number: 'OSS/26-27/016',
+    client: 'Northwind',
+    amount: '$2,000.00',
+    issued: '22 Oct',
+    due: '5 Nov',
+    status: 'partially_paid',
+    statusText: '$1,200.00 due',
+  },
+  {
+    id: 'i13',
+    number: 'OSS/26-27/013',
+    client: 'Saffron Stays',
+    amount: '₹45,000.00',
+    issued: '1 Oct',
+    due: '8 Oct',
+    status: 'paid',
+    statusText: 'Paid',
+  },
+  {
+    id: 'i12',
+    number: 'OSS/26-27/012',
+    client: 'Acme Labs',
+    amount: '₹47,200.00',
+    issued: '15 Sep',
+    due: '22 Sep',
+    status: 'paid',
+    statusText: 'Paid',
+  },
+  {
+    id: 'draft',
+    number: 'Draft',
+    client: 'Mitra Clinic',
+    amount: '₹30,000.00',
+    issued: '—',
+    due: '—',
+    status: 'draft',
+    statusText: 'Draft',
+  },
+];
+
+export const MEMBERS = [
+  { name: PEOPLE.owner, email: 'kiran@onestop.in', role: 'Owner', projects: 5, openTasks: 3 },
+  {
+    name: PEOPLE.designer,
+    email: 'ananya@onestop.in',
+    role: 'Project lead',
+    projects: 3,
+    openTasks: 6,
+  },
+  { name: PEOPLE.developer, email: 'arjun@onestop.in', role: 'Member', projects: 2, openTasks: 8 },
+  { name: PEOPLE.pm, email: 'meera@onestop.in', role: 'Finance', projects: 1, openTasks: 2 },
+];
