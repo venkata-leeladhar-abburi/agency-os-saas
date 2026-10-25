@@ -1,0 +1,15 @@
+/* Agency OS component styles that the token theme doesn't generate: motion keyframes.
+   Import after @agency-os/tokens/globals.css. */
+@theme {
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+  --animate-spin: spin 0.8s linear infinite;
+
+  @keyframes shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
+  }
+}

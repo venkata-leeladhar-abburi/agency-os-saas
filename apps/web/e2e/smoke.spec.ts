@@ -16,14 +16,14 @@ test('theme switch sets data-theme, survives a reload and stays accessible in da
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Dark' }).click();
+  await page.getByRole('radio', { name: 'Dark' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await expect(page.getByRole('button', { name: 'Dark' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('radio', { name: 'Dark' })).toHaveAttribute('aria-checked', 'true');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
-  await page.getByRole('button', { name: 'Light' }).click();
+  await page.getByRole('radio', { name: 'Light' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
