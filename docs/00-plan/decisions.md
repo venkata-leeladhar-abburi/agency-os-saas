@@ -141,3 +141,9 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 **Status:** Accepted · **Date:** 25 Oct 2026
 - **Decision:** the 42 R0/R1 wireframes live at `/prototype/[screen]` in `apps/web` (D-017), built from the real shell, navigation, labels and primary actions, with grey boxes for content. Each screen declares its states; `?state=` switches them and `?chrome=0` hides the prototype controls. The routes are on unless `PROTOTYPE=off`; they are removed after G3. Navigation per role follows the information architecture, R0/R1 items only (Playbook is R2). The top bar's **New** is primary only on pages without their own primary action, so a page never has two. Record tabs that are separate pages use `TabLinks` (links with `aria-current`), not ARIA tabs.
 - **Consequences:** e2e checks every screen in every state with axe (light and dark) and fails if a page is wider than a 390px phone. CI uploads every screen in light and dark at 390px and 1440px as the `prototype-screenshots` artifact. Hi-fi (G2) restyles the same routes.
+
+### G1 approved
+**Status:** Approved · **Date:** 25 Oct 2026
+- **Decision:** the founder approved gate G1 (design system in code and wireframes of all 42 R0/R1 screens) with "Approve G1", with no changes requested.
+- **Note:** the tree test (pass line: first-click success of 80% or more) had not been run at approval. It moves to run alongside usability round R2, before G2; any label that fails is changed before G2. The labels approved for now are "Sales docs" for quotes and proposals, and no Playbook in the R1 navigation.
+- **Consequences:** M4 part 2 (hi-fi prototype on the same `/prototype` routes) can start once G0 is passed or waived (`build-plan.md`: G0 comes before hi-fi).

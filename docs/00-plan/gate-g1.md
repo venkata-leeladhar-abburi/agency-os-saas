@@ -1,6 +1,6 @@
 # Gate G1: design system and wireframes
 
-**Status:** ready for the founder's review · **Prepared:** 25 Oct 2026 · Reply "Approve G1" or list changes.
+**Status:** approved by the founder on 25 Oct 2026 (recorded in `decisions.md`) · **Prepared:** 25 Oct 2026
 
 ## Links
 - **Design system in code (Storybook):** download the `storybook` artifact from the latest CI run on `main` (Actions → CI → run → Artifacts), unzip, open `storybook-static/index.html`. Or run `pnpm --filter @agency-os/ui storybook`. The live Vercel link comes when Vercel is connected (open question 7).
