@@ -1,3 +1,4 @@
 @import '@agency-os/tokens/globals.css';
+@import '@agency-os/ui/styles.css';
 
 @source '../../../packages/ui/src';

@@ -20,8 +20,8 @@ Updated by Claude at the end of every working session. The founder can read this
 | # | Milestone | Status | PR | Notes |
 | --- | --- | --- | --- | --- |
 | M0 | Repo setup | Done | pushed to `main` | CI green on `main`. Preview deploy waits for Vercel (question 7). |
-| M1 | Tokens and theme | In review | feat/m01-tokens | Generator, contrast check (82 of 82 pairs), Geist, Phosphor, light/dark/system switch, token pages in Storybook, story axe checks in CI. |
-| M2 | Core components | Not started | | |
+| M1 | Tokens and theme | Done | [#1](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/1) | Generator, contrast check (82 of 82 pairs), Geist, Phosphor, light/dark/system switch, token pages in Storybook, story axe checks in CI. |
+| M2 | Core components | In review | feat/m02-components | 22 components with every state in Storybook; 39 component tests; 54 story axe checks (27 stories, light and dark). |
 | M3 | Patterns | Not started | | |
 | M4 | Wireframes and prototype | Not started | | |
 | M5 | Accounts and workspaces | Not started | | |

@@ -14,10 +14,11 @@ for (const story of stories) {
       page,
     }, testInfo) => {
       await page.goto(`/iframe.html?id=${story.id}&viewMode=story&globals=theme:${theme}`);
-      await expect(page.locator('#storybook-root')).not.toBeEmpty();
+      await expect(page.locator('#storybook-root > *').first()).toBeAttached();
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
       await page.evaluate(() => document.fonts.ready);
-      const results = await new AxeBuilder({ page }).include('#storybook-root').analyze();
+      // The whole page, so portalled dialogs, menus and toasts are checked too.
+      const results = await new AxeBuilder({ page }).exclude('#storybook-docs').analyze();
       const serious = results.violations.filter(
         (v) => v.impact === 'serious' || v.impact === 'critical',
       );
