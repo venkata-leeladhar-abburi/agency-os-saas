@@ -1,0 +1,22 @@
+{
+  "name": "agency-os",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "turbo lint typecheck test && prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.10",
+    "turbo": "2.11.10"
+  }
+}

@@ -2,7 +2,7 @@
 
 Updated by Claude at the end of every working session. The founder can read this page to see where things stand.
 
-**Current phase:** Planning complete; waiting for the founder to start (see `../../START-HERE.md`).
+**Current phase:** M0 repo setup built; waiting for the founder to review and connect Vercel. M1 next.
 **Next gate:** G0 Research (can run alongside M0 to M3).
 
 ## Gates
@@ -19,7 +19,7 @@ Updated by Claude at the end of every working session. The founder can read this
 
 | # | Milestone | Status | PR | Notes |
 | --- | --- | --- | --- | --- |
-| M0 | Repo setup | Not started | | |
+| M0 | Repo setup | Built, in review | | `pnpm check`, build, Storybook build and e2e (home and health, axe clean) pass locally. Preview deploy waits for Vercel (question 7). |
 | M1 | Tokens and theme | Not started | | `tokens/` ready to copy |
 | M2 | Core components | Not started | | |
 | M3 | Patterns | Not started | | |
@@ -41,4 +41,5 @@ Updated by Claude at the end of every working session. The founder can read this
 
 Newest first. One short entry per session: what was done, what is next, blockers.
 
+- **25 Oct 2026 (build, M0):** arranged the pack at the repo root; built the monorepo (pnpm, Turborepo), `apps/web`, package skeletons, ESLint, Prettier, Vitest, Playwright with axe, Storybook, CI workflow, `.env.example`. Next: M1 tokens and theme. Blockers: no `main` branch on the remote; Vercel and the other accounts (question 7) are not connected, so no preview deploy yet. CI has not run on GitHub yet.
 - **25 Oct 2026 (planning, in the One Stop repo):** research pack, product docs, design system v1 (tokens, Geist, Phosphor, 31 components, 3 example screens), engineering docs and this plan written. Next: the founder uploads the pack to the new repo and starts M0.

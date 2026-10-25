@@ -12,6 +12,7 @@ Three steps to go from this pack to Claude Code building Agency OS.
 ## 2. Set up the cloud environment (once)
 
 In Claude Code on the web, start a new session on `agency-os-app`. Then, from the cloud environment menu in the session's title bar, choose **Edit**:
+
 - **Network access:** allow the package managers and the hosts listed in `docs/04-engineering/environments-and-deploy.md` (step 7).
 - **Secrets:** add dev and test keys as you create the accounts (names in the same file). Never paste keys into the chat.
 
@@ -29,6 +30,7 @@ Stop at each gate and show me what I need to approve. Update progress.md as you 
 ```
 
 From then on:
+
 - Claude asks questions in batches with a recommended answer; reply with your choices, or "go with your defaults".
 - At each gate (G0 to G4), Claude sends links and screenshots. Reply "Approve G1" (or the gate's name), or list the changes you want.
 - To continue in a later session, say: "Continue the plan from progress.md."
