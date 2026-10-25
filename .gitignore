@@ -11,3 +11,4 @@ test-results
 !.env.example
 *.tsbuildinfo
 next-env.d.ts
+prototype-screenshots

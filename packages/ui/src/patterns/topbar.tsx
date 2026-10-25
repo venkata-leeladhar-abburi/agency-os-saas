@@ -1,3 +1,5 @@
+'use client';
+
 import { CaretRight } from '@phosphor-icons/react';
 import { Fragment, type ReactNode } from 'react';
 import { cn } from '../lib/cn';

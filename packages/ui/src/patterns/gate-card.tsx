@@ -1,3 +1,5 @@
+'use client';
+
 import { Check, Flag, Paperclip, WhatsappLogo } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
 import { Avatar } from '../components/avatar';

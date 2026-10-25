@@ -1,3 +1,5 @@
+'use client';
+
 import { Check, Flag } from '@phosphor-icons/react';
 import { cn } from '../lib/cn';
 

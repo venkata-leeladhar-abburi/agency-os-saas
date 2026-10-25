@@ -56,3 +56,47 @@ export function TabsTrigger({
 export function TabsContent({ className, ...props }: ComponentProps<typeof TabsPrimitive.Content>) {
   return <TabsPrimitive.Content className={cn('outline-none', className)} {...props} />;
 }
+
+export type TabLink = { href: string; label: string; count?: number; active?: boolean };
+
+/** Tabs that are separate pages (a record's Overview, Phases, Tasks …): links with aria-current. */
+export function TabLinks({
+  items,
+  label,
+  linkAs,
+  className,
+}: {
+  items: TabLink[];
+  /** Names the navigation: "Project". */
+  label: string;
+  linkAs?: import('../patterns/link').LinkComponent;
+  className?: string;
+}) {
+  const Anchor = linkAs ?? 'a';
+  return (
+    <nav aria-label={label} className={className}>
+      <ul className="flex gap-5 overflow-x-auto border-b border-border p-0 [scrollbar-width:none]">
+        {items.map((item) => (
+          <li key={item.href} className="shrink-0">
+            <Anchor
+              href={item.href}
+              aria-current={item.active ? 'page' : undefined}
+              className={cn(
+                'relative inline-flex h-10 items-center gap-1.5 text-body-medium whitespace-nowrap text-muted-foreground no-underline transition-colors duration-120 hover:text-foreground',
+                item.active &&
+                  'text-foreground after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-t-xs after:bg-primary',
+              )}
+            >
+              {item.label}
+              {item.count !== undefined ? (
+                <span className="rounded-full bg-muted px-1.5 text-caption leading-4.5 tabular-nums">
+                  {item.count}
+                </span>
+              ) : null}
+            </Anchor>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}

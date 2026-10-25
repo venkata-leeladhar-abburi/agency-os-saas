@@ -27,6 +27,15 @@ jobs:
         run: pnpm --filter @agency-os/web e2e
       - name: Storybook stories axe, light and dark
         run: pnpm --filter @agency-os/ui test:stories
+      - name: Prototype screenshot set (every screen, light and dark, 390px and 1440px)
+        run: SCREENSHOTS=1 pnpm --filter @agency-os/web exec playwright test e2e/screenshots.spec.ts
+      - name: Upload prototype screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prototype-screenshots
+          path: apps/web/prototype-screenshots
+          retention-days: 30
       - name: Upload Storybook and story screenshots
         if: always()
         uses: actions/upload-artifact@v4

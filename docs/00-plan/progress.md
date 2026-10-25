@@ -2,7 +2,7 @@
 
 Updated by Claude at the end of every working session. The founder can read this page to see where things stand.
 
-**Current phase:** Design system in code (M1 to M3). Research (G0) can run alongside.
+**Current phase:** Waiting at gate G1 (design system and wireframes). See `gate-g1.md`. Research (G0) not started.
 **Next gate:** G0 Research (can run alongside M0 to M3).
 
 ## Gates
@@ -10,7 +10,7 @@ Updated by Claude at the end of every working session. The founder can read this
 | Gate | Status | Date | Notes |
 | --- | --- | --- | --- |
 | G0 Research | Not started | | Research plan ready in `../01-research/` |
-| G1 System and wireframes | Reference design ready | | Design system v1 published; waiting for M1 to M4 |
+| G1 System and wireframes | Ready for review | 25 Oct 2026 | Summary in `gate-g1.md`. Tree test not run yet (needs participants). |
 | G2 Design approval | Not started | | |
 | G3 Beta ready | Not started | | |
 | G4 Launch | Not started | | |
@@ -22,8 +22,8 @@ Updated by Claude at the end of every working session. The founder can read this
 | M0 | Repo setup | Done | pushed to `main` | CI green on `main`. Preview deploy waits for Vercel (question 7). |
 | M1 | Tokens and theme | Done | [#1](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/1) | Generator, contrast check (82 of 82 pairs), Geist, Phosphor, light/dark/system switch, token pages in Storybook, story axe checks in CI. |
 | M2 | Core components | Done | [#2](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/2) | 22 components with every state in Storybook; 39 component tests; 54 story axe checks (27 stories, light and dark). |
-| M3 | Patterns | In review | feat/m03-patterns | 13 patterns, the three reference screens rebuilt, core money and tax helpers (43 tests, 100% coverage), 56 component tests, 82 story checks. |
-| M4 | Wireframes and prototype | Not started | | |
+| M3 | Patterns | Done | [#3](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/3) | 13 patterns, the three reference screens rebuilt, core money and tax helpers (43 tests, 100% coverage), 56 component tests, 82 story checks. |
+| M4 | Wireframes and prototype | Wireframes done, waiting at G1 | feat/m04-wireframes | 42 screens with states; tree-test and wireframe-test scripts. Hi-fi waits for G1 and G0. |
 | M5 | Accounts and workspaces | Not started | | |
 | M6 | App shell and platform | Not started | | |
 | M7 | Onboarding | Not started | | |
@@ -40,6 +40,8 @@ Updated by Claude at the end of every working session. The founder can read this
 ## Session log
 
 Newest first. One short entry per session: what was done, what is next, blockers.
+
+- **25 Oct 2026 (build, M1 to M4):** M1 tokens and theme, M2 core components and M3 patterns merged (CI green). Core money and tax helpers done early (all worked cases, 100% coverage). M4 wireframes of all 42 R0/R1 screens at `/prototype`, every state checked with axe in light and dark. **Stopped at G1.** Next: hi-fi prototype after the founder approves G1 and passes or waives G0. Needs from the founder: G1 approval, the tree test (or a written waiver), the G0 decision, Vercel (preview links), set `main` as the default branch.
 
 - **25 Oct 2026 (build, M0):** arranged the pack at the repo root; built the monorepo (pnpm, Turborepo), `apps/web`, package skeletons, ESLint, Prettier, Vitest, Playwright with axe, Storybook, CI workflow, `.env.example`. Next: M1 tokens and theme. Blockers: no `main` branch on the remote; Vercel and the other accounts (question 7) are not connected, so no preview deploy yet. CI has not run on GitHub yet.
 - **25 Oct 2026 (planning, in the One Stop repo):** research pack, product docs, design system v1 (tokens, Geist, Phosphor, 31 components, 3 example screens), engineering docs and this plan written. Next: the founder uploads the pack to the new repo and starts M0.
