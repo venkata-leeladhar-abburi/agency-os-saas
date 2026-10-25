@@ -19,6 +19,8 @@ export type ProgressProps = {
   /** Replaces the percentage, e.g. "3 of 5". */
   valueText?: string;
   tone?: keyof typeof TONES;
+  /** Names the bar when there is no visible label. */
+  'aria-label'?: string;
   className?: string;
 };
 
@@ -29,6 +31,7 @@ export function Progress({
   showValue,
   valueText,
   tone = 'default',
+  'aria-label': ariaLabel,
   className,
 }: ProgressProps) {
   const id = useId();
@@ -45,6 +48,7 @@ export function Progress({
       <ProgressPrimitive.Root
         value={clamped}
         aria-labelledby={label ? `${id}-label` : undefined}
+        aria-label={label ? undefined : ariaLabel}
         aria-valuetext={text}
         className="h-1.5 overflow-hidden rounded-full bg-muted"
       >

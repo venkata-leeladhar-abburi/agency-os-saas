@@ -2,15 +2,35 @@ import type { Decorator, Preview } from '@storybook/react-vite';
 import { useEffect, type ReactNode } from 'react';
 import './preview.css';
 
-function ThemeRoot({ theme, children }: { theme: 'light' | 'dark'; children: ReactNode }) {
+function ThemeRoot({
+  theme,
+  bare,
+  children,
+}: {
+  theme: 'light' | 'dark';
+  bare: boolean;
+  children: ReactNode;
+}) {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
-  return <div className="min-h-dvh bg-background p-6 text-foreground">{children}</div>;
+  return (
+    <div
+      className={
+        bare ? 'bg-background text-foreground' : 'min-h-dvh bg-background p-6 text-foreground'
+      }
+    >
+      {children}
+    </div>
+  );
 }
 
+// Screens set `parameters.bare` to render edge to edge, like the app.
 const withTheme: Decorator = (Story, context) => (
-  <ThemeRoot theme={context.globals.theme === 'dark' ? 'dark' : 'light'}>
+  <ThemeRoot
+    theme={context.globals.theme === 'dark' ? 'dark' : 'light'}
+    bare={Boolean(context.parameters.bare)}
+  >
     <Story />
   </ThemeRoot>
 );
