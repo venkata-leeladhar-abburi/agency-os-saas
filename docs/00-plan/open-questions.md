@@ -25,3 +25,5 @@ Claude adds questions here and asks them in one batch. The founder answers inlin
 ## Answered
 
 Move answered questions here with the date and the answer, and add a decision to `decisions.md` when the answer changes the plan.
+
+- **13 Pull requests** (25 Oct 2026): Claude merges its own PRs when CI is green; gate milestones wait for the founder. Recorded as D-021.

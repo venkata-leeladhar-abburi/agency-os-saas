@@ -101,3 +101,22 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 ### D-019 Working branch until the founder creates `main`
 **Status:** Accepted · **Date:** 25 Oct 2026
 - **Decision:** the pack and M0 are on `claude/clever-ramanujan-2d8uch` because the remote has no `main`. Open questions use their defaults (including question 13) until the founder answers.
+
+### D-020 Token pipeline (M1)
+**Status:** Accepted · **Date:** 25 Oct 2026
+- **Context:** the pack has `tokens/tokens.json` plus hand-checked `tokens/globals.css`; the build plan asks for a generator and a contrast check in `packages/tokens`.
+- **Decision:** `tokens/tokens.json` at the root stays the single source of truth. `packages/tokens/scripts/generate.mjs` writes both `packages/tokens/globals.css` (imported by the app and Storybook) and `tokens/globals.css` (the reference copy); it reproduces the pack's file byte for byte. `scripts/contrast.mjs` checks 41 semantic pairs in each theme (text 4.5:1; control borders, focus and charts 3:1). `pnpm --filter @agency-os/tokens test` fails if either output is stale or a pair fails, so CI checks both. `design/system/tokens.json` is the frozen reference bundle and is not regenerated.
+- **Consequences:** to change a token, edit `tokens.json` and run `pnpm --filter @agency-os/tokens generate`.
+
+### D-021 Founder allows Claude to merge non-gate PRs
+**Status:** Accepted · **Date:** 25 Oct 2026
+- **Decision:** answer to open question 13. Claude merges its own PRs when CI is green; gate milestones (M4 at G1 and G2, M16 at G3) wait for the founder.
+
+### D-022 Theme switching, fonts and design-rule checks
+**Status:** Accepted · **Date:** 25 Oct 2026
+- **Decision:** `next-themes` sets `data-theme` on `<html>` (light, dark or system; stored under `theme` in localStorage). Geist comes from the `geist` package (`GeistSans.variable`, `GeistMono.variable`); Storybook serves the same variable font files from the package. `scripts/check-design-rules.mjs` (part of `pnpm check`) fails on raw hex, rgb, hsl or oklch colours, arbitrary colour classes, other icon libraries and other font sources in `apps/web` and `packages/ui`. `cn()` in `packages/ui` uses tailwind-merge taught the Agency OS type scale, so `text-title-lg` and `text-foreground` don't cancel each other out.
+- **Consequences:** Noto Sans Devanagari and Telugu are in the font stack but not bundled; they come from the device (Android ships them). Revisit if Indian-script names render poorly on desktops.
+
+### D-023 Visual and accessibility checks for Storybook; screenshots in the repo
+**Status:** Accepted · **Date:** 25 Oct 2026
+- **Decision:** CI builds Storybook and runs Playwright over every story in light and dark: no serious or critical axe violations, and a screenshot per story uploaded as the `storybook` CI artifact. Pixel baselines are not compared yet, because font rendering differs between this cloud container and the GitHub runner; they will be added with a pinned Playwright Docker image before G1 if the founder wants automated visual diffs. The PR screenshot set (light and dark, 390px and 1440px) is committed under `docs/screenshots/<milestone>/` and made with `apps/web/scripts/screenshots.mjs`.

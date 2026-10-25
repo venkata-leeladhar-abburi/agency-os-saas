@@ -1,0 +1,391 @@
+/* Agency OS — Tailwind CSS v4 + shadcn/ui theme, generated from tokens.json. Do not edit by hand:
+   change tokens.json and regenerate. Light is the default; dark applies under [data-theme="dark"] or .dark. */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
+
+/* 1. Raw scales. Only these colours exist: Tailwind's default palette is removed. */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-neutral-0: #ffffff;
+  --color-neutral-25: #fefbfb;
+  --color-neutral-50: #f9f6f6;
+  --color-neutral-100: #f2efef;
+  --color-neutral-150: #eae7e7;
+  --color-neutral-200: #e2dfdf;
+  --color-neutral-300: #d3d0d0;
+  --color-neutral-400: #a09d9d;
+  --color-neutral-450: #8e8b8b;
+  --color-neutral-500: #716e6e;
+  --color-neutral-600: #656262;
+  --color-neutral-700: #524f4f;
+  --color-neutral-800: #373535;
+  --color-neutral-850: #282626;
+  --color-neutral-900: #1e1b1b;
+  --color-neutral-925: #181515;
+  --color-neutral-950: #151313;
+  --color-neutral-975: #0e0c0c;
+  --color-violet-50: #f6f6ff;
+  --color-violet-100: #ededfe;
+  --color-violet-200: #dcdcfe;
+  --color-violet-300: #c4c2fe;
+  --color-violet-400: #a49cff;
+  --color-violet-500: #8671ff;
+  --color-violet-600: #6840ff;
+  --color-violet-700: #5a2dd2;
+  --color-violet-800: #44269e;
+  --color-violet-900: #2f1d6d;
+  --color-violet-950: #1c1244;
+  --color-lime-50: #f2ffec;
+  --color-lime-100: #e4ffd6;
+  --color-lime-200: #cbffaf;
+  --color-lime-300: #a1ff62;
+  --color-lime-400: #91ee50;
+  --color-lime-500: #7bd23b;
+  --color-lime-600: #5da91f;
+  --color-lime-700: #458111;
+  --color-lime-800: #33600d;
+  --color-lime-900: #274710;
+  --color-lime-950: #162e05;
+  --color-green-50: #edfbf0;
+  --color-green-100: #d9f8e0;
+  --color-green-200: #b8f0c6;
+  --color-green-300: #8ce1a4;
+  --color-green-400: #52cd7d;
+  --color-green-500: #01b25b;
+  --color-green-600: #02934a;
+  --color-green-700: #05773b;
+  --color-green-800: #015d2d;
+  --color-green-900: #02441f;
+  --color-green-950: #072c15;
+  --color-amber-50: #fff7ee;
+  --color-amber-100: #ffefdc;
+  --color-amber-200: #fee1be;
+  --color-amber-300: #fece92;
+  --color-amber-400: #feb858;
+  --color-amber-500: #f3a006;
+  --color-amber-600: #ca8407;
+  --color-amber-700: #9f6700;
+  --color-amber-800: #794d01;
+  --color-amber-900: #593802;
+  --color-amber-950: #3b2300;
+  --color-red-50: #fef4f3;
+  --color-red-100: #fee9e6;
+  --color-red-200: #fed4d0;
+  --color-red-300: #feb5ae;
+  --color-red-400: #ff8a83;
+  --color-red-500: #fb514f;
+  --color-red-600: #d63739;
+  --color-red-700: #b0282c;
+  --color-red-800: #892223;
+  --color-red-900: #631b1b;
+  --color-red-950: #3f1412;
+  --color-blue-50: #f2f7fe;
+  --color-blue-100: #e4f0fe;
+  --color-blue-200: #cce2ff;
+  --color-blue-300: #a8ceff;
+  --color-blue-400: #7ab4fe;
+  --color-blue-500: #3e95fe;
+  --color-blue-600: #2279dc;
+  --color-blue-700: #1762b6;
+  --color-blue-800: #154d8c;
+  --color-blue-900: #123865;
+  --color-blue-950: #0e2440;
+  --color-teal-50: #ebfaf9;
+  --color-teal-100: #d4f7f4;
+  --color-teal-200: #afeee9;
+  --color-teal-300: #79dfd8;
+  --color-teal-400: #1acac3;
+  --color-teal-500: #0daba5;
+  --color-teal-600: #018d87;
+  --color-teal-700: #02736e;
+  --color-teal-800: #025956;
+  --color-teal-900: #01413f;
+  --color-teal-950: #012b29;
+  --color-rose-50: #fff3f6;
+  --color-rose-100: #fee8ee;
+  --color-rose-200: #fed2de;
+  --color-rose-300: #feb1c8;
+  --color-rose-400: #ff83ad;
+  --color-rose-500: #ec5890;
+  --color-rose-600: #c83f76;
+  --color-rose-700: #a53060;
+  --color-rose-800: #80274a;
+  --color-rose-900: #5d1e36;
+  --color-rose-950: #3b1523;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  --spacing-control-sm: 32px;
+  --spacing-control-md: 36px;
+  --spacing-control-lg: 40px;
+  --spacing-control-xl: 44px;
+  --spacing-row-compact: 36px;
+  --spacing-row-default: 44px;
+  --spacing-sidebar-width: 248px;
+  --spacing-sidebar-collapsed: 64px;
+  --spacing-topbar-height: 56px;
+  --container-content: 1280px;
+  --container-prose: 680px;
+
+  --font-sans: var(--font-geist-sans), Geist, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", "Noto Sans Telugu", sans-serif;
+  --font-mono: var(--font-geist-mono), "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --text-display-lg: 48px;
+  --text-display-lg--line-height: 52px;
+  --text-display-lg--letter-spacing: -0.035em;
+  --text-display-lg--font-weight: 600;
+  --text-display: 40px;
+  --text-display--line-height: 44px;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 600;
+  --text-title-xl: 32px;
+  --text-title-xl--line-height: 38px;
+  --text-title-xl--letter-spacing: -0.025em;
+  --text-title-xl--font-weight: 600;
+  --text-title-lg: 24px;
+  --text-title-lg--line-height: 30px;
+  --text-title-lg--letter-spacing: -0.02em;
+  --text-title-lg--font-weight: 600;
+  --text-title-md: 20px;
+  --text-title-md--line-height: 28px;
+  --text-title-md--letter-spacing: -0.015em;
+  --text-title-md--font-weight: 600;
+  --text-title-sm: 16px;
+  --text-title-sm--line-height: 24px;
+  --text-title-sm--letter-spacing: -0.01em;
+  --text-title-sm--font-weight: 600;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--font-weight: 400;
+  --text-body: 14px;
+  --text-body--line-height: 20px;
+  --text-body--font-weight: 400;
+  --text-body-medium: 14px;
+  --text-body-medium--line-height: 20px;
+  --text-body-medium--font-weight: 500;
+  --text-body-sm: 13px;
+  --text-body-sm--line-height: 18px;
+  --text-body-sm--font-weight: 400;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-caption--font-weight: 500;
+  --text-overline: 11px;
+  --text-overline--line-height: 16px;
+  --text-overline--letter-spacing: 0.06em;
+  --text-overline--font-weight: 600;
+  --text-metric: 28px;
+  --text-metric--line-height: 32px;
+  --text-metric--letter-spacing: -0.02em;
+  --text-metric--font-weight: 600;
+  --text-mono: 13px;
+  --text-mono--line-height: 20px;
+  --text-mono--font-weight: 400;
+  --text-mono-sm: 12px;
+  --text-mono-sm--line-height: 16px;
+  --text-mono-sm--font-weight: 450;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 2. Semantic tokens (shadcn names plus ours). Components use only these. */
+:root,
+[data-theme="light"] {
+  --background: var(--color-neutral-50);
+  --foreground: var(--color-neutral-950);
+  --card: var(--color-neutral-0);
+  --card-foreground: var(--color-neutral-950);
+  --popover: var(--color-neutral-0);
+  --popover-foreground: var(--color-neutral-950);
+  --primary: var(--color-violet-600);
+  --primary-foreground: var(--color-neutral-0);
+  --primary-hover: var(--color-violet-700);
+  --secondary: var(--color-neutral-100);
+  --secondary-foreground: var(--color-neutral-950);
+  --muted: var(--color-neutral-100);
+  --muted-foreground: var(--color-neutral-600);
+  --subtle-foreground: var(--color-neutral-500);
+  --accent: var(--color-neutral-100);
+  --accent-foreground: var(--color-neutral-950);
+  --highlight: var(--color-lime-300);
+  --highlight-foreground: var(--color-neutral-950);
+  --brand-soft: var(--color-violet-50);
+  --brand-soft-foreground: var(--color-violet-700);
+  --link: var(--color-violet-700);
+  --destructive: var(--color-red-600);
+  --destructive-foreground: var(--color-neutral-0);
+  --border: var(--color-neutral-200);
+  --border-strong: var(--color-neutral-300);
+  --input: var(--color-neutral-450);
+  --ring: var(--color-violet-600);
+  --success: var(--color-green-700);
+  --success-soft: var(--color-green-50);
+  --warning: var(--color-amber-800);
+  --warning-soft: var(--color-amber-50);
+  --danger: var(--color-red-700);
+  --danger-soft: var(--color-red-50);
+  --info: var(--color-blue-700);
+  --info-soft: var(--color-blue-50);
+  --chart-1: var(--color-violet-600);
+  --chart-2: var(--color-teal-600);
+  --chart-3: var(--color-amber-600);
+  --chart-4: var(--color-rose-500);
+  --chart-5: var(--color-blue-500);
+  --chart-6: var(--color-lime-700);
+  --sidebar: var(--color-neutral-50);
+  --sidebar-foreground: var(--color-neutral-700);
+  --sidebar-active: var(--color-neutral-0);
+  --sidebar-active-foreground: var(--color-neutral-950);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--sidebar-active);
+  --sidebar-accent-foreground: var(--sidebar-active-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  --elevation-xs: 0 1px 2px 0 rgba(21,19,19,0.05);
+  --elevation-sm: 0 1px 3px 0 rgba(21,19,19,0.07), 0 1px 2px -1px rgba(21,19,19,0.05);
+  --elevation-md: 0 8px 20px -6px rgba(21,19,19,0.12), 0 2px 6px -2px rgba(21,19,19,0.06);
+  --elevation-lg: 0 24px 48px -16px rgba(21,19,19,0.24), 0 6px 14px -6px rgba(21,19,19,0.10);
+  color-scheme: light;
+}
+
+[data-theme="dark"],
+.dark {
+  --background: var(--color-neutral-975);
+  --foreground: var(--color-neutral-50);
+  --card: var(--color-neutral-925);
+  --card-foreground: var(--color-neutral-50);
+  --popover: var(--color-neutral-900);
+  --popover-foreground: var(--color-neutral-50);
+  --primary: var(--color-violet-600);
+  --primary-foreground: var(--color-neutral-0);
+  --primary-hover: var(--color-violet-700);
+  --secondary: var(--color-neutral-850);
+  --secondary-foreground: var(--color-neutral-50);
+  --muted: var(--color-neutral-900);
+  --muted-foreground: var(--color-neutral-400);
+  --subtle-foreground: var(--color-neutral-450);
+  --accent: var(--color-neutral-850);
+  --accent-foreground: var(--color-neutral-50);
+  --highlight: var(--color-lime-300);
+  --highlight-foreground: var(--color-neutral-950);
+  --brand-soft: var(--color-violet-950);
+  --brand-soft-foreground: var(--color-violet-300);
+  --link: var(--color-violet-300);
+  --destructive: var(--color-red-600);
+  --destructive-foreground: var(--color-neutral-0);
+  --border: var(--color-neutral-850);
+  --border-strong: var(--color-neutral-800);
+  --input: var(--color-neutral-500);
+  --ring: var(--color-violet-400);
+  --success: var(--color-green-300);
+  --success-soft: var(--color-green-950);
+  --warning: var(--color-amber-300);
+  --warning-soft: var(--color-amber-950);
+  --danger: var(--color-red-300);
+  --danger-soft: var(--color-red-950);
+  --info: var(--color-blue-300);
+  --info-soft: var(--color-blue-950);
+  --chart-1: var(--color-violet-400);
+  --chart-2: var(--color-teal-400);
+  --chart-3: var(--color-amber-400);
+  --chart-4: var(--color-rose-400);
+  --chart-5: var(--color-blue-400);
+  --chart-6: var(--color-lime-300);
+  --sidebar: var(--color-neutral-975);
+  --sidebar-foreground: var(--color-neutral-400);
+  --sidebar-active: var(--color-neutral-900);
+  --sidebar-active-foreground: var(--color-neutral-50);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--sidebar-active);
+  --sidebar-accent-foreground: var(--sidebar-active-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  --elevation-xs: 0 1px 2px 0 rgba(0,0,0,0.4);
+  --elevation-sm: 0 1px 3px 0 rgba(0,0,0,0.5), inset 0 1px 0 0 rgba(255,255,255,0.03);
+  --elevation-md: 0 8px 20px -6px rgba(0,0,0,0.6), inset 0 1px 0 0 rgba(255,255,255,0.04);
+  --elevation-lg: 0 24px 48px -16px rgba(0,0,0,0.75), inset 0 1px 0 0 rgba(255,255,255,0.05);
+  color-scheme: dark;
+}
+
+/* 3. Expose the semantic tokens to Tailwind: bg-background, text-muted-foreground, border-input, ring-ring, shadow-md … */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-soft-foreground: var(--brand-soft-foreground);
+  --color-link: var(--link);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --shadow-xs: var(--elevation-xs);
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-background text-foreground font-sans text-body antialiased; font-feature-settings: "cv11"; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .tabular, td.num, [data-money] { font-variant-numeric: tabular-nums; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+}
+
+@utility text-overline-caps { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
