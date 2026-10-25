@@ -13,7 +13,8 @@
     "test": "turbo test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "turbo lint typecheck test && prettier --check ."
+    "check": "turbo lint typecheck test && node scripts/check-design-rules.mjs && prettier --check .",
+    "lint:design": "node scripts/check-design-rules.mjs"
   },
   "devDependencies": {
     "prettier": "3.9.10",

@@ -2,7 +2,7 @@
 
 Updated by Claude at the end of every working session. The founder can read this page to see where things stand.
 
-**Current phase:** M0 repo setup built; waiting for the founder to review and connect Vercel. M1 next.
+**Current phase:** Design system in code (M1 to M3). Research (G0) can run alongside.
 **Next gate:** G0 Research (can run alongside M0 to M3).
 
 ## Gates
@@ -19,8 +19,8 @@ Updated by Claude at the end of every working session. The founder can read this
 
 | # | Milestone | Status | PR | Notes |
 | --- | --- | --- | --- | --- |
-| M0 | Repo setup | Built, in review | | `pnpm check`, build, Storybook build and e2e (home and health, axe clean) pass locally. Preview deploy waits for Vercel (question 7). |
-| M1 | Tokens and theme | Not started | | `tokens/` ready to copy |
+| M0 | Repo setup | Done | pushed to `main` | CI green on `main`. Preview deploy waits for Vercel (question 7). |
+| M1 | Tokens and theme | In review | feat/m01-tokens | Generator, contrast check (82 of 82 pairs), Geist, Phosphor, light/dark/system switch, token pages in Storybook, story axe checks in CI. |
 | M2 | Core components | Not started | | |
 | M3 | Patterns | Not started | | |
 | M4 | Wireframes and prototype | Not started | | |

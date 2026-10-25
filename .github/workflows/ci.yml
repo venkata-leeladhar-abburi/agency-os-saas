@@ -3,6 +3,9 @@ on:
   push:
     branches: [main]
   pull_request:
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -14,7 +17,22 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm check
+      - name: Lint, typecheck, unit tests, token and contrast check, design rules, format
+        run: pnpm check
       - run: pnpm build
+      - name: Build Storybook
+        run: pnpm --filter @agency-os/ui build-storybook
       - run: pnpm --filter @agency-os/web exec playwright install --with-deps chromium
-      - run: pnpm --filter @agency-os/web e2e
+      - name: App e2e smoke and axe
+        run: pnpm --filter @agency-os/web e2e
+      - name: Storybook stories axe, light and dark
+        run: pnpm --filter @agency-os/ui test:stories
+      - name: Upload Storybook and story screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook
+          path: |
+            packages/ui/storybook-static
+            packages/ui/test-results
+          retention-days: 14

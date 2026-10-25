@@ -1,5 +1,5 @@
 {
   "extends": "@agency-os/config/tsconfig.base.json",
   "compilerOptions": { "jsx": "react-jsx" },
-  "include": ["src", ".storybook"]
+  "include": ["src", ".storybook", "e2e", "playwright.config.ts"]
 }
