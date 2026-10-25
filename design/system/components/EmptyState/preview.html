@@ -1,0 +1,12 @@
+<!-- @dsCard group="Feedback" height=300 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>EmptyState preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--grid'},h(A.EmptyState,{icon:'kanban',title:'No leads yet',action:h(A.Button,{variant:'primary',icon:'plus'},'Add a lead'),secondary:h(A.Button,{variant:'secondary',icon:'upload-simple'},'Import CSV')},'Every enquiry, from Instagram to referrals, lands here with its source.'),h(A.EmptyState,{compact:true,icon:'receipt',title:'Nothing overdue',action:null},'Every invoice is paid or not yet due.')));
+</script>
+</body>
+</html>

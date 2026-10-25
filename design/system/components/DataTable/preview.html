@@ -1,0 +1,12 @@
+<!-- @dsCard group="Data" height=330 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>DataTable preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render((function(){var tone={Paid:'success',Overdue:'danger',Sent:'info',Draft:'neutral'};return h('div',{className:'pv pv--col'},h(A.DataTable,{selectable:true,columns:[{key:'no',label:'Invoice',mono:true,sortable:true},{key:'client',label:'Client',render:function(r){return h('span',{className:'aos-cellmain'},h('b',null,r.client),h('small',null,r.project))}},{key:'due',label:'Due',sortable:true},{key:'status',label:'Status',render:function(r){return h(A.Badge,{tone:tone[r.status],dot:true,size:'sm'},r.status)}},{key:'amt',label:'Amount',align:'right',sortable:true}],rows:[{no:'OSS/26-27/014',client:'Northwind',project:'Mobile app · milestone 2',due:'18 Oct 2026',status:'Overdue',amt:A.formatMoney(2950000,'INR')},{no:'OSS/26-27/015',client:'Saffron Stays',project:'Website · advance',due:'02 Nov 2026',status:'Sent',amt:A.formatMoney(4720000,'INR'),_selected:true},{no:'OSS/26-27/016',client:'Harbor Labs (UK)',project:'Design sprint · export',due:'05 Nov 2026',status:'Draft',amt:A.formatMoney(200000,'USD')},{no:'OSS/26-27/012',client:'Acme Labs',project:'Retainer · October',due:'01 Oct 2026',status:'Paid',amt:A.formatMoney(9440000,'INR')}],footer:[h('span',{key:1},'4 of 18 invoices'),h(A.Button,{key:2,variant:'ghost',size:'sm',iconRight:'arrow-right'},'View all')]}))})());
+</script>
+</body>
+</html>

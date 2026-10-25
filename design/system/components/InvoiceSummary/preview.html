@@ -1,0 +1,12 @@
+<!-- @dsCard group="Agency OS patterns" height=540 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>InvoiceSummary preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--grid',style:{gridTemplateColumns:'repeat(auto-fit,minmax(380px,1fr))'}},h(A.InvoiceSummary,{number:'OSS/26-27/015',status:'due',due:'02 Nov',tax:'intra',lines:[{item:'Website design and build',sac:'998314',qty:1,rate:3500000},{item:'CMS setup and training',sac:'998314',qty:1,rate:500000}]}),h(A.InvoiceSummary,{type:'Export invoice',number:'OSS/26-27/016',status:'due',due:'05 Nov',currency:'USD',tax:'lut',rate:'84.20',lut:'Supply meant for export under LUT ARN AD3609260012345, without payment of IGST.',lines:[{item:'Design sprint (5 days)',sac:'998391',qty:1,rate:200000}]})));
+</script>
+</body>
+</html>

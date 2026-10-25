@@ -1,0 +1,12 @@
+<!-- @dsCard group="Actions" height=88 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>IconButton preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv'},['bell','gear-six','dots-three','pencil-simple','copy','trash'].map(function(i){return h(A.IconButton,{key:i,icon:i,label:i})}),h(A.IconButton,{icon:'sidebar-simple',label:'Collapse sidebar',variant:'outline'}),h(A.IconButton,{icon:'x',label:'Close',size:'sm'})));
+</script>
+</body>
+</html>

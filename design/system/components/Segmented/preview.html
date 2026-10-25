@@ -1,0 +1,12 @@
+<!-- @dsCard group="Navigation" height=80 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Segmented preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv'},h(A.Segmented,{label:'View',items:[{value:'b',label:'Board',icon:'kanban'},{value:'l',label:'List',icon:'table'},{value:'c',label:'Calendar',icon:'calendar-blank'}]}),h(A.Segmented,{label:'Range',items:[{value:'m',label:'This month'},{value:'q',label:'Quarter'},{value:'y',label:'Year'}]})));
+</script>
+</body>
+</html>

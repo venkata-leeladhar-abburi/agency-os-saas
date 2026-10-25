@@ -1,0 +1,12 @@
+<!-- @dsCard group="Forms" height=120 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Switch preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--col'},h(A.Switch,{label:'Automatic payment reminders',description:'3 days before and 1 day after the due date.',defaultChecked:true}),h(A.Switch,{label:'Show both time zones to foreign clients'})));
+</script>
+</body>
+</html>

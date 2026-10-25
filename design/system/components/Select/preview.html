@@ -1,0 +1,12 @@
+<!-- @dsCard group="Forms" height=110 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Select preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--grid'},h(A.Select,{label:'Lead source',options:['Referral','Instagram','LinkedIn','Website','Marketplace','IndiaMART','Ads']}),h(A.Select,{label:'Invoice type',options:['Tax invoice (GST)','Export of services under LUT','Bill of supply (no GST)','Proforma / advance']}),h(A.Select,{label:'Currency',options:['INR ₹','USD $','GBP £','EUR €','AED','AUD $']})));
+</script>
+</body>
+</html>

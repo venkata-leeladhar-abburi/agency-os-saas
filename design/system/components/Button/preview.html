@@ -1,0 +1,14 @@
+<!-- @dsCard group="Actions" height=200 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Button preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--col'},
+  h('div',{className:'pv'},h(A.Button,{variant:'primary',icon:'paper-plane-tilt'},'Send proposal'),h(A.Button,{variant:'secondary'},'Save draft'),h(A.Button,{variant:'soft',icon:'eye'},'Preview'),h(A.Button,{variant:'ghost',icon:'dots-three'},'More'),h(A.Button,{variant:'highlight',icon:'handshake'},'Mark as won'),h(A.Button,{variant:'destructive',icon:'trash'},'Delete lead'),h(A.Button,{variant:'link'},'View invoice')),
+  h('div',{className:'pv'},h(A.Button,{variant:'primary',size:'sm',icon:'plus'},'New'),h(A.Button,{variant:'primary',size:'lg'},'Create invoice'),h(A.Button,{variant:'primary',size:'xl',icon:'check'},'Approve design'),h(A.Button,{variant:'primary',loading:true},'Sending'),h(A.Button,{variant:'secondary',disabled:true},'Disabled'),h(A.Button,{variant:'secondary',icon:'magnifying-glass',kbd:'Ctrl K'},'Search'))));
+</script>
+</body>
+</html>

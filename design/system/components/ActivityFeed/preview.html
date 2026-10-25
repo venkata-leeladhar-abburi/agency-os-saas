@@ -1,0 +1,12 @@
+<!-- @dsCard group="Data" height=230 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>ActivityFeed preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--col',style:{maxWidth:560}},h(A.ActivityFeed,{items:[{icon:'check',tone:'success',who:'Srinivas',text:'approved',target:'Homepage design',when:'10 min ago'},{icon:'paper-plane-tilt',tone:'brand',who:'Kiran',text:'sent invoice',target:'OSS/26-27/015',when:'2 h ago'},{icon:'eye',who:'Kite & Co',text:'viewed the proposal',when:'Yesterday'},{icon:'warning',tone:'warning',who:'Arjun',text:'requested approval for',target:'Build gate',when:'21 Oct'}]})));
+</script>
+</body>
+</html>

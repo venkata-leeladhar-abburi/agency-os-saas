@@ -1,0 +1,12 @@
+<!-- @dsCard group="Status" height=110 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Progress preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--col',style:{maxWidth:420}},h(A.Progress,{label:'Budget used',value:62,showValue:true}),h(A.Progress,{label:'Northwind · mobile app',value:92,showValue:true,tone:'danger',valueText:'92% · at risk'}),h(A.Progress,{label:'Setup',value:60,showValue:true,tone:'highlight',valueText:'3 of 5'})));
+</script>
+</body>
+</html>

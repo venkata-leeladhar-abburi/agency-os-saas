@@ -1,0 +1,27 @@
+# Open questions for the founder
+
+Claude adds questions here and asks them in one batch. The founder answers inline (write the answer under the question). Each question has a default that Claude uses if there is no answer by the time the work needs it; defaults are reversible unless marked **blocking**.
+
+| # | Question | Needed by | Default if no answer |
+| --- | --- | --- | --- |
+| 0 | **Design system page:** the Agency OS Design System lives at https://claude.ai/artifact/CxZxGVUSE1JmKQB5bPEnvQ (private to the founder). Share it with anyone who should review it, from the page's Share menu. | G1 | `design/showcase.html` and `design/screens/` are the offline copy |
+| 1 | **Research:** will you run the interviews and survey in `../01-research/research-plan.md` before G0, or waive G0 and build on the documented hypotheses? | G0 | Build M0 to M3 (they don't depend on research); wait at G1 for your call |
+| 2 | **Name and domain:** is "Agency OS" the final product name? Which domain will the product use? | M16 | Vercel URLs until decided |
+| 3 | **Fonts:** Geist and Geist Mono (free) are chosen. Do you want a paid display face for marketing headlines? If yes, send the font files and the web licence. | G1 | Geist everywhere |
+| 4 | **Logo:** the One Stop glyph plus the "Agency OS" wordmark is used for now. Do you want a dedicated Agency OS logo? | G2 | Keep the current lockup |
+| 5 | **Pricing:** what goes into Free (Q1)? What is the Solo price (Q2)? Do Starter ₹1,499 and Growth ₹3,499 stand? | M6 | The proposed limits in `../02-product/defaults-and-content.md` §8 (Free: 1 member, 1 client with a portal, 25 open leads, 3 quotes, proposals and invoices a month). Note: the brief doesn't say whether Free can send quotes and invoices, but activation needs it. Solo hidden until research (A5) |
+| 6 | **Q4 to Q6 from the deck:** how hirers reach agencies, what earns the verified badge, mobile app or mobile web first | R3 planning | Mobile web first (the portal is phone-first); R3 questions wait for research |
+| 7 | **Accounts:** please create GitHub (repo), Vercel, Supabase (two projects, Mumbai), Inngest, Resend, PostHog, Sentry and Upstash, and add the keys as described in `../04-engineering/environments-and-deploy.md` | M0 (GitHub, Vercel), M5 (Supabase), later others | Claude builds with local or mock services where possible and lists what is waiting |
+| 8 | **Razorpay:** create a Razorpay account (test keys now, KYC and live keys before G3) for Agency OS subscriptions | M6 test, G3 live | Test mode only |
+| 9 | **International billing:** should overseas agencies pay their Agency OS subscription in USD (Razorpay international or another provider)? | After G4 | INR only at launch |
+| 10 | **Chartered accountant (blocking for G3):** who will review the GST invoice template, the export-under-LUT wording and the exchange-rate source? | M13 | None: G3 cannot pass without it |
+| 11 | **Lawyer (blocking for G3):** terms, privacy policy, DPA, and whether click-to-sign proposals are enough for Indian and international clients | M16 | None: G3 cannot pass without it |
+| 12 | **SMS for phone sign-in:** which SMS provider, and will you complete DLT registration? | M5 (optional) | Phone OTP stays off; Google and email work |
+| 13 | **Pull requests:** do you want to review every PR, or may Claude merge its own PRs when CI is green (gate milestones always wait for you)? | M0 | Claude opens PRs and merges non-gate PRs when CI is green |
+| 14 | **Support and sender email:** which address do clients and users reply to, and which domain sends emails? | M6 | Replies go to the agency member who sent the message; sender set when the domain is ready |
+| 15 | **Beta agencies:** which 5 to 10 agencies (India and abroad) will join the beta after One Stop? | G3 | Claude prepares an invite page and onboarding email; you pick the agencies |
+| 16 | **Analytics region:** PostHog US or EU cloud? | M6 | EU cloud |
+
+## Answered
+
+Move answered questions here with the date and the answer, and add a decision to `decisions.md` when the answer changes the plan.

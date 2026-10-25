@@ -1,0 +1,12 @@
+<!-- @dsCard group="Agency OS patterns" height=130 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>RecordHeader preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--col'},h(A.RecordHeader,{avatar:true,title:'Beere Kesava & Brothers',status:'Active client',statusTone:'success',meta:[{icon:'map-pin',text:'Dharmavaram, Andhra Pradesh'},{icon:'currency-inr',text:'Lifetime ₹18.4 L'},{icon:'folder-simple',text:'2 projects'},{icon:'whatsapp-logo',text:'Prefers WhatsApp'}],actions:[h(A.Button,{key:1,variant:'secondary',icon:'chat-circle-dots'},'Message'),h(A.Button,{key:2,variant:'primary',icon:'plus'},'New project')]})));
+</script>
+</body>
+</html>

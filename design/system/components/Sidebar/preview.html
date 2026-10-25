@@ -1,0 +1,12 @@
+<!-- @dsCard group="Navigation" height=780 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Sidebar preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{style:{height:760,display:'flex'}},h(A.Sidebar,{workspace:'One Stop Solutions',plan:'Agency · Growth',active:'leads',user:{name:'Kiran Rao',role:'Owner'},groups:[{items:[{value:'today',label:'Today',icon:'house'},{value:'dash',label:'Dashboard',icon:'squares-four'}]},{label:'Sell',items:[{value:'leads',label:'Leads',icon:'funnel-simple',count:12,alert:true},{value:'clients',label:'Clients',icon:'users-three'}]},{label:'Deliver',items:[{value:'projects',label:'Projects',icon:'folder-simple',count:9},{value:'tasks',label:'Tasks',icon:'check-square-offset'},{value:'docs',label:'Documents',icon:'file-text'}]},{label:'Money',items:[{value:'inv',label:'Invoices',icon:'receipt',count:2}]},{label:'Agency',items:[{value:'team',label:'Team',icon:'users'},{value:'pb',label:'Playbook',icon:'book-open-text'},{value:'set',label:'Settings',icon:'gear-six'}]}]})));
+</script>
+</body>
+</html>

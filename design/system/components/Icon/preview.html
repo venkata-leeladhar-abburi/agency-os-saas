@@ -1,0 +1,12 @@
+<!-- @dsCard group="Brand" height=360 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Icon preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv',style:{gap:6}},Object.keys(window.__AOS_ICON_NAMES||{}).map(function(n){return h('span',{key:n,title:n,style:{display:'grid',placeItems:'center',width:40,height:40,borderRadius:8,border:'1px solid var(--border)',background:'var(--card)',color:'var(--foreground)'}},h(A.Icon,{name:n,size:20}))})));
+</script>
+</body>
+</html>

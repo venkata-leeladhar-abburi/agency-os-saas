@@ -1,0 +1,64 @@
+<!-- @dsCard height=320 -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Agency OS</title>
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--background); color:var(--foreground); font-family:var(--font-sans); overflow:hidden; }
+  .cover { position:relative; height:320px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:320px; overflow:hidden; }
+  .art svg { display:block; width:480px; height:320px; overflow:hidden; }
+  .brand { fill:var(--primary); }
+  .tint { fill:var(--violet-200); }
+  [data-theme="dark"] .tint { fill:var(--brand-soft); }
+  .ink { fill:var(--foreground); }
+  .lime { fill:var(--highlight); }
+  .blk { rx:var(--radius-xl); }
+  .unit { fill:var(--primary); }
+  .sq { rx:var(--radius-md); }
+  .words { position:absolute; left:var(--space-10); bottom:var(--space-8); max-width:440px; }
+  .name { margin:0; font-size:112px; line-height:.95; font-weight:600; letter-spacing:-.04em; color:var(--foreground); }
+  .tag { margin:var(--space-3) 0 0 4px; font-size:14px; line-height:20px; color:var(--muted-foreground); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 320" width="480" height="320">
+<!--
+  blocks      primary slab 256x200 bled off the top and right (the brand, largest) · violet-200 / brand-soft in dark 208x208 (the tint) · foreground 120x96 (ink; turns light in dark mode so it never vanishes) · highlight 120x96 bled off the right (lime, the rare win colour) — about 38% of 960x320
+  arrangement one big violet slab with three satellites, bottoms on one line space-6 above the edge, space-4 gutters
+  pattern     literal motif: the One Stop glyph is a disc, two squares and a quarter circle, so those three shapes tile the tint in primary as four 2x2 glyph cells (16 units)
+  scales      units 40 (space-10) on a 48 pitch (space-12), gap space-2; blocks radius-xl, unit squares radius-md, discs half the side
+-->
+<rect class="brand blk" x="240" y="-16" width="256" height="200" rx="16"/>
+<rect class="tint blk" x="16" y="88" width="208" height="208" rx="16"/>
+<rect class="ink blk" x="240" y="200" width="120" height="96" rx="16"/>
+<rect class="lime blk" x="376" y="200" width="120" height="96" rx="16"/>
+<circle class="unit" cx="48" cy="120" r="20"/>
+<rect class="unit sq" x="76" y="100" width="40" height="40" rx="8"/>
+<circle class="unit" cx="144" cy="120" r="20"/>
+<rect class="unit sq" x="172" y="100" width="40" height="40" rx="8"/>
+<rect class="unit sq" x="28" y="148" width="40" height="40" rx="8"/>
+<path class="unit" d="M76 188A40 40 0 0 1 116 148V188Z"/>
+<rect class="unit sq" x="124" y="148" width="40" height="40" rx="8"/>
+<path class="unit" d="M172 188A40 40 0 0 1 212 148V188Z"/>
+<circle class="unit" cx="48" cy="216" r="20"/>
+<rect class="unit sq" x="76" y="196" width="40" height="40" rx="8"/>
+<circle class="unit" cx="144" cy="216" r="20"/>
+<rect class="unit sq" x="172" y="196" width="40" height="40" rx="8"/>
+<rect class="unit sq" x="28" y="244" width="40" height="40" rx="8"/>
+<path class="unit" d="M76 284A40 40 0 0 1 116 244V284Z"/>
+<rect class="unit sq" x="124" y="244" width="40" height="40" rx="8"/>
+<path class="unit" d="M172 284A40 40 0 0 1 212 244V284Z"/>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">Agency OS</h1>
+<p class="tag">Get found, win the work, deliver, get paid, hand over.</p>
+</div>
+</div>
+</body>
+</html>

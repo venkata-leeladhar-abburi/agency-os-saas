@@ -1,0 +1,251 @@
+/* Agency OS — generated from tokens.json */
+:root, [data-theme="light"] {
+  --neutral-0: #ffffff;
+  --neutral-25: #fefbfb;
+  --neutral-50: #f9f6f6;
+  --neutral-100: #f2efef;
+  --neutral-150: #eae7e7;
+  --neutral-200: #e2dfdf;
+  --neutral-300: #d3d0d0;
+  --neutral-400: #a09d9d;
+  --neutral-450: #8e8b8b;
+  --neutral-500: #716e6e;
+  --neutral-600: #656262;
+  --neutral-700: #524f4f;
+  --neutral-800: #373535;
+  --neutral-850: #282626;
+  --neutral-900: #1e1b1b;
+  --neutral-925: #181515;
+  --neutral-950: #151313;
+  --neutral-975: #0e0c0c;
+  --violet-50: #f6f6ff;
+  --violet-100: #ededfe;
+  --violet-200: #dcdcfe;
+  --violet-300: #c4c2fe;
+  --violet-400: #a49cff;
+  --violet-500: #8671ff;
+  --violet-600: #6840ff;
+  --violet-700: #5a2dd2;
+  --violet-800: #44269e;
+  --violet-900: #2f1d6d;
+  --violet-950: #1c1244;
+  --lime-50: #f2ffec;
+  --lime-100: #e4ffd6;
+  --lime-200: #cbffaf;
+  --lime-300: #a1ff62;
+  --lime-400: #91ee50;
+  --lime-500: #7bd23b;
+  --lime-600: #5da91f;
+  --lime-700: #458111;
+  --lime-800: #33600d;
+  --lime-900: #274710;
+  --lime-950: #162e05;
+  --green-50: #edfbf0;
+  --green-100: #d9f8e0;
+  --green-200: #b8f0c6;
+  --green-300: #8ce1a4;
+  --green-400: #52cd7d;
+  --green-500: #01b25b;
+  --green-600: #02934a;
+  --green-700: #05773b;
+  --green-800: #015d2d;
+  --green-900: #02441f;
+  --green-950: #072c15;
+  --amber-50: #fff7ee;
+  --amber-100: #ffefdc;
+  --amber-200: #fee1be;
+  --amber-300: #fece92;
+  --amber-400: #feb858;
+  --amber-500: #f3a006;
+  --amber-600: #ca8407;
+  --amber-700: #9f6700;
+  --amber-800: #794d01;
+  --amber-900: #593802;
+  --amber-950: #3b2300;
+  --red-50: #fef4f3;
+  --red-100: #fee9e6;
+  --red-200: #fed4d0;
+  --red-300: #feb5ae;
+  --red-400: #ff8a83;
+  --red-500: #fb514f;
+  --red-600: #d63739;
+  --red-700: #b0282c;
+  --red-800: #892223;
+  --red-900: #631b1b;
+  --red-950: #3f1412;
+  --blue-50: #f2f7fe;
+  --blue-100: #e4f0fe;
+  --blue-200: #cce2ff;
+  --blue-300: #a8ceff;
+  --blue-400: #7ab4fe;
+  --blue-500: #3e95fe;
+  --blue-600: #2279dc;
+  --blue-700: #1762b6;
+  --blue-800: #154d8c;
+  --blue-900: #123865;
+  --blue-950: #0e2440;
+  --teal-50: #ebfaf9;
+  --teal-100: #d4f7f4;
+  --teal-200: #afeee9;
+  --teal-300: #79dfd8;
+  --teal-400: #1acac3;
+  --teal-500: #0daba5;
+  --teal-600: #018d87;
+  --teal-700: #02736e;
+  --teal-800: #025956;
+  --teal-900: #01413f;
+  --teal-950: #012b29;
+  --rose-50: #fff3f6;
+  --rose-100: #fee8ee;
+  --rose-200: #fed2de;
+  --rose-300: #feb1c8;
+  --rose-400: #ff83ad;
+  --rose-500: #ec5890;
+  --rose-600: #c83f76;
+  --rose-700: #a53060;
+  --rose-800: #80274a;
+  --rose-900: #5d1e36;
+  --rose-950: #3b1523;
+  --background: var(--neutral-50);
+  --foreground: var(--neutral-950);
+  --card: var(--neutral-0);
+  --card-foreground: var(--neutral-950);
+  --popover: var(--neutral-0);
+  --popover-foreground: var(--neutral-950);
+  --primary: var(--violet-600);
+  --primary-foreground: var(--neutral-0);
+  --primary-hover: var(--violet-700);
+  --secondary: var(--neutral-100);
+  --secondary-foreground: var(--neutral-950);
+  --muted: var(--neutral-100);
+  --muted-foreground: var(--neutral-600);
+  --subtle-foreground: var(--neutral-500);
+  --accent: var(--neutral-100);
+  --accent-foreground: var(--neutral-950);
+  --highlight: var(--lime-300);
+  --highlight-foreground: var(--neutral-950);
+  --brand-soft: var(--violet-50);
+  --brand-soft-foreground: var(--violet-700);
+  --link: var(--violet-700);
+  --destructive: var(--red-600);
+  --destructive-foreground: var(--neutral-0);
+  --border: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+  --input: var(--neutral-450);
+  --ring: var(--violet-600);
+  --success: var(--green-700);
+  --success-soft: var(--green-50);
+  --warning: var(--amber-800);
+  --warning-soft: var(--amber-50);
+  --danger: var(--red-700);
+  --danger-soft: var(--red-50);
+  --info: var(--blue-700);
+  --info-soft: var(--blue-50);
+  --chart-1: var(--violet-600);
+  --chart-2: var(--teal-600);
+  --chart-3: var(--amber-600);
+  --chart-4: var(--rose-500);
+  --chart-5: var(--blue-500);
+  --chart-6: var(--lime-700);
+  --sidebar: var(--neutral-50);
+  --sidebar-foreground: var(--neutral-700);
+  --sidebar-active: var(--neutral-0);
+  --sidebar-active-foreground: var(--neutral-950);
+  --shadow-xs: 0 1px 2px 0 rgba(21,19,19,0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(21,19,19,0.07), 0 1px 2px -1px rgba(21,19,19,0.05);
+  --shadow-md: 0 8px 20px -6px rgba(21,19,19,0.12), 0 2px 6px -2px rgba(21,19,19,0.06);
+  --shadow-lg: 0 24px 48px -16px rgba(21,19,19,0.24), 0 6px 14px -6px rgba(21,19,19,0.10);
+}
+[data-theme="dark"] {
+  --background: var(--neutral-975);
+  --foreground: var(--neutral-50);
+  --card: var(--neutral-925);
+  --card-foreground: var(--neutral-50);
+  --popover: var(--neutral-900);
+  --popover-foreground: var(--neutral-50);
+  --secondary: var(--neutral-850);
+  --secondary-foreground: var(--neutral-50);
+  --muted: var(--neutral-900);
+  --muted-foreground: var(--neutral-400);
+  --subtle-foreground: var(--neutral-450);
+  --accent: var(--neutral-850);
+  --accent-foreground: var(--neutral-50);
+  --brand-soft: var(--violet-950);
+  --brand-soft-foreground: var(--violet-300);
+  --link: var(--violet-300);
+  --border: var(--neutral-850);
+  --border-strong: var(--neutral-800);
+  --input: var(--neutral-500);
+  --ring: var(--violet-400);
+  --success: var(--green-300);
+  --success-soft: var(--green-950);
+  --warning: var(--amber-300);
+  --warning-soft: var(--amber-950);
+  --danger: var(--red-300);
+  --danger-soft: var(--red-950);
+  --info: var(--blue-300);
+  --info-soft: var(--blue-950);
+  --chart-1: var(--violet-400);
+  --chart-2: var(--teal-400);
+  --chart-3: var(--amber-400);
+  --chart-4: var(--rose-400);
+  --chart-5: var(--blue-400);
+  --chart-6: var(--lime-300);
+  --sidebar: var(--neutral-975);
+  --sidebar-foreground: var(--neutral-400);
+  --sidebar-active: var(--neutral-900);
+  --sidebar-active-foreground: var(--neutral-50);
+  --shadow-xs: 0 1px 2px 0 rgba(0,0,0,0.4);
+  --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.5), inset 0 1px 0 0 rgba(255,255,255,0.03);
+  --shadow-md: 0 8px 20px -6px rgba(0,0,0,0.6), inset 0 1px 0 0 rgba(255,255,255,0.04);
+  --shadow-lg: 0 24px 48px -16px rgba(0,0,0,0.75), inset 0 1px 0 0 rgba(255,255,255,0.05);
+}
+:root {
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --control-sm: 32px;
+  --control-md: 36px;
+  --control-lg: 40px;
+  --control-xl: 44px;
+  --row-compact: 36px;
+  --row-default: 44px;
+  --sidebar-width: 248px;
+  --sidebar-collapsed: 64px;
+  --topbar-height: 56px;
+  --content-max: 1280px;
+  --prose-max: 680px;
+  --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", "Noto Sans Telugu", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.display-lg { font-family: var(--font-sans); font-size: 48px; line-height: 52px; font-weight: 600; letter-spacing: -0.035em; }
+.display { font-family: var(--font-sans); font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.03em; }
+.title-xl { font-family: var(--font-sans); font-size: 32px; line-height: 38px; font-weight: 600; letter-spacing: -0.025em; }
+.title-lg { font-family: var(--font-sans); font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -0.02em; }
+.title-md { font-family: var(--font-sans); font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.015em; }
+.title-sm { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; }
+.body-lg { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 400; }
+.body { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; }
+.body-medium { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 500; }
+.body-sm { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 400; }
+.caption { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 500; }
+.overline { font-family: var(--font-sans); font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; }
+.metric { font-family: var(--font-sans); font-size: 28px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em; }
+.mono { font-family: var(--font-mono); font-size: 13px; line-height: 20px; font-weight: 400; }
+.mono-sm { font-family: var(--font-mono); font-size: 12px; line-height: 16px; font-weight: 450; }
+@font-face { font-family: "Geist"; src: url("fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }

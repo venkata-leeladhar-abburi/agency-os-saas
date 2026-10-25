@@ -1,0 +1,12 @@
+<!-- @dsCard group="Status" height=90 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Avatar preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv'},h(A.Avatar,{name:'Kiran Rao',size:'lg'}),h(A.Avatar,{name:'Ananya Iyer'}),h(A.Avatar,{name:'Arjun Mehta',size:'sm'}),h(A.Avatar,{name:'Meera Pillai',size:'xs'}),h(A.AvatarGroup,{names:['Kiran Rao','Ananya Iyer','Arjun Mehta','Meera Pillai','Srinivas Beere','Sarah Lewis'],size:'md'})));
+</script>
+</body>
+</html>

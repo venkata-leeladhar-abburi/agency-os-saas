@@ -1,0 +1,25 @@
+<!-- @dsCard group="Screens" height=760 width=1360 page subtitle="Leads pipeline with a lead open" -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Leads pipeline with a lead open</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+var side=h(A.Sidebar,{workspace:'One Stop Solutions',plan:'Agency · Growth',active:'leads',user:{name:'Kiran Rao',role:'Owner'},groups:[{items:[{value:'today',label:'Today',icon:'house'},{value:'dash',label:'Dashboard',icon:'squares-four'}]},{label:'Sell',items:[{value:'leads',label:'Leads',icon:'funnel-simple',count:12,alert:true},{value:'clients',label:'Clients',icon:'users-three'}]},{label:'Deliver',items:[{value:'projects',label:'Projects',icon:'folder-simple',count:9},{value:'tasks',label:'Tasks',icon:'check-square-offset'}]},{label:'Money',items:[{value:'inv',label:'Invoices',icon:'receipt',count:2}]}]});
+var cols=[{name:'New',total:'₹2.95 L',cards:[{name:'Kite & Co',service:'Website',value:'₹80,000',source:'Instagram',owner:'Kiran Rao',due:'Call today'},{name:'Lumen Foods',service:'Brand + website',value:'₹1,50,000',source:'Referral',owner:'Ananya Iyer',due:'Follow up was due Mon',overdue:true},{name:'Orbit Fitness',service:'App',value:'₹45,000',source:'Marketplace',owner:'Arjun Mehta'}]},{name:'Contacted',total:'₹2.7 L',cards:[{name:'Mitra Clinic',service:'Booking app',value:'₹60,000',source:'Website',owner:'Arjun Mehta',due:'Thu, 11:30 am'},{name:'Tara Textiles',service:'ERP',value:'₹1,10,000',source:'IndiaMART',owner:'Kiran Rao'}]},{name:'Proposal',total:'₹2.47 L',cards:[{name:'Northwind',service:'Mobile app',value:'₹2,40,000',source:'Marketplace',owner:'Kiran Rao',due:'Viewed 2 h ago'}]},{name:'Won',won:true,total:'₹4.1 L',cards:[{name:'Saffron Stays',service:'Website',value:'₹90,000',source:'Referral',owner:'Ananya Iyer'},{name:'Acme Labs',service:'Retainer',value:'₹3,20,000',source:'Referral',owner:'Kiran Rao'}]}];
+var main=h('div',{className:'scr__main scr__main--sheet'},h(A.Topbar,{crumbs:['One Stop Solutions','Leads']}),
+ h('div',{className:'scr__body'},
+  h('div',{className:'scr__head'},h('div',null,h('h1',{className:'scr__title'},'Leads'),h('p',{className:'scr__sub'},'12 open · ₹8.12 L in the pipeline · win rate 38%')),h('div',{style:{display:'flex',gap:8,alignItems:'center'}},h('span',{className:'scr__example'},'EXAMPLE DATA'),h(A.Segmented,{label:'View',items:[{value:'b',label:'Board',icon:'kanban'},{value:'l',label:'List',icon:'table'}]}),h(A.Button,{variant:'secondary',icon:'upload-simple'},'Import'),h(A.Button,{variant:'primary',icon:'plus'},'New lead'))),
+  h('div',{style:{display:'flex',gap:8,marginBottom:16}},h(A.Badge,{tone:'outline'},'Source: All'),h(A.Badge,{tone:'outline'},'Owner: Anyone'),h(A.Badge,{tone:'brand'},'Follow-ups due · 3')),
+  h(A.PipelineBoard,{columns:cols})),
+   h('aside',{className:'scr__sheet','aria-label':'Lead: Northwind'},
+    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h(A.Badge,{tone:'info',dot:true},'Proposal'),h(A.IconButton,{icon:'x',label:'Close',size:'sm'})),
+    h('div',null,h('h2',{style:{margin:0,fontSize:20,lineHeight:'28px',fontWeight:600,letterSpacing:'-.015em'}},'Northwind'),h('p',{style:{margin:'2px 0 0',color:'var(--muted-foreground)'}},'Mobile app · ₹2,40,000 · Marketplace')),
+    h(A.Alert,{tone:'brand',title:'Proposal viewed 3 times'},'Last opened 2 hours ago. A good moment to call.'),
+    h('div',{style:{display:'flex',gap:8}},h(A.Button,{variant:'secondary',icon:'phone',size:'sm'},'Call'),h(A.Button,{variant:'secondary',icon:'whatsapp-logo',size:'sm'},'WhatsApp'),h(A.Button,{variant:'highlight',icon:'handshake',size:'sm'},'Mark as won')),
+    h(A.ActivityFeed,{items:[{icon:'eye',who:'Northwind',text:'viewed the proposal',when:'2 h ago'},{icon:'paper-plane-tilt',tone:'brand',who:'Kiran',text:'sent the proposal',when:'Fri'},{icon:'chat-circle-dots',who:'Kiran',text:'logged a call',when:'Thu'}]})));
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'scr'},side,main));
+</script>
+</body>
+</html>

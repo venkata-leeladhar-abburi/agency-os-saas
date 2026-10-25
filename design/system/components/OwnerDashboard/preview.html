@@ -1,0 +1,27 @@
+<!-- @dsCard group="Screens" height=900 width=1360 page subtitle="The agency owner's dashboard" -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>The agency owner's dashboard</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+var side=h(A.Sidebar,{workspace:'One Stop Solutions',plan:'Agency · Growth',active:'dash',user:{name:'Kiran Rao',role:'Owner'},groups:[{items:[{value:'today',label:'Today',icon:'house'},{value:'dash',label:'Dashboard',icon:'squares-four'}]},{label:'Sell',items:[{value:'leads',label:'Leads',icon:'funnel-simple',count:12,alert:true},{value:'clients',label:'Clients',icon:'users-three'}]},{label:'Deliver',items:[{value:'projects',label:'Projects',icon:'folder-simple',count:9},{value:'tasks',label:'Tasks',icon:'check-square-offset'}]},{label:'Money',items:[{value:'inv',label:'Invoices',icon:'receipt',count:2}]},{label:'Agency',items:[{value:'team',label:'Team',icon:'users'},{value:'pb',label:'Playbook',icon:'book-open-text'},{value:'set',label:'Settings',icon:'gear-six'}]}]});
+var risk=[['Acme Labs','Website redesign','Design gate 2 days late','danger',48],['Northwind','Mobile app','Budget 92% used','danger',92],['Lumen Foods','Brand refresh','Waiting on client assets','warning',35],['Veda Wellness','App MVP','Change request open','info',60]];
+var main=h('div',{className:'scr__main'},h(A.Topbar,{crumbs:['One Stop Solutions','Dashboard']},h(A.Button,{variant:'secondary',size:'sm',icon:'magnifying-glass',kbd:'Ctrl K'},'Search')),
+ h('div',{className:'scr__body'},
+  h('div',{className:'scr__head'},h('div',null,h('h1',{className:'scr__title'},'Good morning, Kiran'),h('p',{className:'scr__sub'},'Sunday 25 Oct · 3 things need you today')),h('div',{style:{display:'flex',gap:8,alignItems:'center'}},h('span',{className:'scr__example'},'EXAMPLE DATA'),h(A.Segmented,{label:'Range',items:[{value:'m',label:'This month'},{value:'q',label:'Quarter'},{value:'y',label:'Year'}]}))),
+  h('div',{className:'scr__metrics'},h(A.MetricCard,{label:'Revenue · October',icon:'currency-inr',value:A.formatMoney(48600000,'INR'),delta:12,note:'vs September',spark:[12,18,15,22,19,26,24,31]}),h(A.MetricCard,{label:'Pending',icon:'clock',value:A.formatMoney(12000000,'INR'),note:'6 invoices'}),h(A.MetricCard,{label:'Overdue',icon:'warning-circle',value:A.formatMoney(3850000,'INR'),tone:'danger',delta:8,inverse:true,note:'2 invoices · reminders on'}),h(A.MetricCard,{label:'Pipeline value',icon:'funnel-simple',value:A.formatMoney(124000000,'INR',{compact:true}),note:'Win rate 38%'})),
+  h('div',{className:'scr__grid'},
+   h('div',{className:'scr__stack'},
+    h(A.Card,{title:'Leads pipeline',description:'By stage, this quarter',actions:h(A.Button,{variant:'ghost',size:'sm',iconRight:'arrow-right'},'Open pipeline')},
+     h(A.PipelineBoard,{size:'sm',columns:[{name:'New',total:'₹2.95 L',cards:[{name:'Kite & Co',value:'₹80,000',source:'Instagram',owner:'Kiran Rao',due:'Call today'},{name:'Lumen Foods',value:'₹1,50,000',source:'Referral',owner:'Ananya Iyer',due:'Follow up was due Mon',overdue:true}]},{name:'Proposal',total:'₹2.47 L',cards:[{name:'Northwind',value:'₹2,40,000',source:'Marketplace',owner:'Kiran Rao',due:'Viewed 2 h ago'}]},{name:'Won',won:true,total:'₹4.1 L',cards:[{name:'Saffron Stays',value:'₹90,000',source:'Referral',owner:'Ananya Iyer'}]}]})),
+    h(A.Card,{title:'Projects at risk',description:'4 of 9 active',flush:true},h(A.DataTable,{columns:[{key:'c',label:'Project',render:function(r){return h('span',{className:'aos-cellmain'},h('b',null,r[0]),h('small',null,r[1]))}},{key:'s',label:'Why',render:function(r){return h(A.Badge,{tone:r[3],dot:true,size:'sm'},r[2])}},{key:'p',label:'Progress',render:function(r){return h('div',{style:{width:140}},h(A.Progress,{value:r[4],tone:r[4]>90?'danger':null}))}}],rows:risk}))),
+   h('div',{className:'scr__stack'},
+    h(A.Card,{title:'Today',description:'Sun 25 Oct'},h('ul',{className:'today'},[['10:00','Standup','Google Meet'],['11:30','Discovery call','Kite & Co'],['15:00','Design review','Acme Labs'],['Due','INV OSS/26-27/014','Northwind · ₹29,500'],['Task','Follow up','Lumen Foods']].map(function(r,i){return h('li',{key:i},h('time',null,r[0]),h('span',null,h('b',null,r[1]),' ',h('small',null,'· '+r[2])),h(A.IconButton,{icon:'arrow-up-right',label:'Open',size:'sm'}))}))),
+    h(A.Card,{title:'Team load',description:'Open tasks this week'},h('div',{className:'load'},[['Design',78],['Frontend',104],['Backend',62],['QA',40]].map(function(r){return h('div',{key:r[0],className:'load__row'},h('span',null,r[0]),h(A.Progress,{value:Math.min(100,r[1]),tone:r[1]>100?'danger':null}),h('span',null,r[1]+'%'))}))),
+    h(A.Checklist,{title:'Finish setting up',items:[{label:'Add your logo and services',done:true},{label:'Add your first lead',done:true},{label:'Send a quote',cta:'Create quote',hint:'GST is added for you.'},{label:'Invite a client'}]})))));
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'scr'},side,main));
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<!-- @dsCard group="Navigation" height=460 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>CommandPalette preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv'},h(A.CommandPalette,{query:'kite',groups:[{label:'Leads and clients',items:[{icon:'funnel-simple',label:'Kite & Co',meta:'Lead · Proposal sent · ₹80,000',active:true},{icon:'users-three',label:'Kite Studios',meta:'Client · 2 projects'}]},{label:'Actions',items:[{icon:'plus',label:'New lead',kbd:'N L'},{icon:'receipt',label:'Create invoice',kbd:'N I'},{icon:'paper-plane-tilt',label:'Send proposal to Kite & Co'}]}]})));
+</script>
+</body>
+</html>

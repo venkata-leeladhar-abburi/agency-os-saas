@@ -1,0 +1,12 @@
+<!-- @dsCard group="Containers" height=190 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Card preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--grid'},h(A.Card,{title:'Projects at risk',icon:'warning',description:'4 of 9 active',actions:h(A.Button,{variant:'ghost',size:'sm',iconRight:'arrow-right'},'View all')},h('p',{style:{margin:0,color:'var(--muted-foreground)'}},'Gates overdue or budget above 90%.')),h(A.Card,{title:'Pipeline value',description:'Open leads, last 90 days'},h('p',{className:'aos-tnum',style:{margin:0,fontSize:28,fontWeight:600,letterSpacing:'-.025em'}},A.formatMoney(124000000,'INR',{compact:true})))));
+</script>
+</body>
+</html>

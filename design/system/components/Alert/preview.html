@@ -1,0 +1,12 @@
+<!-- @dsCard group="Feedback" height=260 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Alert preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--col'},h(A.Alert,{tone:'warning',title:'2 invoices are overdue',action:h(A.Button,{size:'sm',variant:'secondary'},'Send reminders')},'₹38,500 from Northwind and Mitra Clinic.'),h(A.Alert,{tone:'info',title:'Export invoice'},'This client is in the UK. The invoice will use USD and your LUT (valid until 31 Mar 2027).'),h(A.Alert,{tone:'danger',title:'Payment failed'},'The UPI payment was declined. Ask the client to try again or pay by card.')));
+</script>
+</body>
+</html>

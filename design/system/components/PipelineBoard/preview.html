@@ -1,0 +1,12 @@
+<!-- @dsCard group="Agency OS patterns" height=420 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>PipelineBoard preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--col'},h(A.PipelineBoard,{columns:[{name:'New',total:A.formatMoney(29500000,'INR',{compact:true}),cards:[{name:'Kite & Co',service:'Website',value:A.formatMoney(8000000,'INR'),source:'Instagram',owner:'Kiran Rao',due:'Call today'},{name:'Lumen Foods',service:'Brand + website',value:A.formatMoney(15000000,'INR'),source:'Referral',owner:'Ananya Iyer',due:'Follow up was due Mon',overdue:true}]},{name:'Contacted',total:A.formatMoney(27000000,'INR',{compact:true}),cards:[{name:'Mitra Clinic',service:'Booking app',value:A.formatMoney(6000000,'INR'),source:'Website',owner:'Arjun Mehta',due:'Thu, 11:30 am'}]},{name:'Proposal',total:A.formatMoney(24700000,'INR',{compact:true}),cards:[{name:'Northwind',service:'Mobile app',value:A.formatMoney(24000000,'INR'),source:'Marketplace',owner:'Kiran Rao',due:'Viewed 2 h ago'}]},{name:'Won',won:true,total:A.formatMoney(41000000,'INR',{compact:true}),cards:[{name:'Saffron Stays',service:'Website',value:A.formatMoney(9000000,'INR'),source:'Referral',owner:'Ananya Iyer'}]}]})));
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<!-- @dsCard group="Navigation" height=110 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Tabs preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--col'},h(A.Tabs,{label:'Project',items:[{value:'o',label:'Overview'},{value:'p',label:'Phases'},{value:'t',label:'Tasks',count:24},{value:'f',label:'Files'},{value:'m',label:'Messages',count:3},{value:'i',label:'Invoices'}]})));
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<!-- @dsCard group="Status" height=120 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Badge preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv'},h(A.Badge,null,'Draft'),h(A.Badge,{tone:'brand',dot:true},'In progress'),h(A.Badge,{tone:'success',dot:true},'Paid'),h(A.Badge,{tone:'warning',dot:true},'Waiting for client'),h(A.Badge,{tone:'danger',dot:true},'Overdue'),h(A.Badge,{tone:'info',icon:'globe-hemisphere-east'},'Export · LUT'),h(A.Badge,{tone:'highlight',icon:'handshake'},'Won'),h(A.Badge,{tone:'outline'},'Instagram'),h(A.Badge,{tone:'success',icon:'seal-check'},'Verified')));
+</script>
+</body>
+</html>

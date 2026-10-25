@@ -1,0 +1,12 @@
+<!-- @dsCard group="Forms" height=120 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Checkbox preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--col'},h(A.Checkbox,{label:'Send a WhatsApp link too',defaultChecked:true}),h(A.Checkbox,{label:'Add GST to this quote',description:'CGST 9% + SGST 9% for clients in Telangana.'}),h(A.Checkbox,{label:'Disabled option',disabled:true})));
+</script>
+</body>
+</html>

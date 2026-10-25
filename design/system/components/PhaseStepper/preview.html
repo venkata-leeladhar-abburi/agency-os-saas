@@ -1,0 +1,12 @@
+<!-- @dsCard group="Agency OS patterns" height=140 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>PhaseStepper preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--col'},h(A.PhaseStepper,{current:3}),h(A.PhaseStepper,{current:4,skipped:[1,2,3],compact:true})));
+</script>
+</body>
+</html>

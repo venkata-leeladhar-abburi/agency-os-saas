@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agency OS design system</title>
+<link rel="stylesheet" href="system/tokens.css">
+<link rel="stylesheet" href="system/components/bundle.css">
+<style>
+  body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: 14px; line-height: 20px; }
+  .top { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: var(--card); border-bottom: 1px solid var(--border); }
+  .top b { font-size: 15px; } .top span { color: var(--muted-foreground); }
+  .top button { margin-left: auto; height: 32px; padding: 0 12px; border: 1px solid var(--input); border-radius: 8px; background: var(--card); color: var(--foreground); font: inherit; cursor: pointer; }
+  .wrap { display: grid; grid-template-columns: 200px minmax(0, 1fr); }
+  nav { position: sticky; top: 57px; align-self: start; height: calc(100vh - 57px); overflow: auto; padding: 16px; display: grid; gap: 2px; align-content: start; border-right: 1px solid var(--border); }
+  nav a { padding: 4px 8px; border-radius: 6px; color: var(--muted-foreground); text-decoration: none; }
+  nav a:hover { background: var(--accent); color: var(--foreground); }
+  main { padding: 24px 32px 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; min-width: 0; }
+  .sc header { margin-bottom: 12px; max-width: 760px; }
+  .sc__group { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-foreground); }
+  .sc h2 { margin: 2px 0 4px; font-size: 20px; line-height: 28px; letter-spacing: -.015em; }
+  .sc__desc { margin: 0; color: var(--muted-foreground); }
+  .sc__frame { border: 1px solid var(--border); border-radius: 12px; background: var(--background); overflow: auto; }
+  .sc__frame--wide { height: 820px; }
+  .sc__screen { width: 1360px; }
+  .sc__screen .scr { height: 820px; min-height: 0; }
+</style>
+</head>
+<body>
+<div class="top"><b>Agency OS design system</b><span>Open from a local folder; every component and three example screens. Example data only.</span><button type="button" id="theme">Dark mode</button></div>
+<div class="wrap"><nav><a href="#Button">Button</a><a href="#IconButton">IconButton</a><a href="#Input">Input</a><a href="#Textarea">Textarea</a><a href="#Select">Select</a><a href="#Checkbox">Checkbox</a><a href="#Switch">Switch</a><a href="#Badge">Badge</a><a href="#Avatar">Avatar</a><a href="#Progress">Progress</a><a href="#Skeleton">Skeleton</a><a href="#Tabs">Tabs</a><a href="#Segmented">Segmented</a><a href="#Sidebar">Sidebar</a><a href="#CommandPalette">CommandPalette</a><a href="#Card">Card</a><a href="#Alert">Alert</a><a href="#Toast">Toast</a><a href="#Dialog">Dialog</a><a href="#EmptyState">EmptyState</a><a href="#MetricCard">MetricCard</a><a href="#DataTable">DataTable</a><a href="#PipelineBoard">PipelineBoard</a><a href="#ActivityFeed">ActivityFeed</a><a href="#PhaseStepper">PhaseStepper</a><a href="#GateCard">GateCard</a><a href="#InvoiceSummary">InvoiceSummary</a><a href="#Checklist">Checklist</a><a href="#RecordHeader">RecordHeader</a><a href="#Icon">Icon</a><a href="#Logo">Logo</a><a href="#OwnerDashboard">OwnerDashboard</a><a href="#LeadsPipeline">LeadsPipeline</a><a href="#ClientPortal">ClientPortal</a></nav><main>
+<section id="Button" class="sc"><header><p class="sc__group">Actions</p><h2>Button</h2><p class="sc__desc">Buttons start an action. **One `primary` per view** for the main thing the page is for; `secondary` (outlined) for other actions; `ghost` in toolbars, tables and cards; `soft` for low-emphasis fills; `destructive` only inside a confirmation dialog; `highlight` (lime) for rare celebratory actions; `link` inline in text.</p></header><div class="sc__frame"><div id="root-Button"></div></div></section>
+<section id="IconButton" class="sc"><header><p class="sc__group">Actions</p><h2>IconButton</h2><p class="sc__desc">A square button with only an icon, for toolbars, table rows and dialogs. **Always pass `label`**: it becomes the `aria-label` and tooltip. Variants: `ghost` (default) and `outline`; sizes `md` (36) and `sm` (28).</p></header><div class="sc__frame"><div id="root-IconButton"></div></div></section>
+<section id="Input" class="sc"><header><p class="sc__group">Forms</p><h2>Input</h2><p class="sc__desc">Single-line text with a label above. Props: `label`, `hint`, `error`, `required`, `optional`, `prefix` and `suffix` (₹, %, .com), `icon`, `size="xl"` for phones, plus every native input prop.</p></header><div class="sc__frame"><div id="root-Input"></div></div></section>
+<section id="Textarea" class="sc"><header><p class="sc__group">Forms</p><h2>Textarea</h2><p class="sc__desc">Multi-line text for notes, scope and messages. Same label, hint and error rules as `Input`. Starts at 3 rows and resizes vertically.</p></header><div class="sc__frame"><div id="root-Textarea"></div></div></section>
+<section id="Select" class="sc"><header><p class="sc__group">Forms</p><h2>Select</h2><p class="sc__desc">A native select styled to match `Input`. Use it for short fixed lists (currency, GST type, lead source). For long or searchable lists the app uses a combobox (shadcn Command in a Popover).</p></header><div class="sc__frame"><div id="root-Select"></div></div></section>
+<section id="Checkbox" class="sc"><header><p class="sc__group">Forms</p><h2>Checkbox</h2><p class="sc__desc">Binary choices and multi-select in lists and tables. The box border is `input` (3:1); checked fills `primary`. Put the label to the right; add a `description` for consequences.</p></header><div class="sc__frame"><div id="root-Checkbox"></div></div></section>
+<section id="Switch" class="sc"><header><p class="sc__group">Forms</p><h2>Switch</h2><p class="sc__desc">Settings that take effect immediately (no Save button). Use a checkbox when a form has a Save button. The off track is `input`, on is `primary`.</p></header><div class="sc__frame"><div id="root-Switch"></div></div></section>
+<section id="Badge" class="sc"><header><p class="sc__group">Status</p><h2>Badge</h2><p class="sc__desc">One or two words of status. Tones: `neutral`, `brand`, `success`, `warning`, `danger`, `info`, `highlight`, `outline`. Add `dot` for live status (Overdue, Waiting) so meaning never rests on colour alone. Use `size="sm"` inside cards and tables.</p></header><div class="sc__frame"><div id="root-Badge"></div></div></section>
+<section id="Avatar" class="sc"><header><p class="sc__group">Status</p><h2>Avatar</h2><p class="sc__desc">People and companies. Shows a photo when `src` is given, otherwise initials on a tint picked from the name (stable per person). Sizes `xs` 20, `sm` 24, `md` 32, `lg` 48 (rounded square, for company records). `AvatarGroup` stacks people with a +N overflow.</p></header><div class="sc__frame"><div id="root-Avatar"></div></div></section>
+<section id="Progress" class="sc"><header><p class="sc__group">Status</p><h2>Progress</h2><p class="sc__desc">A thin bar for progress toward a known end: onboarding, budget used, a phase. Tones: default (`primary`), `success`, `danger` (over budget), `highlight`. Give it a `label` and `showValue` when the number matters.</p></header><div class="sc__frame"><div id="root-Progress"></div></div></section>
+<section id="Skeleton" class="sc"><header><p class="sc__group">Status</p><h2>Skeleton</h2><p class="sc__desc">Placeholder shapes while data loads, matching the real layout so nothing jumps. Shimmer stops under reduced motion. Prefer skeletons to spinners for anything that takes longer than about 300 ms.</p></header><div class="sc__frame"><div id="root-Skeleton"></div></div></section>
+<section id="Tabs" class="sc"><header><p class="sc__group">Navigation</p><h2>Tabs</h2><p class="sc__desc">Switch between views of one record (Overview, Phases, Tasks, Files, Invoices). Underlined, with optional counts. Use `Segmented` to switch the *display* of the same data (Board / List / Calendar).</p></header><div class="sc__frame"><div id="root-Tabs"></div></div></section>
+<section id="Segmented" class="sc"><header><p class="sc__group">Navigation</p><h2>Segmented</h2><p class="sc__desc">A compact switch between two to four display modes of the same data. Not for navigation between pages.</p></header><div class="sc__frame"><div id="root-Segmented"></div></div></section>
+<section id="Sidebar" class="sc"><header><p class="sc__group">Navigation</p><h2>Sidebar</h2><p class="sc__desc">The app's main navigation, grouped by how each role works.</p></header><div class="sc__frame"><div id="root-Sidebar"></div></div></section>
+<section id="CommandPalette" class="sc"><header><p class="sc__group">Navigation</p><h2>CommandPalette</h2><p class="sc__desc">Ctrl/Cmd+K from anywhere: jump to any lead, client, project or invoice, or run an action (New lead, Create invoice, Switch workspace). Results are grouped; the highlighted row shows where Enter goes. Every action in the app should be reachable here.</p></header><div class="sc__frame"><div id="root-CommandPalette"></div></div></section>
+<section id="Card" class="sc"><header><p class="sc__group">Containers</p><h2>Card</h2><p class="sc__desc">The basic surface: `card` with a 1px `border` and `radius-lg`, no shadow. Give it a `title` (`title-sm`), optional `description`, `icon` and `actions`. Use `flush` when the body is a table or list that runs edge to edge. Don't nest cards inside cards.</p></header><div class="sc__frame"><div id="root-Card"></div></div></section>
+<section id="Alert" class="sc"><header><p class="sc__group">Feedback</p><h2>Alert</h2><p class="sc__desc">An inline message in the page about this screen's state. Tones: `info`, `success`, `warning`, `danger`, `brand`. Lead with what happened, then what to do; add one `action`. For confirmations of an action just taken, use a `Toast`.</p></header><div class="sc__frame"><div id="root-Alert"></div></div></section>
+<section id="Toast" class="sc"><header><p class="sc__group">Feedback</p><h2>Toast</h2><p class="sc__desc">A short confirmation of what just happened, bottom right on desktop and top on phones, for 5 seconds. Past tense ("Proposal sent"). Include **Undo** for reversible actions instead of asking for confirmation first.</p></header><div class="sc__frame"><div id="root-Toast"></div></div></section>
+<section id="Dialog" class="sc"><header><p class="sc__group">Feedback</p><h2>Dialog</h2><p class="sc__desc">Focused decisions that block the page: confirming a destructive action, or a short form. Title states the decision; the description states the consequence; the destructive button names the action ("Delete lead"), never "OK". Escape and the X close it; focus is trapped and returns to the trigger.</p></header><div class="sc__frame"><div id="root-Dialog"></div></div></section>
+<section id="EmptyState" class="sc"><header><p class="sc__group">Feedback</p><h2>EmptyState</h2><p class="sc__desc">What a screen shows before it has data: a duotone icon, a title that says what will be here, one sentence on why it matters, and one primary action (plus an optional secondary). Empty states are onboarding. Use `compact` inside cards.</p></header><div class="sc__frame"><div id="root-EmptyState"></div></div></section>
+<section id="MetricCard" class="sc"><header><p class="sc__group">Data</p><h2>MetricCard</h2><p class="sc__desc">A number people decide on, linking to the list behind it. Label (with icon), value in `metric` with tabular figures, a delta badge, a note, and an optional sparkline. Set `inverse` when down is good (overdue). `tone="danger"` colours the value for money at risk.</p></header><div class="sc__frame"><div id="root-MetricCard"></div></div></section>
+<section id="DataTable" class="sc"><header><p class="sc__group">Data</p><h2>DataTable</h2><p class="sc__desc">Lists of records.</p></header><div class="sc__frame"><div id="root-DataTable"></div></div></section>
+<section id="PipelineBoard" class="sc"><header><p class="sc__group">Agency OS patterns</p><h2>PipelineBoard</h2><p class="sc__desc">The leads Kanban.</p></header><div class="sc__frame"><div id="root-PipelineBoard"></div></div></section>
+<section id="ActivityFeed" class="sc"><header><p class="sc__group">Data</p><h2>ActivityFeed</h2><p class="sc__desc">A timeline of what happened on a record (lead, project, client): who, what, when. Icons in tinted circles mark the kind of event. Newest first; relative time for the last 7 days, then dates.</p></header><div class="sc__frame"><div id="root-ActivityFeed"></div></div></section>
+<section id="PhaseStepper" class="sc"><header><p class="sc__group">Agency OS patterns</p><h2>PhaseStepper</h2><p class="sc__desc">A project's route through its phases (default: our seven).</p></header><div class="sc__frame"><div id="root-PhaseStepper"></div></div></section>
+<section id="GateCard" class="sc"><header><p class="sc__group">Agency OS patterns</p><h2>GateCard</h2><p class="sc__desc">An approval at a phase gate: what is being approved, files, the approver and the status (Not sent, Waiting for client, Approved, Changes requested).</p></header><div class="sc__frame"><div id="root-GateCard"></div></div></section>
+<section id="InvoiceSummary" class="sc"><header><p class="sc__group">Agency OS patterns</p><h2>InvoiceSummary</h2><p class="sc__desc">The money part of an invoice.</p></header><div class="sc__frame"><div id="root-InvoiceSummary"></div></div></section>
+<section id="Checklist" class="sc"><header><p class="sc__group">Agency OS patterns</p><h2>Checklist</h2><p class="sc__desc">The onboarding checklist that gets a new workspace to its first proposal in minutes. Done steps are ticked with lime; the next step is highlighted and carries its action; progress shows at the top. It can be dismissed and reopened from Help.</p></header><div class="sc__frame"><div id="root-Checklist"></div></div></section>
+<section id="RecordHeader" class="sc"><header><p class="sc__group">Agency OS patterns</p><h2>RecordHeader</h2><p class="sc__desc">The top of every record page (lead, client, project, invoice): avatar or icon, `title-lg` name, status badge, a meta row (owner, value, dates, location) and the record's actions (secondary first, one primary). Tabs sit directly below.</p></header><div class="sc__frame"><div id="root-RecordHeader"></div></div></section>
+<section id="Icon" class="sc"><header><p class="sc__group">Brand</p><h2>Icon</h2><p class="sc__desc">Phosphor icons. Pass `name` (kebab-case), `size` (16 inline, 18 to 20 navigation, 28 to 36 empty states), `weight` (`regular` default, `fill` for the selected nav item, `duotone` for empty states) and `label` when the icon carries meaning on its own. The grid shows the icons built into this system.</p></header><div class="sc__frame"><div id="root-Icon"></div></div></section>
+<section id="Logo" class="sc"><header><p class="sc__group">Brand</p><h2>Logo</h2><p class="sc__desc">The Agency OS lockup: the glyph in `primary` and the wordmark in Geist SemiBold. On a violet or ink tile the glyph is lime (`highlight`), as in the sidebar workspace tile. Keep clear space equal to the glyph's height. No dedicated Agency OS logo has been drawn yet.</p></header><div class="sc__frame"><div id="root-Logo"></div></div></section>
+<section id="OwnerDashboard" class="sc"><header><p class="sc__group">Screens</p><h2>OwnerDashboard</h2><p class="sc__desc"></p></header><div class="sc__frame sc__frame--wide"><div id="root-OwnerDashboard" class="sc__screen"></div></div></section>
+<section id="LeadsPipeline" class="sc"><header><p class="sc__group">Screens</p><h2>LeadsPipeline</h2><p class="sc__desc"></p></header><div class="sc__frame sc__frame--wide"><div id="root-LeadsPipeline" class="sc__screen"></div></div></section>
+<section id="ClientPortal" class="sc"><header><p class="sc__group">Screens</p><h2>ClientPortal</h2><p class="sc__desc"></p></header><div class="sc__frame"><div id="root-ClientPortal"></div></div></section>
+</main></div>
+<script src="system/components/lib/react.production.min.js"></script>
+<script src="system/components/lib/react-dom.production.min.js"></script>
+<script src="system/components/bundle.js"></script>
+<script>
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Button')).render(h('div',{className:'pv pv--col'},
+  h('div',{className:'pv'},h(A.Button,{variant:'primary',icon:'paper-plane-tilt'},'Send proposal'),h(A.Button,{variant:'secondary'},'Save draft'),h(A.Button,{variant:'soft',icon:'eye'},'Preview'),h(A.Button,{variant:'ghost',icon:'dots-three'},'More'),h(A.Button,{variant:'highlight',icon:'handshake'},'Mark as won'),h(A.Button,{variant:'destructive',icon:'trash'},'Delete lead'),h(A.Button,{variant:'link'},'View invoice')),
+  h('div',{className:'pv'},h(A.Button,{variant:'primary',size:'sm',icon:'plus'},'New'),h(A.Button,{variant:'primary',size:'lg'},'Create invoice'),h(A.Button,{variant:'primary',size:'xl',icon:'check'},'Approve design'),h(A.Button,{variant:'primary',loading:true},'Sending'),h(A.Button,{variant:'secondary',disabled:true},'Disabled'),h(A.Button,{variant:'secondary',icon:'magnifying-glass',kbd:'Ctrl K'},'Search'))));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-IconButton')).render(h('div',{className:'pv'},['bell','gear-six','dots-three','pencil-simple','copy','trash'].map(function(i){return h(A.IconButton,{key:i,icon:i,label:i})}),h(A.IconButton,{icon:'sidebar-simple',label:'Collapse sidebar',variant:'outline'}),h(A.IconButton,{icon:'x',label:'Close',size:'sm'})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Input')).render(h('div',{className:'pv pv--grid'},h(A.Input,{label:'Client name',placeholder:'Kite & Co',required:true}),h(A.Input,{label:'Budget',prefix:'₹',placeholder:'80,000',inputMode:'numeric',hint:'Before GST.'}),h(A.Input,{label:'GSTIN',defaultValue:'36ABCDE1234F1Z',error:'A GSTIN has 15 characters. This one has 14.'}),h(A.Input,{label:'Search',icon:'magnifying-glass',placeholder:'Leads, clients, invoices'}),h(A.Input,{label:'Website',prefix:'https://',placeholder:'kiteandco.in',optional:true}),h(A.Input,{label:'Disabled',defaultValue:'OSS/26-27/014',disabled:true})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Textarea')).render(h('div',{className:'pv pv--grid'},h(A.Textarea,{label:'Scope in',placeholder:'5-page website, CMS, SEO setup',hint:'One item per line.'}),h(A.Textarea,{label:'Message to client',defaultValue:'Hi Srinivas, the homepage design is ready for your approval.'})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Select')).render(h('div',{className:'pv pv--grid'},h(A.Select,{label:'Lead source',options:['Referral','Instagram','LinkedIn','Website','Marketplace','IndiaMART','Ads']}),h(A.Select,{label:'Invoice type',options:['Tax invoice (GST)','Export of services under LUT','Bill of supply (no GST)','Proforma / advance']}),h(A.Select,{label:'Currency',options:['INR ₹','USD $','GBP £','EUR €','AED','AUD $']})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Checkbox')).render(h('div',{className:'pv pv--col'},h(A.Checkbox,{label:'Send a WhatsApp link too',defaultChecked:true}),h(A.Checkbox,{label:'Add GST to this quote',description:'CGST 9% + SGST 9% for clients in Telangana.'}),h(A.Checkbox,{label:'Disabled option',disabled:true})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Switch')).render(h('div',{className:'pv pv--col'},h(A.Switch,{label:'Automatic payment reminders',description:'3 days before and 1 day after the due date.',defaultChecked:true}),h(A.Switch,{label:'Show both time zones to foreign clients'})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Badge')).render(h('div',{className:'pv'},h(A.Badge,null,'Draft'),h(A.Badge,{tone:'brand',dot:true},'In progress'),h(A.Badge,{tone:'success',dot:true},'Paid'),h(A.Badge,{tone:'warning',dot:true},'Waiting for client'),h(A.Badge,{tone:'danger',dot:true},'Overdue'),h(A.Badge,{tone:'info',icon:'globe-hemisphere-east'},'Export · LUT'),h(A.Badge,{tone:'highlight',icon:'handshake'},'Won'),h(A.Badge,{tone:'outline'},'Instagram'),h(A.Badge,{tone:'success',icon:'seal-check'},'Verified')));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Avatar')).render(h('div',{className:'pv'},h(A.Avatar,{name:'Kiran Rao',size:'lg'}),h(A.Avatar,{name:'Ananya Iyer'}),h(A.Avatar,{name:'Arjun Mehta',size:'sm'}),h(A.Avatar,{name:'Meera Pillai',size:'xs'}),h(A.AvatarGroup,{names:['Kiran Rao','Ananya Iyer','Arjun Mehta','Meera Pillai','Srinivas Beere','Sarah Lewis'],size:'md'})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Progress')).render(h('div',{className:'pv pv--col',style:{maxWidth:420}},h(A.Progress,{label:'Budget used',value:62,showValue:true}),h(A.Progress,{label:'Northwind · mobile app',value:92,showValue:true,tone:'danger',valueText:'92% · at risk'}),h(A.Progress,{label:'Setup',value:60,showValue:true,tone:'highlight',valueText:'3 of 5'})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Skeleton')).render(h('div',{className:'pv pv--col',style:{maxWidth:420}},h('div',{style:{display:'flex',gap:12,alignItems:'center'}},h(A.Skeleton,{circle:true,width:32,height:32}),h('div',{style:{flex:1,display:'grid',gap:6}},h(A.Skeleton,{width:'60%',height:12}),h(A.Skeleton,{width:'35%',height:10}))),h(A.Skeleton,{height:10}),h(A.Skeleton,{width:'80%',height:10})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Tabs')).render(h('div',{className:'pv pv--col'},h(A.Tabs,{label:'Project',items:[{value:'o',label:'Overview'},{value:'p',label:'Phases'},{value:'t',label:'Tasks',count:24},{value:'f',label:'Files'},{value:'m',label:'Messages',count:3},{value:'i',label:'Invoices'}]})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Segmented')).render(h('div',{className:'pv'},h(A.Segmented,{label:'View',items:[{value:'b',label:'Board',icon:'kanban'},{value:'l',label:'List',icon:'table'},{value:'c',label:'Calendar',icon:'calendar-blank'}]}),h(A.Segmented,{label:'Range',items:[{value:'m',label:'This month'},{value:'q',label:'Quarter'},{value:'y',label:'Year'}]})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Sidebar')).render(h('div',{style:{height:760,display:'flex'}},h(A.Sidebar,{workspace:'One Stop Solutions',plan:'Agency · Growth',active:'leads',user:{name:'Kiran Rao',role:'Owner'},groups:[{items:[{value:'today',label:'Today',icon:'house'},{value:'dash',label:'Dashboard',icon:'squares-four'}]},{label:'Sell',items:[{value:'leads',label:'Leads',icon:'funnel-simple',count:12,alert:true},{value:'clients',label:'Clients',icon:'users-three'}]},{label:'Deliver',items:[{value:'projects',label:'Projects',icon:'folder-simple',count:9},{value:'tasks',label:'Tasks',icon:'check-square-offset'},{value:'docs',label:'Documents',icon:'file-text'}]},{label:'Money',items:[{value:'inv',label:'Invoices',icon:'receipt',count:2}]},{label:'Agency',items:[{value:'team',label:'Team',icon:'users'},{value:'pb',label:'Playbook',icon:'book-open-text'},{value:'set',label:'Settings',icon:'gear-six'}]}]})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-CommandPalette')).render(h('div',{className:'pv'},h(A.CommandPalette,{query:'kite',groups:[{label:'Leads and clients',items:[{icon:'funnel-simple',label:'Kite & Co',meta:'Lead · Proposal sent · ₹80,000',active:true},{icon:'users-three',label:'Kite Studios',meta:'Client · 2 projects'}]},{label:'Actions',items:[{icon:'plus',label:'New lead',kbd:'N L'},{icon:'receipt',label:'Create invoice',kbd:'N I'},{icon:'paper-plane-tilt',label:'Send proposal to Kite & Co'}]}]})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Card')).render(h('div',{className:'pv pv--grid'},h(A.Card,{title:'Projects at risk',icon:'warning',description:'4 of 9 active',actions:h(A.Button,{variant:'ghost',size:'sm',iconRight:'arrow-right'},'View all')},h('p',{style:{margin:0,color:'var(--muted-foreground)'}},'Gates overdue or budget above 90%.')),h(A.Card,{title:'Pipeline value',description:'Open leads, last 90 days'},h('p',{className:'aos-tnum',style:{margin:0,fontSize:28,fontWeight:600,letterSpacing:'-.025em'}},A.formatMoney(124000000,'INR',{compact:true})))));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Alert')).render(h('div',{className:'pv pv--col'},h(A.Alert,{tone:'warning',title:'2 invoices are overdue',action:h(A.Button,{size:'sm',variant:'secondary'},'Send reminders')},'₹38,500 from Northwind and Mitra Clinic.'),h(A.Alert,{tone:'info',title:'Export invoice'},'This client is in the UK. The invoice will use USD and your LUT (valid until 31 Mar 2027).'),h(A.Alert,{tone:'danger',title:'Payment failed'},'The UPI payment was declined. Ask the client to try again or pay by card.')));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Toast')).render(h('div',{className:'pv'},h(A.Toast,{title:'Lead moved to Won',description:'Kite & Co · ₹80,000',action:'Undo'}),h(A.Toast,{tone:'danger',title:'Could not send',description:'Check the client\u2019s email address.'})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Dialog')).render(h('div',{className:'pv'},h(A.Dialog,{icon:'trash',tone:'danger',title:'Delete Kite & Co?',description:'The lead, its activity and 2 draft quotes will be deleted. This can\u2019t be undone.',footer:[h(A.Button,{key:1,variant:'secondary'},'Cancel'),h(A.Button,{key:2,variant:'destructive'},'Delete lead')]})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-EmptyState')).render(h('div',{className:'pv pv--grid'},h(A.EmptyState,{icon:'kanban',title:'No leads yet',action:h(A.Button,{variant:'primary',icon:'plus'},'Add a lead'),secondary:h(A.Button,{variant:'secondary',icon:'upload-simple'},'Import CSV')},'Every enquiry, from Instagram to referrals, lands here with its source.'),h(A.EmptyState,{compact:true,icon:'receipt',title:'Nothing overdue',action:null},'Every invoice is paid or not yet due.')));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-MetricCard')).render(h('div',{className:'pv pv--grid'},h(A.MetricCard,{label:'Revenue · October',icon:'currency-inr',value:A.formatMoney(48600000,'INR'),delta:12,note:'vs September',spark:[12,18,15,22,19,26,24,31]}),h(A.MetricCard,{label:'Pending',icon:'clock',value:A.formatMoney(12000000,'INR'),note:'6 invoices'}),h(A.MetricCard,{label:'Overdue',icon:'warning-circle',value:A.formatMoney(3850000,'INR'),tone:'danger',delta:8,inverse:true,note:'2 invoices'}),h(A.MetricCard,{label:'Pipeline value',icon:'funnel-simple',value:A.formatMoney(124000000,'INR',{compact:true}),note:'Win rate 38%'})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-DataTable')).render((function(){var tone={Paid:'success',Overdue:'danger',Sent:'info',Draft:'neutral'};return h('div',{className:'pv pv--col'},h(A.DataTable,{selectable:true,columns:[{key:'no',label:'Invoice',mono:true,sortable:true},{key:'client',label:'Client',render:function(r){return h('span',{className:'aos-cellmain'},h('b',null,r.client),h('small',null,r.project))}},{key:'due',label:'Due',sortable:true},{key:'status',label:'Status',render:function(r){return h(A.Badge,{tone:tone[r.status],dot:true,size:'sm'},r.status)}},{key:'amt',label:'Amount',align:'right',sortable:true}],rows:[{no:'OSS/26-27/014',client:'Northwind',project:'Mobile app · milestone 2',due:'18 Oct 2026',status:'Overdue',amt:A.formatMoney(2950000,'INR')},{no:'OSS/26-27/015',client:'Saffron Stays',project:'Website · advance',due:'02 Nov 2026',status:'Sent',amt:A.formatMoney(4720000,'INR'),_selected:true},{no:'OSS/26-27/016',client:'Harbor Labs (UK)',project:'Design sprint · export',due:'05 Nov 2026',status:'Draft',amt:A.formatMoney(200000,'USD')},{no:'OSS/26-27/012',client:'Acme Labs',project:'Retainer · October',due:'01 Oct 2026',status:'Paid',amt:A.formatMoney(9440000,'INR')}],footer:[h('span',{key:1},'4 of 18 invoices'),h(A.Button,{key:2,variant:'ghost',size:'sm',iconRight:'arrow-right'},'View all')]}))})());
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-PipelineBoard')).render(h('div',{className:'pv pv--col'},h(A.PipelineBoard,{columns:[{name:'New',total:A.formatMoney(29500000,'INR',{compact:true}),cards:[{name:'Kite & Co',service:'Website',value:A.formatMoney(8000000,'INR'),source:'Instagram',owner:'Kiran Rao',due:'Call today'},{name:'Lumen Foods',service:'Brand + website',value:A.formatMoney(15000000,'INR'),source:'Referral',owner:'Ananya Iyer',due:'Follow up was due Mon',overdue:true}]},{name:'Contacted',total:A.formatMoney(27000000,'INR',{compact:true}),cards:[{name:'Mitra Clinic',service:'Booking app',value:A.formatMoney(6000000,'INR'),source:'Website',owner:'Arjun Mehta',due:'Thu, 11:30 am'}]},{name:'Proposal',total:A.formatMoney(24700000,'INR',{compact:true}),cards:[{name:'Northwind',service:'Mobile app',value:A.formatMoney(24000000,'INR'),source:'Marketplace',owner:'Kiran Rao',due:'Viewed 2 h ago'}]},{name:'Won',won:true,total:A.formatMoney(41000000,'INR',{compact:true}),cards:[{name:'Saffron Stays',service:'Website',value:A.formatMoney(9000000,'INR'),source:'Referral',owner:'Ananya Iyer'}]}]})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-ActivityFeed')).render(h('div',{className:'pv pv--col',style:{maxWidth:560}},h(A.ActivityFeed,{items:[{icon:'check',tone:'success',who:'Srinivas',text:'approved',target:'Homepage design',when:'10 min ago'},{icon:'paper-plane-tilt',tone:'brand',who:'Kiran',text:'sent invoice',target:'OSS/26-27/015',when:'2 h ago'},{icon:'eye',who:'Kite & Co',text:'viewed the proposal',when:'Yesterday'},{icon:'warning',tone:'warning',who:'Arjun',text:'requested approval for',target:'Build gate',when:'21 Oct'}]})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-PhaseStepper')).render(h('div',{className:'pv pv--col'},h(A.PhaseStepper,{current:3}),h(A.PhaseStepper,{current:4,skipped:[1,2,3],compact:true})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-GateCard')).render(h('div',{className:'pv pv--grid'},h(A.GateCard,{phase:'Design gate',status:'waiting',view:'client',title:'Approve the homepage design',description:'Desktop and phone versions, with the Telugu headline you asked for.',files:['Homepage v3.fig','Mobile.pdf'],approver:'Srinivas Beere',when:'sent 2 h ago'}),h(A.GateCard,{phase:'Define gate',status:'approved',title:'PRD and timeline',approver:'Srinivas Beere',when:'14 Oct 2026'})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-InvoiceSummary')).render(h('div',{className:'pv pv--grid',style:{gridTemplateColumns:'repeat(auto-fit,minmax(380px,1fr))'}},h(A.InvoiceSummary,{number:'OSS/26-27/015',status:'due',due:'02 Nov',tax:'intra',lines:[{item:'Website design and build',sac:'998314',qty:1,rate:3500000},{item:'CMS setup and training',sac:'998314',qty:1,rate:500000}]}),h(A.InvoiceSummary,{type:'Export invoice',number:'OSS/26-27/016',status:'due',due:'05 Nov',currency:'USD',tax:'lut',rate:'84.20',lut:'Supply meant for export under LUT ARN AD3609260012345, without payment of IGST.',lines:[{item:'Design sprint (5 days)',sac:'998391',qty:1,rate:200000}]})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Checklist')).render(h('div',{className:'pv pv--col',style:{maxWidth:560}},h(A.Checklist,{title:'Set up One Stop Solutions',items:[{label:'Add your logo and services',done:true},{label:'Add your first lead',done:true},{label:'Send a quote',hint:'Use the website template. GST is added for you.',cta:'Create quote'},{label:'Invite a client to the portal'},{label:'Create your first invoice'}]})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-RecordHeader')).render(h('div',{className:'pv pv--col'},h(A.RecordHeader,{avatar:true,title:'Beere Kesava & Brothers',status:'Active client',statusTone:'success',meta:[{icon:'map-pin',text:'Dharmavaram, Andhra Pradesh'},{icon:'currency-inr',text:'Lifetime ₹18.4 L'},{icon:'folder-simple',text:'2 projects'},{icon:'whatsapp-logo',text:'Prefers WhatsApp'}],actions:[h(A.Button,{key:1,variant:'secondary',icon:'chat-circle-dots'},'Message'),h(A.Button,{key:2,variant:'primary',icon:'plus'},'New project')]})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Icon')).render(h('div',{className:'pv',style:{gap:6}},Object.keys(window.__AOS_ICON_NAMES||{}).map(function(n){return h('span',{key:n,title:n,style:{display:'grid',placeItems:'center',width:40,height:40,borderRadius:8,border:'1px solid var(--border)',background:'var(--card)',color:'var(--foreground)'}},h(A.Icon,{name:n,size:20}))})));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root-Logo')).render(h('div',{className:'pv',style:{gap:32}},h(A.Logo,{size:26}),h('span',{style:{display:'grid',placeItems:'center',width:44,height:44,borderRadius:12,background:'var(--primary)',color:'var(--highlight)'}},h(A.Mark,{size:22})),h('span',{style:{display:'grid',placeItems:'center',width:44,height:44,borderRadius:12,background:'var(--neutral-950)',color:'var(--highlight)'}},h(A.Mark,{size:22}))));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+var side=h(A.Sidebar,{workspace:'One Stop Solutions',plan:'Agency · Growth',active:'dash',user:{name:'Kiran Rao',role:'Owner'},groups:[{items:[{value:'today',label:'Today',icon:'house'},{value:'dash',label:'Dashboard',icon:'squares-four'}]},{label:'Sell',items:[{value:'leads',label:'Leads',icon:'funnel-simple',count:12,alert:true},{value:'clients',label:'Clients',icon:'users-three'}]},{label:'Deliver',items:[{value:'projects',label:'Projects',icon:'folder-simple',count:9},{value:'tasks',label:'Tasks',icon:'check-square-offset'}]},{label:'Money',items:[{value:'inv',label:'Invoices',icon:'receipt',count:2}]},{label:'Agency',items:[{value:'team',label:'Team',icon:'users'},{value:'pb',label:'Playbook',icon:'book-open-text'},{value:'set',label:'Settings',icon:'gear-six'}]}]});
+var risk=[['Acme Labs','Website redesign','Design gate 2 days late','danger',48],['Northwind','Mobile app','Budget 92% used','danger',92],['Lumen Foods','Brand refresh','Waiting on client assets','warning',35],['Veda Wellness','App MVP','Change request open','info',60]];
+var main=h('div',{className:'scr__main'},h(A.Topbar,{crumbs:['One Stop Solutions','Dashboard']},h(A.Button,{variant:'secondary',size:'sm',icon:'magnifying-glass',kbd:'Ctrl K'},'Search')),
+ h('div',{className:'scr__body'},
+  h('div',{className:'scr__head'},h('div',null,h('h1',{className:'scr__title'},'Good morning, Kiran'),h('p',{className:'scr__sub'},'Sunday 25 Oct · 3 things need you today')),h('div',{style:{display:'flex',gap:8,alignItems:'center'}},h('span',{className:'scr__example'},'EXAMPLE DATA'),h(A.Segmented,{label:'Range',items:[{value:'m',label:'This month'},{value:'q',label:'Quarter'},{value:'y',label:'Year'}]}))),
+  h('div',{className:'scr__metrics'},h(A.MetricCard,{label:'Revenue · October',icon:'currency-inr',value:A.formatMoney(48600000,'INR'),delta:12,note:'vs September',spark:[12,18,15,22,19,26,24,31]}),h(A.MetricCard,{label:'Pending',icon:'clock',value:A.formatMoney(12000000,'INR'),note:'6 invoices'}),h(A.MetricCard,{label:'Overdue',icon:'warning-circle',value:A.formatMoney(3850000,'INR'),tone:'danger',delta:8,inverse:true,note:'2 invoices · reminders on'}),h(A.MetricCard,{label:'Pipeline value',icon:'funnel-simple',value:A.formatMoney(124000000,'INR',{compact:true}),note:'Win rate 38%'})),
+  h('div',{className:'scr__grid'},
+   h('div',{className:'scr__stack'},
+    h(A.Card,{title:'Leads pipeline',description:'By stage, this quarter',actions:h(A.Button,{variant:'ghost',size:'sm',iconRight:'arrow-right'},'Open pipeline')},
+     h(A.PipelineBoard,{size:'sm',columns:[{name:'New',total:'₹2.95 L',cards:[{name:'Kite & Co',value:'₹80,000',source:'Instagram',owner:'Kiran Rao',due:'Call today'},{name:'Lumen Foods',value:'₹1,50,000',source:'Referral',owner:'Ananya Iyer',due:'Follow up was due Mon',overdue:true}]},{name:'Proposal',total:'₹2.47 L',cards:[{name:'Northwind',value:'₹2,40,000',source:'Marketplace',owner:'Kiran Rao',due:'Viewed 2 h ago'}]},{name:'Won',won:true,total:'₹4.1 L',cards:[{name:'Saffron Stays',value:'₹90,000',source:'Referral',owner:'Ananya Iyer'}]}]})),
+    h(A.Card,{title:'Projects at risk',description:'4 of 9 active',flush:true},h(A.DataTable,{columns:[{key:'c',label:'Project',render:function(r){return h('span',{className:'aos-cellmain'},h('b',null,r[0]),h('small',null,r[1]))}},{key:'s',label:'Why',render:function(r){return h(A.Badge,{tone:r[3],dot:true,size:'sm'},r[2])}},{key:'p',label:'Progress',render:function(r){return h('div',{style:{width:140}},h(A.Progress,{value:r[4],tone:r[4]>90?'danger':null}))}}],rows:risk}))),
+   h('div',{className:'scr__stack'},
+    h(A.Card,{title:'Today',description:'Sun 25 Oct'},h('ul',{className:'today'},[['10:00','Standup','Google Meet'],['11:30','Discovery call','Kite & Co'],['15:00','Design review','Acme Labs'],['Due','INV OSS/26-27/014','Northwind · ₹29,500'],['Task','Follow up','Lumen Foods']].map(function(r,i){return h('li',{key:i},h('time',null,r[0]),h('span',null,h('b',null,r[1]),' ',h('small',null,'· '+r[2])),h(A.IconButton,{icon:'arrow-up-right',label:'Open',size:'sm'}))}))),
+    h(A.Card,{title:'Team load',description:'Open tasks this week'},h('div',{className:'load'},[['Design',78],['Frontend',104],['Backend',62],['QA',40]].map(function(r){return h('div',{key:r[0],className:'load__row'},h('span',null,r[0]),h(A.Progress,{value:Math.min(100,r[1]),tone:r[1]>100?'danger':null}),h('span',null,r[1]+'%'))}))),
+    h(A.Checklist,{title:'Finish setting up',items:[{label:'Add your logo and services',done:true},{label:'Add your first lead',done:true},{label:'Send a quote',cta:'Create quote',hint:'GST is added for you.'},{label:'Invite a client'}]})))));
+ReactDOM.createRoot(document.getElementById('root-OwnerDashboard')).render(h('div',{className:'scr'},side,main));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+var side=h(A.Sidebar,{workspace:'One Stop Solutions',plan:'Agency · Growth',active:'leads',user:{name:'Kiran Rao',role:'Owner'},groups:[{items:[{value:'today',label:'Today',icon:'house'},{value:'dash',label:'Dashboard',icon:'squares-four'}]},{label:'Sell',items:[{value:'leads',label:'Leads',icon:'funnel-simple',count:12,alert:true},{value:'clients',label:'Clients',icon:'users-three'}]},{label:'Deliver',items:[{value:'projects',label:'Projects',icon:'folder-simple',count:9},{value:'tasks',label:'Tasks',icon:'check-square-offset'}]},{label:'Money',items:[{value:'inv',label:'Invoices',icon:'receipt',count:2}]}]});
+var cols=[{name:'New',total:'₹2.95 L',cards:[{name:'Kite & Co',service:'Website',value:'₹80,000',source:'Instagram',owner:'Kiran Rao',due:'Call today'},{name:'Lumen Foods',service:'Brand + website',value:'₹1,50,000',source:'Referral',owner:'Ananya Iyer',due:'Follow up was due Mon',overdue:true},{name:'Orbit Fitness',service:'App',value:'₹45,000',source:'Marketplace',owner:'Arjun Mehta'}]},{name:'Contacted',total:'₹2.7 L',cards:[{name:'Mitra Clinic',service:'Booking app',value:'₹60,000',source:'Website',owner:'Arjun Mehta',due:'Thu, 11:30 am'},{name:'Tara Textiles',service:'ERP',value:'₹1,10,000',source:'IndiaMART',owner:'Kiran Rao'}]},{name:'Proposal',total:'₹2.47 L',cards:[{name:'Northwind',service:'Mobile app',value:'₹2,40,000',source:'Marketplace',owner:'Kiran Rao',due:'Viewed 2 h ago'}]},{name:'Won',won:true,total:'₹4.1 L',cards:[{name:'Saffron Stays',service:'Website',value:'₹90,000',source:'Referral',owner:'Ananya Iyer'},{name:'Acme Labs',service:'Retainer',value:'₹3,20,000',source:'Referral',owner:'Kiran Rao'}]}];
+var main=h('div',{className:'scr__main scr__main--sheet'},h(A.Topbar,{crumbs:['One Stop Solutions','Leads']}),
+ h('div',{className:'scr__body'},
+  h('div',{className:'scr__head'},h('div',null,h('h1',{className:'scr__title'},'Leads'),h('p',{className:'scr__sub'},'12 open · ₹8.12 L in the pipeline · win rate 38%')),h('div',{style:{display:'flex',gap:8,alignItems:'center'}},h('span',{className:'scr__example'},'EXAMPLE DATA'),h(A.Segmented,{label:'View',items:[{value:'b',label:'Board',icon:'kanban'},{value:'l',label:'List',icon:'table'}]}),h(A.Button,{variant:'secondary',icon:'upload-simple'},'Import'),h(A.Button,{variant:'primary',icon:'plus'},'New lead'))),
+  h('div',{style:{display:'flex',gap:8,marginBottom:16}},h(A.Badge,{tone:'outline'},'Source: All'),h(A.Badge,{tone:'outline'},'Owner: Anyone'),h(A.Badge,{tone:'brand'},'Follow-ups due · 3')),
+  h(A.PipelineBoard,{columns:cols})),
+   h('aside',{className:'scr__sheet','aria-label':'Lead: Northwind'},
+    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h(A.Badge,{tone:'info',dot:true},'Proposal'),h(A.IconButton,{icon:'x',label:'Close',size:'sm'})),
+    h('div',null,h('h2',{style:{margin:0,fontSize:20,lineHeight:'28px',fontWeight:600,letterSpacing:'-.015em'}},'Northwind'),h('p',{style:{margin:'2px 0 0',color:'var(--muted-foreground)'}},'Mobile app · ₹2,40,000 · Marketplace')),
+    h(A.Alert,{tone:'brand',title:'Proposal viewed 3 times'},'Last opened 2 hours ago. A good moment to call.'),
+    h('div',{style:{display:'flex',gap:8}},h(A.Button,{variant:'secondary',icon:'phone',size:'sm'},'Call'),h(A.Button,{variant:'secondary',icon:'whatsapp-logo',size:'sm'},'WhatsApp'),h(A.Button,{variant:'highlight',icon:'handshake',size:'sm'},'Mark as won')),
+    h(A.ActivityFeed,{items:[{icon:'eye',who:'Northwind',text:'viewed the proposal',when:'2 h ago'},{icon:'paper-plane-tilt',tone:'brand',who:'Kiran',text:'sent the proposal',when:'Fri'},{icon:'chat-circle-dots',who:'Kiran',text:'logged a call',when:'Thu'}]})));
+ReactDOM.createRoot(document.getElementById('root-LeadsPipeline')).render(h('div',{className:'scr'},side,main));
+
+})();
+(function () { var A = window.AgencyOS, h = React.createElement;
+var app=h('div',{className:'phone'},
+ h('div',{className:'phone__bar'},h('span',null,'9:41'),h('span',null,'5G')),
+ h('div',{className:'phone__head'},h('span',{className:'phone__brand'},h('span',null,h(A.Mark,{size:18})),'One Stop Solutions'),h(A.Avatar,{name:'Srinivas Beere',size:'md'})),
+ h('div',{className:'phone__body'},
+  h('div',null,h('p',{className:'aos-overline'},'Beere Kesava ERP'),h('h1',{className:'phone__hello'},'Namaste, Srinivas')),
+  h('div',{className:'needs'},h('p',{className:'aos-overline'},'Needs you · 2'),
+   h('div',{className:'need'},h('span',{className:'need__icon need__icon--brand'},h(A.Icon,{name:'flag',size:20})),h('span',{className:'need__text'},h('b',null,'Approve the dashboard design'),h('small',null,'Shared today by Ananya')),h(A.Icon,{name:'caret-right',size:18,style:{color:'var(--muted-foreground)'}})),
+   h('div',{className:'need'},h('span',{className:'need__icon need__icon--warning'},h(A.Icon,{name:'receipt',size:20})),h('span',{className:'need__text'},h('b',null,'Pay ₹47,200'),h('small',null,'Milestone 2 · due 2 Nov · UPI or card')),h(A.Icon,{name:'caret-right',size:18,style:{color:'var(--muted-foreground)'}}))),
+  h('div',{className:'aos-card',style:{padding:16,borderRadius:16,display:'grid',gap:14}},h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('b',{style:{fontSize:15}},'Progress'),h(A.Badge,{tone:'brand',dot:true},'Design')),h(A.PhaseStepper,{current:3,compact:true}),h(A.Progress,{value:45,label:'Overall',showValue:true})),
+  h('div',{className:'aos-card',style:{padding:16,borderRadius:16}},h('p',{className:'aos-overline',style:{marginBottom:12}},'Latest'),h(A.ActivityFeed,{items:[{icon:'check',tone:'success',who:'You',text:'approved the PRD',when:'14 Oct'},{icon:'upload-simple',tone:'brand',who:'Ananya',text:'shared 3 screens',when:'Today'}]})),
+  h(A.Button,{variant:'primary',size:'xl',block:true,icon:'check'},'Review and approve')),
+ h('nav',{className:'phone__tabs'},[['house','Home',1],['folder-simple','Project'],['receipt','Payments'],['chat-circle-dots','Messages']].map(function(t){return h('span',{key:t[1],className:'phone__tab'+(t[2]?' is-active':'')},h(A.Icon,{name:t[0],size:22,weight:t[2]?'fill':'regular'}),t[1])})));
+ReactDOM.createRoot(document.getElementById('root-ClientPortal')).render(h('div',{style:{padding:'24px 0',display:'grid',placeItems:'center'}},app,h('p',{className:'scr__example',style:{marginTop:20}},'EXAMPLE DATA')));
+
+})();
+document.getElementById('theme').onclick = function () {
+  var d = document.documentElement, dark = d.getAttribute('data-theme') !== 'dark';
+  d.setAttribute('data-theme', dark ? 'dark' : 'light'); this.textContent = dark ? 'Light mode' : 'Dark mode';
+};
+</script>
+</body>
+</html>

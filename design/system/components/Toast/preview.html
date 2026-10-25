@@ -1,0 +1,12 @@
+<!-- @dsCard group="Feedback" height=100 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Toast preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv'},h(A.Toast,{title:'Lead moved to Won',description:'Kite & Co · ₹80,000',action:'Undo'}),h(A.Toast,{tone:'danger',title:'Could not send',description:'Check the client\u2019s email address.'})));
+</script>
+</body>
+</html>

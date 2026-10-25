@@ -1,0 +1,12 @@
+<!-- @dsCard group="Forms" height=150 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Textarea preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--grid'},h(A.Textarea,{label:'Scope in',placeholder:'5-page website, CMS, SEO setup',hint:'One item per line.'}),h(A.Textarea,{label:'Message to client',defaultValue:'Hi Srinivas, the homepage design is ready for your approval.'})));
+</script>
+</body>
+</html>

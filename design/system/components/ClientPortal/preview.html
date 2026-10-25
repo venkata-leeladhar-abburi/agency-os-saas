@@ -1,0 +1,24 @@
+<!-- @dsCard group="Screens" height=900 width=460 page subtitle="The client portal home on a phone" -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>The client portal home on a phone</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+var app=h('div',{className:'phone'},
+ h('div',{className:'phone__bar'},h('span',null,'9:41'),h('span',null,'5G')),
+ h('div',{className:'phone__head'},h('span',{className:'phone__brand'},h('span',null,h(A.Mark,{size:18})),'One Stop Solutions'),h(A.Avatar,{name:'Srinivas Beere',size:'md'})),
+ h('div',{className:'phone__body'},
+  h('div',null,h('p',{className:'aos-overline'},'Beere Kesava ERP'),h('h1',{className:'phone__hello'},'Namaste, Srinivas')),
+  h('div',{className:'needs'},h('p',{className:'aos-overline'},'Needs you · 2'),
+   h('div',{className:'need'},h('span',{className:'need__icon need__icon--brand'},h(A.Icon,{name:'flag',size:20})),h('span',{className:'need__text'},h('b',null,'Approve the dashboard design'),h('small',null,'Shared today by Ananya')),h(A.Icon,{name:'caret-right',size:18,style:{color:'var(--muted-foreground)'}})),
+   h('div',{className:'need'},h('span',{className:'need__icon need__icon--warning'},h(A.Icon,{name:'receipt',size:20})),h('span',{className:'need__text'},h('b',null,'Pay ₹47,200'),h('small',null,'Milestone 2 · due 2 Nov · UPI or card')),h(A.Icon,{name:'caret-right',size:18,style:{color:'var(--muted-foreground)'}}))),
+  h('div',{className:'aos-card',style:{padding:16,borderRadius:16,display:'grid',gap:14}},h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('b',{style:{fontSize:15}},'Progress'),h(A.Badge,{tone:'brand',dot:true},'Design')),h(A.PhaseStepper,{current:3,compact:true}),h(A.Progress,{value:45,label:'Overall',showValue:true})),
+  h('div',{className:'aos-card',style:{padding:16,borderRadius:16}},h('p',{className:'aos-overline',style:{marginBottom:12}},'Latest'),h(A.ActivityFeed,{items:[{icon:'check',tone:'success',who:'You',text:'approved the PRD',when:'14 Oct'},{icon:'upload-simple',tone:'brand',who:'Ananya',text:'shared 3 screens',when:'Today'}]})),
+  h(A.Button,{variant:'primary',size:'xl',block:true,icon:'check'},'Review and approve')),
+ h('nav',{className:'phone__tabs'},[['house','Home',1],['folder-simple','Project'],['receipt','Payments'],['chat-circle-dots','Messages']].map(function(t){return h('span',{key:t[1],className:'phone__tab'+(t[2]?' is-active':'')},h(A.Icon,{name:t[0],size:22,weight:t[2]?'fill':'regular'}),t[1])})));
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{style:{padding:'24px 0',display:'grid',placeItems:'center'}},app,h('p',{className:'scr__example',style:{marginTop:20}},'EXAMPLE DATA')));
+</script>
+</body>
+</html>

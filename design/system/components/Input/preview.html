@@ -1,0 +1,12 @@
+<!-- @dsCard group="Forms" height=260 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Input preview</title></head>
+<body>
+<div id="root"></div>
+<script>
+var A = window.AgencyOS, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h('div',{className:'pv pv--grid'},h(A.Input,{label:'Client name',placeholder:'Kite & Co',required:true}),h(A.Input,{label:'Budget',prefix:'₹',placeholder:'80,000',inputMode:'numeric',hint:'Before GST.'}),h(A.Input,{label:'GSTIN',defaultValue:'36ABCDE1234F1Z',error:'A GSTIN has 15 characters. This one has 14.'}),h(A.Input,{label:'Search',icon:'magnifying-glass',placeholder:'Leads, clients, invoices'}),h(A.Input,{label:'Website',prefix:'https://',placeholder:'kiteandco.in',optional:true}),h(A.Input,{label:'Disabled',defaultValue:'OSS/26-27/014',disabled:true})));
+</script>
+</body>
+</html>
