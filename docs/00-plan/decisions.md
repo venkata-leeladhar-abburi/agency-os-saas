@@ -214,7 +214,6 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Daily updates:** one per member, day and project, saved again to update it. The member sees their own, the project's lead sees the project's, and people with `members.write` see all.
 - **Team page:** `team_overview()` gives each member's role, active projects and open tasks as counts only, to anyone with `members.read`.
 
-<<<<<<< HEAD
 ### D-036 Invoices and payments (M13 part 1)
 **Status:** Accepted · **Date:** 26 Oct 2026
 - **Drafts and issuing:** a draft has no number. Issuing takes the next number from `document_sequences`. Tax invoices, bills of supply and exports share the `OSS/26-27/001` series, and proformas have their own (`OSS/PF26-27/001`) so they never leave gaps in the tax series. Issuing also fixes the bill-to details, sets the due date from the payment terms (on receipt, 7, 15 or 30 days; default 7) and schedules the default reminders. An invoice in another currency needs an exchange rate to INR when issued, and the INR total is stored.
@@ -226,10 +225,9 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Messages and notifications** show whole amounts without zero paise (`formatAmount`: ₹1,18,000).
 - **Free plan:** 3 issued invoices a month; proformas don't count.
 - **Not yet (part 2):** the agency's own Razorpay keys go in Supabase Vault (`api-and-integrations.md`). Creating payment links, the per-workspace webhook secret, PDFs and reminder emails need the Supabase project and Resend.
-=======
+
 ### D-040 Founder answers: plan limits and message notifications
 **Status:** Approved by the founder · **Date:** 26 Oct 2026
 - **Plans:** the limits in `defaults-and-content.md` §8 are confirmed as enforced since M6 (open question 5).
 - **Message notifications:** a new message in a project thread notifies the other side in the app and by email. The team gets the in-app list and email; the client gets the portal and email. Each person can turn it off in Settings (open question 17). It's added to the notification defaults with M14.
 - **Database access from cloud sessions:** these sessions allow only HTTPS, so migrations run on the Supabase project from a GitHub Actions workflow started by hand (`DATABASE_URL_DIRECT` as a repository secret). The app talks to Supabase Auth and Storage over HTTPS.
->>>>>>> origin/main
