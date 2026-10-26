@@ -1,6 +1,14 @@
 import { standardProposal } from '@agency-os/core';
 import { describe, expect, it } from 'vitest';
-import { applyProposalText, mentions, proposalStatus, quoteTotals, taskDue } from './views';
+import {
+  applyProposalText,
+  dueIn,
+  mentions,
+  proposalStatus,
+  quoteTotals,
+  relativeInSentence,
+  taskDue,
+} from './views';
 
 const now = new Date('2026-10-26T04:30:00Z'); // 10:00 IST
 const settings = { stateCode: '37', lutArn: 'AD3609260012345' };
@@ -68,5 +76,15 @@ describe('applyProposalText', () => {
     expect(about).toMatchObject({ body: 'A studio in Vijayawada.', placeholder: false });
     expect(goals).toMatchObject({ placeholder: true });
     expect(scope).toMatchObject({ included: ['Five pages'], excluded: ['Photography'] });
+  });
+});
+
+describe('dueIn and relativeInSentence', () => {
+  it('reads future dates and keeps weekday capitals', () => {
+    expect(dueIn('2026-10-31T06:00:00Z', now)).toBe('in 5 days');
+    expect(dueIn('2026-10-27T06:00:00Z', now)).toBe('tomorrow');
+    expect(dueIn('2026-10-24T06:00:00Z', now)).toBe('2 days ago');
+    expect(relativeInSentence('2026-10-24T06:00:00Z', now)).toBe('Sat');
+    expect(relativeInSentence('2026-10-25T06:00:00Z', now)).toBe('yesterday');
   });
 });

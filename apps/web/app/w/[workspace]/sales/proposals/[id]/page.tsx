@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import { ProposalDocument } from '@/components/sales/proposal-document';
 import { Activities } from '@/components/workspace/activity';
 import { getProposal } from '@/lib/data/sales';
-import { PROPOSAL_STATUS_LABELS, relativeTime, type ProposalView } from '@/lib/data/views';
+import { PROPOSAL_STATUS_LABELS, relativeInSentence, type ProposalView } from '@/lib/data/views';
 import { siteOrigin } from '@/lib/origin';
 import { ProposalTextForm, SendDialog } from './proposal-panels';
 
@@ -99,7 +99,7 @@ export default async function ProposalPage({
 
       {status === 'viewed' && p.lastViewedAt ? (
         <Alert tone="brand" title={`Viewed ${p.views} ${p.views === 1 ? 'time' : 'times'}`}>
-          Last opened {relativeTime(p.lastViewedAt).toLowerCase()}. A good moment to follow up.
+          Last opened {relativeInSentence(p.lastViewedAt)}. A good moment to follow up.
         </Alert>
       ) : null}
       {status === 'accepted' && p.signature ? (

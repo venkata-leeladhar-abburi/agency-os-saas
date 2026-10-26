@@ -20,16 +20,21 @@ export type ImportResult = {
 
 const key = (v: string | null) => v?.toLowerCase().replace(/[^\d+a-z@.]/g, '') ?? '';
 
-/** Imports checked rows; skips rows with problems and leads already in the workspace. */
+/**
+ * Imports checked rows; skips rows with problems, leads already in the workspace, and open
+ * leads beyond `room` (what the plan has left).
+ */
 export async function importLeads(
   rows: string[][],
   mapping: LeadImportMapping,
+  room = Infinity,
 ): Promise<ImportResult> {
   const s = store();
   const seen = new Set(
     s.leads.flatMap((l) => [l.email, l.phone].filter(Boolean).map((v) => key(v))),
   );
   const result: ImportResult = { imported: 0, skipped: [] };
+  let openAdded = 0;
   const now = new Date();
   rows.slice(0, MAX_IMPORT_ROWS).forEach((cells, i) => {
     if (cells.every((c) => !c.trim())) return;
@@ -51,10 +56,20 @@ export async function importLeads(
       });
       return;
     }
-    for (const v of [l.email, phone]) if (v) seen.add(key(v));
     const stage =
       STAGES.find((st) => st.name.toLowerCase() === l.stage?.trim().toLowerCase())?.id ??
       ('new' as StageId);
+    const open = stage !== 'won' && stage !== 'lost';
+    if (open && openAdded >= room) {
+      result.skipped.push({
+        row,
+        name: l.company ?? l.name,
+        reasons: ['Your plan’s limit of open leads is reached. Upgrade to import the rest.'],
+      });
+      return;
+    }
+    if (open) openAdded += 1;
+    for (const v of [l.email, phone]) if (v) seen.add(key(v));
     const service =
       DEFAULT_SERVICES.find((sv) => sv.toLowerCase() === l.service?.trim().toLowerCase()) ??
       l.service ??

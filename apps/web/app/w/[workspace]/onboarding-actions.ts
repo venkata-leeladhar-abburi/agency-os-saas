@@ -1,6 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { audit } from '@/lib/data/audit';
+import { callerIp } from '@/lib/origin';
 import {
   dismissOnboarding,
   loadExampleData,
@@ -21,6 +23,12 @@ export async function showOnboardingAction(slug: string) {
 
 export async function removeExampleAction(slug: string): Promise<RemoveResult> {
   const result = await removeExampleData();
+  audit(
+    'example.removed',
+    `${result.removed} records`,
+    result.kept.length ? `Kept ${result.kept.join(', ')}` : '',
+    await callerIp(),
+  );
   revalidatePath(`/w/${slug}`, 'layout');
   return result;
 }

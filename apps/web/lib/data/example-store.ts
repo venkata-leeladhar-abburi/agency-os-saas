@@ -4,9 +4,13 @@
 import { SEVEN_PHASES, standardProposal } from '@agency-os/core';
 import { NOTIFICATION_CATEGORIES } from './types';
 import type {
+  AuditEntry,
   Client,
+  DailyUpdate,
+  Invitation,
   Invoice,
   Lead,
+  Member,
   Message,
   Notification,
   Project,
@@ -33,6 +37,10 @@ export type ExampleStore = {
   enquiryHits: Map<string, number[]>;
   notifications: Notification[];
   messages: Message[];
+  members: Member[];
+  invitations: Invitation[];
+  dailyUpdates: DailyUpdate[];
+  audit: AuditEntry[];
 };
 
 const OWNER = 'Kiran Rao';
@@ -578,6 +586,97 @@ function seed(): ExampleStore {
     },
   ];
 
+  const members: Member[] = [
+    {
+      id: 'u-kiran',
+      name: OWNER,
+      email: 'kiran@onestop.example',
+      role: 'owner',
+      title: 'Founder',
+      joinedAt: iso(-200),
+    },
+    {
+      id: 'u-ananya',
+      name: DESIGNER,
+      email: 'ananya@onestop.example',
+      role: 'project_lead',
+      title: 'Designer',
+      joinedAt: iso(-150),
+    },
+    {
+      id: 'u-arjun',
+      name: DEVELOPER,
+      email: 'arjun@onestop.example',
+      role: 'member',
+      title: 'Developer',
+      joinedAt: iso(-120),
+    },
+    {
+      id: 'u-meera',
+      name: PM,
+      email: 'meera@onestop.example',
+      role: 'finance',
+      title: 'Accounts',
+      joinedAt: iso(-90),
+    },
+  ];
+
+  const invitations: Invitation[] = [
+    {
+      id: 'inv-rahul',
+      email: 'rahul@onestop.example',
+      role: 'member',
+      token: 'example-invite-rahul-Qm3x8',
+      invitedBy: OWNER,
+      createdAt: iso(-2),
+      expiresAt: iso(5),
+      revokedAt: null,
+      acceptedAt: null,
+    },
+  ];
+
+  const dailyUpdates: DailyUpdate[] = [
+    {
+      id: 'd1',
+      member: DESIGNER,
+      on: date(0),
+      done: 'Homepage hero, both options',
+      next: 'Mobile layouts for Acme Labs',
+      blockers: '',
+      at: iso(0, 10),
+    },
+    {
+      id: 'd2',
+      member: DEVELOPER,
+      on: date(0),
+      done: 'Checkout API fix',
+      next: 'QA on Android',
+      blockers: 'Waiting for Northwind’s payment keys',
+      at: iso(0, 10),
+    },
+  ];
+
+  const audit: AuditEntry[] = [
+    {
+      id: 'au2',
+      at: iso(-2),
+      actor: OWNER,
+      action: 'member.invited',
+      subject: 'rahul@onestop.example',
+      detail: 'As Member',
+      ip: '203.0.113.24',
+    },
+    {
+      id: 'au1',
+      at: iso(-13),
+      actor: PM,
+      action: 'invoice.issued',
+      subject: 'OSS/26-27/014',
+      detail: 'Acme Labs · ₹29,500.00',
+      ip: '203.0.113.31',
+    },
+  ];
+
   const store: ExampleStore = {
     settings: {
       name: 'One Stop Solutions',
@@ -591,6 +690,7 @@ function seed(): ExampleStore {
         NOTIFICATION_CATEGORIES.map((c) => [c.id, { inApp: c.inApp, email: c.email }]),
       ) as WorkspaceSettings['notificationPrefs'],
       onboardingDismissed: false,
+      plan: 'growth',
     },
     leads,
     clients,
@@ -604,6 +704,10 @@ function seed(): ExampleStore {
     enquiryHits: new Map(),
     notifications,
     messages,
+    members,
+    invitations,
+    dailyUpdates,
+    audit,
   };
   for (const list of EXAMPLE_LISTS) for (const record of store[list]) record.example = true;
   return store;

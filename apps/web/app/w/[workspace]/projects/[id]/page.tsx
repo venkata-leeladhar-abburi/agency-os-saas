@@ -16,7 +16,7 @@ import { Thread } from '@/components/portal/portal-bits';
 import { Activities } from '@/components/workspace/activity';
 import { getProject, projectMessages } from '@/lib/data';
 import { tasks } from '@/lib/data/tasks';
-import { budgetUsed, relativeTime } from '@/lib/data/views';
+import { budgetUsed, relativeInSentence, relativeTime } from '@/lib/data/views';
 import { RequestGateForm } from './request-gate';
 import { TeamMessageForm } from './team-message';
 
@@ -108,11 +108,7 @@ export default async function ProjectPage({
           title={project.gate.title}
           status={project.gate.status}
           approver={project.gate.approver}
-          when={
-            project.gate.sentAt
-              ? `sent ${relativeTime(project.gate.sentAt).replace(/^Just now$/, 'just now')}`
-              : undefined
-          }
+          when={project.gate.sentAt ? `sent ${relativeInSentence(project.gate.sentAt)}` : undefined}
         />
       ) : current?.gate ? (
         <Card title="Client sign-off" description={`This phase ends with “${current.gate.title}”.`}>

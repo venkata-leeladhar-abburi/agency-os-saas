@@ -9,6 +9,11 @@ import {
   saveProposalText,
   sendProposal,
 } from '@/lib/data/sales';
+import { needsUpgrade } from '@/lib/data/plan';
+import { getProposal, getQuote } from '@/lib/data/sales';
+import { audit } from '@/lib/data/audit';
+import { callerIp } from '@/lib/origin';
+
 import { istDate } from '@/lib/data/views';
 import { checkProposalText, checkQuote, checkSend, fields, type Errors } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
@@ -28,6 +33,10 @@ export async function createQuoteAction(
     today: istDate(new Date()),
   });
   if (!checked.ok) return { errors: checked.errors, lineErrors: checked.lineErrors, values: f };
+  const limit =
+    (await needsUpgrade('quotes_per_month')) ??
+    (f.intent === 'proposal' ? await needsUpgrade('proposals_per_month') : null);
+  if (limit) return { limit, lineErrors: undefined, values: f };
   const id = await createQuote(checked.value);
   revalidatePath(`/w/${slug}`, 'layout');
   if (f.intent === 'proposal') {
@@ -37,7 +46,12 @@ export async function createQuoteAction(
   redirect(`/w/${slug}/sales/quotes/${id}`);
 }
 
-export async function createProposalAction(slug: string, quoteId: string) {
+export async function createProposalAction(slug: string, quoteId: string): Promise<FormState> {
+  const existing = (await getQuote(quoteId))?.proposal;
+  if (!existing) {
+    const limit = await needsUpgrade('proposals_per_month');
+    if (limit) return { limit };
+  }
   const id = await createProposal(quoteId);
   revalidatePath(`/w/${slug}`, 'layout');
   redirect(id ? `/w/${slug}/sales/proposals/${id}` : `/w/${slug}/sales`);
@@ -67,6 +81,12 @@ export async function sendProposalAction(
   const checked = checkSend(f);
   if (!checked.ok) return { errors: checked.errors, values: f };
   await sendProposal(id, checked.value.email);
+  audit(
+    'proposal.sent',
+    (await getProposal(id))?.proposal.title ?? id,
+    `To ${checked.value.email}`,
+    await callerIp(),
+  );
   revalidatePath(`/w/${slug}`, 'layout');
   return { done: Date.now() };
 }

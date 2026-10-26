@@ -5,6 +5,7 @@ import { buttonVariants, Input, Select, Textarea } from '@agency-os/ui';
 import Link from 'next/link';
 import { useActionState } from 'react';
 import { FormMessage, Submit } from '@/components/workspace/form-bits';
+import { PlanLimitDialog } from '@/components/workspace/plan-limit';
 import { EMPTY_FORM } from '@/lib/form-state';
 import { createLeadAction } from '../actions';
 
@@ -15,6 +16,7 @@ export function NewLeadForm({ slug, defaultFollowUp }: { slug: string; defaultFo
   return (
     <form action={action} className="grid gap-6" noValidate>
       <FormMessage state={state} title="The lead wasn’t added" />
+      <PlanLimitDialog limit={state.limit} slug={slug} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
           label="Name"

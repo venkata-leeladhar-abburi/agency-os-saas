@@ -3,8 +3,13 @@
 // forms can be built and used before the database is reachable. Each one is swapped for its
 // query in packages/db (withUser + the matching function) as the screens are wired up; the
 // shapes the screens receive stay the same.
-import { formatDate, formatInvoiceNumber, formatMoney, LEAD_SOURCE_LABELS } from '@agency-os/core';
-import { MEMBERS } from '@agency-os/ui/example';
+import {
+  formatDate,
+  formatInvoiceNumber,
+  formatMoney,
+  LEAD_SOURCE_LABELS,
+  PLAN_DETAILS,
+} from '@agency-os/core';
 import type {
   ClientInput,
   InvoiceInput,
@@ -40,6 +45,7 @@ export type WorkspaceSummary = {
 
 export const EXAMPLE_SLUG = 'one-stop';
 export { EXAMPLE_USER } from './shared';
+export { people } from './team';
 
 export function exampleWorkspace(): WorkspaceSummary {
   return {
@@ -47,12 +53,9 @@ export function exampleWorkspace(): WorkspaceSummary {
     name: store().settings.name,
     slug: EXAMPLE_SLUG,
     role: 'owner',
-    plan: 'Agency · Growth',
+    plan: PLAN_DETAILS[store().settings.plan].name,
   };
 }
-
-/** The people a lead or project can be given to. */
-export const PEOPLE = MEMBERS.map((m) => m.name);
 
 // ---------- Leads ----------
 
@@ -448,10 +451,6 @@ export async function saveSettings(input: SettingsInput) {
   Object.assign(store().settings, input);
 }
 
-export async function members() {
-  return MEMBERS;
-}
-
 export async function dashboard() {
   const due = store()
     .invoices.map(invoiceView)
@@ -506,7 +505,7 @@ export async function dashboard() {
       progress: p.progress,
       tone: p.health === 'Late' ? ('danger' as const) : ('default' as const),
     })),
-    teamLoad: PEOPLE.map((name) => ({
+    teamLoad: store().members.map(({ name }) => ({
       name,
       open: store().tasks.filter((t) => t.assignee === name && t.status !== 'done').length,
     })),

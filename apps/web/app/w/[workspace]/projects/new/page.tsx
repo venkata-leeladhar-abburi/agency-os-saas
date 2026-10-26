@@ -1,5 +1,5 @@
 import { PageHeader } from '@agency-os/ui';
-import { clientOptions, PEOPLE } from '@/lib/data';
+import { clientOptions, people } from '@/lib/data';
 import { istDateIn } from '@/lib/data/views';
 import { NewProjectForm } from './new-project-form';
 
@@ -23,7 +23,7 @@ export default async function NewProjectPage({
       <NewProjectForm
         slug={workspace}
         clients={clients}
-        people={PEOPLE}
+        people={await people()}
         defaults={{
           clientId: clients.some((c) => c.id === client) ? client : undefined,
           startOn: istDateIn(0),

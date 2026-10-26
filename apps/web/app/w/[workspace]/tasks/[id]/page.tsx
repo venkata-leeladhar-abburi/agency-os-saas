@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Activities } from '@/components/workspace/activity';
 import { Submit } from '@/components/workspace/form-bits';
-import { PEOPLE } from '@/lib/data';
+import { people } from '@/lib/data';
 import { phaseNames } from '@/lib/data/project-phases';
 import { getTask, projectOptions } from '@/lib/data/tasks';
 import { TASK_STATUSES } from '@/lib/data/types';
@@ -85,7 +85,7 @@ export default async function TaskPage({
               slug={workspace}
               id={task.id}
               projects={projects}
-              people={PEOPLE}
+              people={await people()}
               values={{
                 title: task.title,
                 projectId: task.projectId,

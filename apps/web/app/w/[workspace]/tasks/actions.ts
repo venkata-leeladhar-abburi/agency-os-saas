@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { PEOPLE } from '@/lib/data';
+import { people } from '@/lib/data';
 import {
   addComment,
   addSubtask,
@@ -19,7 +19,7 @@ import type { FormState } from '@/lib/form-state';
 async function checked(form: FormData) {
   const f = fields(form);
   const ids = (await projectOptions()).map((p) => p.id);
-  return { f, result: checkTask(f, ids, PEOPLE) };
+  return { f, result: checkTask(f, ids, await people()) };
 }
 
 export async function createTaskAction(

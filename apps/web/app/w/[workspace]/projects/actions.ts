@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { clientOptions, createProject, EXAMPLE_USER, PEOPLE, requestGate } from '@/lib/data';
+import { clientOptions, createProject, EXAMPLE_USER, people, requestGate } from '@/lib/data';
 import { sendMessage } from '@/lib/data/portal';
 import { checkProject, fields } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
@@ -14,7 +14,7 @@ export async function createProjectAction(
 ): Promise<FormState> {
   const f = fields(form);
   const ids = (await clientOptions()).map((c) => c.id);
-  const checked = checkProject(f, ids, PEOPLE);
+  const checked = checkProject(f, ids, await people());
   if (!checked.ok) return { errors: checked.errors, values: f };
   const id = await createProject(checked.value);
   revalidatePath(`/w/${slug}`, 'layout');

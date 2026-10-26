@@ -1,8 +1,13 @@
-import { Button, Logo } from '@agency-os/ui';
+import { Alert, Button, buttonVariants, Logo } from '@agency-os/ui';
+import Link from 'next/link';
 import { acceptInvitation, AccountError, myWorkspaces, withUser } from '@agency-os/db';
 import { redirect } from 'next/navigation';
 import { database } from '@/lib/server/db';
 import { currentUser } from '@/lib/supabase/server';
+import { ROLE_LABELS } from '@agency-os/core';
+import { EXAMPLE_SLUG, exampleMode, settings } from '@/lib/data';
+import { invitationByToken } from '@/lib/data/team';
+import { ExampleInvite } from './example-invite';
 
 export const metadata = { title: 'Accept invite · Agency OS' };
 
@@ -49,10 +54,11 @@ export default async function InvitePage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; joined?: string }>;
 }) {
   const { token } = await params;
-  const { error } = await searchParams;
+  const { error, joined } = await searchParams;
+  if (exampleMode()) return <ExampleInvitePage token={token} joined={joined} />;
   const user = await currentUser();
   const message = error ? (MESSAGES[error] ?? MESSAGES.failed!) : null;
   return (
@@ -80,6 +86,46 @@ export default async function InvitePage({
           </>
         )}
       </div>
+    </main>
+  );
+}
+
+const EXAMPLE_STATES = {
+  expired: ['This invite has expired', 'Invites work for 7 days. Ask for a new one.'],
+  revoked: ['This invite was cancelled', 'Ask the person who invited you for a new one.'],
+  used: ['This invite has already been used', 'Sign in to open the workspace.'],
+  invalid: ['This invite link doesn’t work', 'Check the link, or ask for a new invite.'],
+} as const;
+
+async function ExampleInvitePage({ token, joined }: { token: string; joined?: string }) {
+  const found = await invitationByToken(token);
+  if (joined && found.state === 'used')
+    return (
+      <main className="mx-auto grid min-h-dvh w-full max-w-md content-center gap-6 px-4 py-10">
+        <Logo />
+        <Alert tone="success" title={`${joined} joined ${(await settings()).name}`}>
+          They’re on the team as {ROLE_LABELS[found.invite.role]}.
+        </Alert>
+        <Link href={`/w/${EXAMPLE_SLUG}/team`} className={buttonVariants({ variant: 'primary' })}>
+          Open the team
+        </Link>
+      </main>
+    );
+  return (
+    <main className="mx-auto grid min-h-dvh w-full max-w-md content-center gap-6 px-4 py-10">
+      <Logo />
+      {found.state === 'open' ? (
+        <ExampleInvite
+          token={token}
+          workspace={found.workspace}
+          role={ROLE_LABELS[found.invite.role]}
+        />
+      ) : (
+        <div className="grid gap-3">
+          <h1 className="text-title-md">{EXAMPLE_STATES[found.state][0]}</h1>
+          <p className="text-body text-muted-foreground">{EXAMPLE_STATES[found.state][1]}</p>
+        </div>
+      )}
     </main>
   );
 }

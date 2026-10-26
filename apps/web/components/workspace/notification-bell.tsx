@@ -117,7 +117,7 @@ export function NotificationBell({ slug, unread }: { slug: string; unread: numbe
         )}
         <div className="border-t border-border px-4 py-2.5">
           <Link
-            href={`/w/${slug}/settings#notifications`}
+            href={`/w/${slug}/settings/notifications`}
             onClick={() => setOpen(false)}
             className="text-body-sm font-medium"
           >

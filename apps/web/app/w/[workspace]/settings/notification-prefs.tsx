@@ -17,9 +17,8 @@ export function NotificationPrefs({
   const [state, action] = useActionState(savePrefsAction.bind(null, slug), EMPTY_FORM);
   return (
     <Card
-      id="notifications"
-      title="Notifications"
-      description="What you hear about, in the app and by email. Emails go out once email sending is set up."
+      title="Per category"
+      description="Emails go out once email sending is set up; your choices are kept until then."
     >
       <form action={action} className="grid gap-4">
         <table className="w-full border-collapse text-body">

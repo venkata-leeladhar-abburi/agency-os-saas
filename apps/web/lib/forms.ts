@@ -26,7 +26,9 @@ export type Checked<T, K extends string = string> =
 /** FormData to plain strings (the last value wins; checkboxes give "on"). */
 export function fields(form: FormData): Fields {
   const out: Fields = {};
-  for (const [k, v] of form.entries()) if (typeof v === 'string') out[k] = v;
+  // Next adds its own "$ACTION_…" fields to server action forms; they aren't the user's.
+  for (const [k, v] of form.entries())
+    if (typeof v === 'string' && !k.startsWith('$ACTION')) out[k] = v;
   return out;
 }
 
@@ -687,4 +689,35 @@ export function checkNotificationPrefs<C extends string>(
       { inApp: f[`inApp.${c}`] === 'on', email: f[`email.${c}`] === 'on' },
     ]),
   ) as Record<C, { inApp: boolean; email: boolean }>;
+}
+
+// ---------- Team ----------
+
+const INVITE_ROLES = ['admin', 'project_lead', 'member', 'finance', 'hr'] as const;
+
+export function checkInvite(
+  f: Fields,
+): Checked<{ email: string; role: (typeof INVITE_ROLES)[number] }> {
+  const errors: Errors = {};
+  const email = text(f, 'email').toLowerCase();
+  if (!isEmail(email)) errors.email = 'Enter their work email, like name@agency.in.';
+  const role = text(f, 'role') as (typeof INVITE_ROLES)[number];
+  if (!INVITE_ROLES.includes(role)) errors.role = 'Pick a role.';
+  if (Object.keys(errors).length) return { ok: false, errors };
+  return { ok: true, value: { email, role } };
+}
+
+export function checkDailyUpdate(
+  f: Fields,
+): Checked<{ done: string; next: string; blockers: string }> {
+  const done = text(f, 'done');
+  const next = text(f, 'next');
+  const blockers = text(f, 'blockers');
+  const errors: Errors = {};
+  if (!done && !next && !blockers)
+    errors.done = 'Add what you did, what’s next or what’s blocking you.';
+  for (const [k, v] of Object.entries({ done, next, blockers }))
+    if (v.length > 1000) errors[k] = 'Keep it under 1,000 characters.';
+  if (Object.keys(errors).length) return { ok: false, errors };
+  return { ok: true, value: { done, next, blockers } };
 }

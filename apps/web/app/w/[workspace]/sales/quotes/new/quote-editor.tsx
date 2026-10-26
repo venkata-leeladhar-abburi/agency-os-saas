@@ -4,6 +4,7 @@ import { Alert, buttonVariants, Input, InvoiceSummary, Select } from '@agency-os
 import Link from 'next/link';
 import { useActionState, useMemo, useState } from 'react';
 import { FormMessage, Submit } from '@/components/workspace/form-bits';
+import { PlanLimitDialog } from '@/components/workspace/plan-limit';
 import { LineItems, linesFrom } from '@/components/workspace/line-items';
 import type { WorkspaceSettings } from '@/lib/data/types';
 import { quoteTotals } from '@/lib/data/views';
@@ -93,6 +94,7 @@ export function QuoteEditor({
     >
       <div className="grid content-start gap-4">
         <FormMessage state={state} title="The quote wasn’t saved" />
+        <PlanLimitDialog limit={state.limit} slug={slug} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Select
             label="For"

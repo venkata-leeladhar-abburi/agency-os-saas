@@ -12,6 +12,7 @@ import {
   winLead,
 } from '@/lib/data';
 import type { StageId } from '@/lib/data/types';
+import { needsUpgrade } from '@/lib/data/plan';
 import { STAGES } from '@/lib/data/types';
 import { checkLead, checkLostReason, checkNote, fields } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
@@ -26,6 +27,8 @@ export async function createLeadAction(
   const f = fields(form);
   const checked = checkLead(f);
   if (!checked.ok) return { errors: checked.errors, values: f };
+  const limit = await needsUpgrade('open_leads');
+  if (limit) return { limit, values: f };
   const id = await createLead(checked.value);
   revalidatePath(leadsPath(slug));
   redirect(`${leadsPath(slug)}/${id}`);

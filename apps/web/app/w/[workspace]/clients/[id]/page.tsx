@@ -3,7 +3,7 @@ import { formatDate, formatMoney } from '@agency-os/core';
 import { Alert, Badge, buttonVariants, Card, RecordHeader, type BadgeProps } from '@agency-os/ui';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Submit } from '@/components/workspace/form-bits';
+import { LimitedActionButton } from '@/components/workspace/limited-action';
 import { formatPhone } from '@/lib/auth/helpers';
 import { exampleMode, getClient } from '@/lib/data';
 import { inviteToPortalAction } from '../actions';
@@ -96,11 +96,15 @@ export default async function ClientPage({
           tone="info"
           title="Invite them to the client portal"
           action={
-            <form action={inviteToPortalAction.bind(null, workspace, client.id)}>
-              <Submit size="sm" variant="secondary" icon="invite">
-                Send invite
-              </Submit>
-            </form>
+            <LimitedActionButton
+              action={inviteToPortalAction.bind(null, workspace, client.id)}
+              slug={workspace}
+              size="sm"
+              variant="secondary"
+              icon="invite"
+            >
+              Send invite
+            </LimitedActionButton>
           }
         >
           They approve work, pay invoices and message you there. No password needed.

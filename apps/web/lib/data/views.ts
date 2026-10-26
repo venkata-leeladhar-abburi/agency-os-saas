@@ -23,7 +23,8 @@ function daysBetween(fromDate: string, toDate: string): number {
   return Math.round((Date.parse(toDate) - Date.parse(fromDate)) / DAY);
 }
 
-const time = (at: string) =>
+/** "11:00 am" in IST. */
+export const istTime = (at: string) =>
   new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: TZ })
     .format(new Date(at))
     .replace(/\u202f/g, ' ')
@@ -51,7 +52,7 @@ export function followUp(
             month: 'short',
             timeZone: TZ,
           }).format(new Date(at));
-  return { text: `${when}, ${time(at)}`, overdue: false };
+  return { text: `${when}, ${istTime(at)}`, overdue: false };
 }
 
 /** "2 h ago", "Yesterday", "Mon", then the date after a week (content-style.md). */
@@ -278,4 +279,18 @@ export function applyProposalText(blocks: ProposalBlock[], t: ProposalText): Pro
       return t.terms ? { ...b, body: t.terms, placeholder: false } : b;
     return b;
   });
+}
+
+/** A future date in words: "today", "tomorrow", "in 5 days" (or "2 days ago" once it's passed). */
+export function dueIn(at: string, now = new Date()): string {
+  const days = daysBetween(istDate(now), istDate(at));
+  if (days === 0) return 'today';
+  if (days === 1) return 'tomorrow';
+  if (days > 1) return `in ${days} days`;
+  return days === -1 ? 'yesterday' : `${-days} days ago`;
+}
+
+/** relativeTime for use mid-sentence: "sent just now", "sent yesterday", but "sent Sat". */
+export function relativeInSentence(at: string, now = new Date()): string {
+  return relativeTime(at, now).replace(/^(Just now|Yesterday)$/, (m) => m.toLowerCase());
 }

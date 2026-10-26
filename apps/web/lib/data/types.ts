@@ -1,4 +1,11 @@
-import type { InvoiceLineInput, LeadSource, LostReason, ProposalBlock } from '@agency-os/core';
+import type {
+  InvoiceLineInput,
+  LeadSource,
+  LostReason,
+  Plan,
+  ProposalBlock,
+  Role,
+} from '@agency-os/core';
 
 /** The records the workspace screens work with. The database rows map onto these. */
 
@@ -154,6 +161,54 @@ export type WorkspaceSettings = {
   notificationPrefs: Record<NotificationCategory, { inApp: boolean; email: boolean }>;
   /** The setup checklist was hidden; Help brings it back. */
   onboardingDismissed: boolean;
+  plan: Plan;
+};
+
+export type Member = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  /** What they do, shown under their name: "Designer". */
+  title: string;
+  joinedAt: string;
+};
+
+export type Invitation = {
+  id: string;
+  email: string;
+  role: Role;
+  /** The unguessable part of the invite link (the database keeps only its hash). */
+  token: string;
+  invitedBy: string;
+  createdAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  acceptedAt: string | null;
+};
+
+export type DailyUpdate = {
+  id: string;
+  member: string;
+  /** IST date. */
+  on: string;
+  done: string;
+  next: string;
+  blockers: string;
+  at: string;
+};
+
+/** Who did what, when and from where (PRD E0.5). */
+export type AuditEntry = {
+  id: string;
+  at: string;
+  actor: string;
+  /** "member.invited", "invoice.issued" … */
+  action: string;
+  /** What it was done to: "OSS/26-27/017", "meera@onestop.in". */
+  subject: string;
+  detail: string;
+  ip: string | null;
 };
 
 /** Notification categories and their defaults (defaults-and-content.md §7, decision D-040). */

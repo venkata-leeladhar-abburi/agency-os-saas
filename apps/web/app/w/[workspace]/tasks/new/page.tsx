@@ -1,5 +1,5 @@
 import { PageHeader } from '@agency-os/ui';
-import { PEOPLE } from '@/lib/data';
+import { people } from '@/lib/data';
 import { phaseNames } from '@/lib/data/project-phases';
 import { projectOptions } from '@/lib/data/tasks';
 import { NewTaskForm } from './new-task-form';
@@ -25,7 +25,7 @@ export default async function NewTaskPage({
       <NewTaskForm
         slug={workspace}
         projects={projects}
-        people={PEOPLE}
+        people={await people()}
         defaults={{ projectId: projects.some((p) => p.id === project) ? project : undefined }}
       />
     </div>

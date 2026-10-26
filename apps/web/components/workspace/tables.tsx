@@ -14,7 +14,6 @@ import {
   type ColumnDef,
   type PipelineColumn,
 } from '@agency-os/ui';
-import type { MEMBERS } from '@agency-os/ui/example';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
@@ -422,38 +421,6 @@ export function InvoicesTable({ rows, base }: { rows: InvoiceRow[]; base: string
       selectable
       columnPicker
       footer={<span>Showing {rows.length} invoices this financial year</span>}
-    />
-  );
-}
-
-type Member = (typeof MEMBERS)[number];
-const memberColumns: ColumnDef<Member, unknown>[] = [
-  {
-    accessorKey: 'name',
-    header: 'Member',
-    cell: ({ row }) => (
-      <span className="inline-flex items-center gap-2.5">
-        <Avatar name={row.original.name} />
-        <CellMain title={row.original.name} subtitle={row.original.email} />
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'role',
-    header: 'Role',
-    cell: ({ row }) => <Badge size="sm">{row.original.role}</Badge>,
-  },
-  { accessorKey: 'projects', header: 'Projects', meta: { align: 'right' } },
-  { accessorKey: 'openTasks', header: 'Open tasks', meta: { align: 'right' } },
-];
-
-export function TeamTable({ rows }: { rows: Member[] }) {
-  return (
-    <DataTable
-      caption="Team members"
-      columns={memberColumns}
-      data={rows}
-      getRowId={(r) => r.email}
     />
   );
 }

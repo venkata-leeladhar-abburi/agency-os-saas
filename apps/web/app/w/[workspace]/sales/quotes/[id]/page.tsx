@@ -2,7 +2,7 @@ import { formatDate } from '@agency-os/core';
 import { buttonVariants, InvoiceSummary } from '@agency-os/ui';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Submit } from '@/components/workspace/form-bits';
+import { LimitedActionButton } from '@/components/workspace/limited-action';
 import { getQuote } from '@/lib/data/sales';
 import { createProposalAction } from '../../actions';
 
@@ -48,9 +48,12 @@ export default async function QuotePage({
             Open proposal
           </Link>
         ) : (
-          <form action={createProposalAction.bind(null, workspace, quote.id)}>
-            <Submit>Make a proposal</Submit>
-          </form>
+          <LimitedActionButton
+            action={createProposalAction.bind(null, workspace, quote.id)}
+            slug={workspace}
+          >
+            Make a proposal
+          </LimitedActionButton>
         )}
       </div>
       <InvoiceSummary type="Quote" number={quote.number} totals={totals} className="max-w-3xl" />

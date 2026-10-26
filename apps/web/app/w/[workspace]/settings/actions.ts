@@ -2,6 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { saveSettings } from '@/lib/data';
+import { audit } from '@/lib/data/audit';
+import { callerIp } from '@/lib/origin';
+
 import { saveNotificationPrefs } from '@/lib/data/notifications';
 import { NOTIFICATION_CATEGORIES } from '@/lib/data/types';
 import { checkNotificationPrefs, checkSettings, fields } from '@/lib/forms';
@@ -16,6 +19,12 @@ export async function saveSettingsAction(
   const checked = checkSettings(f, form.getAll('services').map(String));
   if (!checked.ok) return { errors: checked.errors, values: f };
   await saveSettings(checked.value);
+  audit(
+    'settings.saved',
+    checked.value.name,
+    `Prefix ${checked.value.invoicePrefix}, GSTIN ${checked.value.gstin ?? 'none'}`,
+    await callerIp(),
+  );
   revalidatePath(`/w/${slug}`, 'layout');
   return { done: Date.now() };
 }
@@ -30,6 +39,6 @@ export async function savePrefsAction(
     NOTIFICATION_CATEGORIES.map((c) => c.id),
   );
   await saveNotificationPrefs(prefs);
-  revalidatePath(`/w/${slug}/settings`);
+  revalidatePath(`/w/${slug}/settings/notifications`);
   return { done: Date.now() };
 }

@@ -4,7 +4,6 @@ import { notify } from './notifications';
 import { EXAMPLE_USER, newId, store } from './shared';
 import { TASK_PRIORITIES, TASK_STATUSES, type Task, type TaskStatus } from './types';
 import { mentions, taskDue } from './views';
-import { MEMBERS } from '@agency-os/ui/example';
 
 export type TaskRow = {
   id: string;
@@ -112,7 +111,7 @@ export async function addComment(id: string, text: string): Promise<string[]> {
   });
   const named = mentions(
     text,
-    MEMBERS.map((m) => m.name),
+    store().members.map((m) => m.name),
   );
   // Each person sees their own list; in example mode that's Kiran's, so only a mention of
   // Kiran by someone else would land there. The others get theirs once members sign in.
