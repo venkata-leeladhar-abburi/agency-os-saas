@@ -14,19 +14,12 @@ import {
   type ColumnDef,
   type PipelineColumn,
 } from '@agency-os/ui';
-import type {
-  ExampleClient,
-  ExampleInvoice,
-  ExampleLeadRow,
-  ExampleProject,
-  ExampleTask,
-  MEMBERS,
-  METRICS,
-  AT_RISK,
-  TEAM_LOAD,
-  TODAY,
-} from '@agency-os/ui/example';
+import type { ExampleTask, MEMBERS, TEAM_LOAD } from '@agency-os/ui/example';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
+import type { ClientRow, InvoiceRow, LeadRow, ProjectRow, TodayItem } from '@/lib/data';
+import { moveLeadAction } from '@/app/w/[workspace]/leads/actions';
 
 const byMinor = (a: bigint, b: bigint) => (a > b ? 1 : a < b ? -1 : 0);
 
@@ -39,11 +32,39 @@ function Person({ name }: { name: string }) {
   );
 }
 
-export function LeadsBoard({ columns, size }: { columns: PipelineColumn[]; size?: 'sm' | 'md' }) {
-  return <PipelineBoard columns={columns} size={size} />;
+/** The leads board: open a card, add a lead, move a card to change its stage. */
+export function LeadsBoard({
+  columns,
+  base,
+  size,
+}: {
+  columns: PipelineColumn[];
+  /** The leads path: /w/<workspace>/leads. */
+  base: string;
+  size?: 'sm' | 'md';
+}) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  return (
+    <PipelineBoard
+      columns={columns}
+      size={size}
+      onOpen={(id) => router.push(`${base}/${id}`)}
+      onAddLead={size === 'sm' ? undefined : () => router.push(`${base}/new`)}
+      onMove={(id, to) => {
+        // Lost needs a reason, so it opens the lead to ask for one.
+        if (to === 'lost') return router.push(`${base}/${id}?lost=1`);
+        startTransition(async () => {
+          const next = await moveLeadAction(id, to);
+          if (next) router.push(`${base.replace(/\/leads$/, '')}/${next}`);
+          else router.refresh();
+        });
+      }}
+    />
+  );
 }
 
-const STAGE_TONE: Record<ExampleLeadRow['stage'], BadgeProps['tone']> = {
+const STAGE_TONE: Record<LeadRow['stage'], BadgeProps['tone']> = {
   New: 'neutral',
   Contacted: 'info',
   Proposal: 'brand',
@@ -51,7 +72,7 @@ const STAGE_TONE: Record<ExampleLeadRow['stage'], BadgeProps['tone']> = {
   Lost: 'outline',
 };
 
-const leadColumns: ColumnDef<ExampleLeadRow, unknown>[] = [
+const leadColumns: ColumnDef<LeadRow, unknown>[] = [
   {
     accessorKey: 'name',
     header: 'Lead',
@@ -95,9 +116,11 @@ const leadColumns: ColumnDef<ExampleLeadRow, unknown>[] = [
   },
 ];
 
-export function LeadsTable({ rows }: { rows: ExampleLeadRow[] }) {
+export function LeadsTable({ rows, base }: { rows: LeadRow[]; base: string }) {
+  const router = useRouter();
   return (
     <DataTable
+      onRowClick={(r) => router.push(`${base}/${r.id}`)}
       caption="Leads"
       columns={leadColumns}
       data={rows}
@@ -109,13 +132,13 @@ export function LeadsTable({ rows }: { rows: ExampleLeadRow[] }) {
   );
 }
 
-const PORTAL_TONE: Record<ExampleClient['portal'], BadgeProps['tone']> = {
+const PORTAL_TONE: Record<ClientRow['portal'], BadgeProps['tone']> = {
   Active: 'success',
   Invited: 'warning',
   'Not invited': 'neutral',
 };
 
-const clientColumns: ColumnDef<ExampleClient, unknown>[] = [
+const clientColumns: ColumnDef<ClientRow, unknown>[] = [
   {
     accessorKey: 'name',
     header: 'Client',
@@ -157,9 +180,11 @@ const clientColumns: ColumnDef<ExampleClient, unknown>[] = [
   },
 ];
 
-export function ClientsTable({ rows }: { rows: ExampleClient[] }) {
+export function ClientsTable({ rows, base }: { rows: ClientRow[]; base: string }) {
+  const router = useRouter();
   return (
     <DataTable
+      onRowClick={(r) => router.push(`${base}/${r.id}`)}
       caption="Clients"
       columns={clientColumns}
       data={rows}
@@ -170,13 +195,13 @@ export function ClientsTable({ rows }: { rows: ExampleClient[] }) {
   );
 }
 
-const HEALTH_TONE: Record<ExampleProject['health'], BadgeProps['tone']> = {
+const HEALTH_TONE: Record<ProjectRow['health'], BadgeProps['tone']> = {
   'On track': 'success',
   'At risk': 'warning',
   Late: 'danger',
 };
 
-const projectColumns: ColumnDef<ExampleProject, unknown>[] = [
+const projectColumns: ColumnDef<ProjectRow, unknown>[] = [
   {
     accessorKey: 'name',
     header: 'Project',
@@ -215,9 +240,11 @@ const projectColumns: ColumnDef<ExampleProject, unknown>[] = [
   { accessorKey: 'due', header: 'Due', meta: { label: 'Due' } },
 ];
 
-export function ProjectsTable({ rows }: { rows: ExampleProject[] }) {
+export function ProjectsTable({ rows, base }: { rows: ProjectRow[]; base: string }) {
+  const router = useRouter();
   return (
     <DataTable
+      onRowClick={(r) => router.push(`${base}/${r.id}`)}
       caption="Projects"
       columns={projectColumns}
       data={rows}
@@ -340,7 +367,7 @@ export function TaskBoard({ rows }: { rows: ExampleTask[] }) {
   );
 }
 
-const INVOICE_TONE: Record<ExampleInvoice['status'], BadgeProps['tone']> = {
+const INVOICE_TONE: Record<InvoiceRow['status'], BadgeProps['tone']> = {
   draft: 'neutral',
   due: 'warning',
   overdue: 'danger',
@@ -348,7 +375,7 @@ const INVOICE_TONE: Record<ExampleInvoice['status'], BadgeProps['tone']> = {
   partially_paid: 'info',
 };
 
-const invoiceColumns: ColumnDef<ExampleInvoice, unknown>[] = [
+const invoiceColumns: ColumnDef<InvoiceRow, unknown>[] = [
   { accessorKey: 'number', header: 'Number', meta: { mono: true, label: 'Number' } },
   { accessorKey: 'client', header: 'Client', meta: { label: 'Client' } },
   { accessorKey: 'amount', header: 'Amount', meta: { align: 'right', label: 'Amount' } },
@@ -366,9 +393,11 @@ const invoiceColumns: ColumnDef<ExampleInvoice, unknown>[] = [
   },
 ];
 
-export function InvoicesTable({ rows }: { rows: ExampleInvoice[] }) {
+export function InvoicesTable({ rows, base }: { rows: InvoiceRow[]; base: string }) {
+  const router = useRouter();
   return (
     <DataTable
+      onRowClick={(r) => router.push(`${base}/${r.id}`)}
       caption="Invoices"
       columns={invoiceColumns}
       data={rows}
@@ -412,7 +441,14 @@ export function TeamTable({ rows }: { rows: Member[] }) {
   );
 }
 
-type Risk = (typeof AT_RISK)[number];
+type Risk = {
+  id: string;
+  client: string;
+  project: string;
+  why: string;
+  progress: number;
+  tone: 'default' | 'danger';
+};
 const riskColumns: ColumnDef<Risk, unknown>[] = [
   {
     accessorKey: 'client',
@@ -445,9 +481,11 @@ const riskColumns: ColumnDef<Risk, unknown>[] = [
   },
 ];
 
-export function RiskTable({ rows }: { rows: Risk[] }) {
+export function RiskTable({ rows, base }: { rows: Risk[]; base: string }) {
+  const router = useRouter();
   return (
     <DataTable
+      onRowClick={(r) => router.push(`${base}/${r.id}`)}
       caption="Projects at risk"
       columns={riskColumns}
       data={rows}
@@ -457,19 +495,27 @@ export function RiskTable({ rows }: { rows: Risk[] }) {
   );
 }
 
-export function TodayList({ items, href }: { items: typeof TODAY; href: string }) {
+/** What needs doing today, grouped; each row opens its record. */
+export function TodayList({ items, limit }: { items: TodayItem[]; limit?: number }) {
   return (
     <ul className="grid gap-0.5 p-0">
-      {items.map((item) => (
-        <li key={item.title}>
+      {items.slice(0, limit).map((item) => (
+        <li key={item.id}>
           <Link
-            href={href}
-            className="grid grid-cols-[56px_1fr_auto] items-center gap-3 rounded-md px-2 py-2 text-foreground no-underline hover:bg-accent"
+            href={item.href}
+            className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-md px-2 py-2 text-foreground no-underline hover:bg-accent"
           >
-            <span className="font-mono text-mono-sm text-muted-foreground">{item.time}</span>
-            <span className="min-w-0">
-              <span className="font-medium">{item.title}</span>
-              <span className="text-body-sm text-muted-foreground"> · {item.meta}</span>
+            <span className="grid min-w-0">
+              <span className="truncate font-medium">{item.title}</span>
+              <span
+                className={
+                  item.overdue
+                    ? 'truncate text-caption font-medium text-danger'
+                    : 'truncate text-caption font-normal text-muted-foreground'
+                }
+              >
+                {item.meta}
+              </span>
             </span>
             <ArrowUpRight size={14} aria-hidden="true" className="text-muted-foreground" />
           </Link>
@@ -500,7 +546,15 @@ export function TeamLoad({ rows }: { rows: typeof TEAM_LOAD }) {
   );
 }
 
-export function DashboardMetrics({ metrics, base }: { metrics: typeof METRICS; base: string }) {
+type Metric = { label: string; value: string; note?: string };
+
+export function DashboardMetrics({
+  metrics,
+  base,
+}: {
+  metrics: Record<'revenue' | 'pending' | 'overdue' | 'pipeline', Metric>;
+  base: string;
+}) {
   return (
     <div className="mb-4 grid grid-cols-4 gap-3 max-xl:grid-cols-2 max-sm:grid-cols-1">
       <MetricCard {...metrics.revenue} icon={CurrencyInr} href={`${base}/invoices`} />

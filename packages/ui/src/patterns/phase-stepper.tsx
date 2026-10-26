@@ -54,6 +54,8 @@ export function PhaseStepper({
     <div className={cn('grid gap-2', className)}>
       <ol
         aria-label={labels?.title ?? 'Project phases'}
+        // Scrolls sideways on phones, so it must be reachable by keyboard (WCAG 2.1.1).
+        tabIndex={compact ? undefined : 0}
         className={cn('grid p-0', compact ? 'overflow-visible' : 'overflow-x-auto')}
         style={{
           gridTemplateColumns: `repeat(${phases.length}, minmax(${compact ? '0' : '72px'}, 1fr))`,

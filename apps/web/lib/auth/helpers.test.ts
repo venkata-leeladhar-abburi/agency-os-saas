@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isEmail, normaliseIndianPhone, safeNext } from './helpers';
+import { formatPhone, isEmail, normaliseIndianPhone, safeNext } from './helpers';
 
 describe('safeNext', () => {
   it('keeps same-site paths', () => expect(safeNext('/acme/leads?x=1')).toBe('/acme/leads?x=1'));
@@ -22,5 +22,12 @@ describe('isEmail', () => {
   it('accepts and rejects', () => {
     expect(isEmail(' kiran@onestop.in ')).toBe(true);
     expect(isEmail('kiran@')).toBe(false);
+  });
+});
+
+describe('formatPhone', () => {
+  it('spaces Indian mobiles and leaves others alone', () => {
+    expect(formatPhone('+919014952056')).toBe('+91 90149 52056');
+    expect(formatPhone('+44 20 7946 0958')).toBe('+44 20 7946 0958');
   });
 });

@@ -1,7 +1,7 @@
 import { myWorkspaces, withUser } from '@agency-os/db';
 import { notFound, redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { EXAMPLE_USER, EXAMPLE_WORKSPACE, exampleMode } from '@/lib/data';
+import { EXAMPLE_SLUG, EXAMPLE_USER, exampleMode, exampleWorkspace } from '@/lib/data';
 import { database } from '@/lib/server/db';
 import { currentUser } from '@/lib/supabase/server';
 import { WorkspaceShell } from './shell';
@@ -15,14 +15,10 @@ export default async function WorkspaceLayout({
 }) {
   const { workspace } = await params;
   if (exampleMode()) {
-    if (workspace !== EXAMPLE_WORKSPACE.slug) redirect(`/w/${EXAMPLE_WORKSPACE.slug}`);
+    if (workspace !== EXAMPLE_SLUG) redirect(`/w/${EXAMPLE_SLUG}`);
+    const current = exampleWorkspace();
     return (
-      <WorkspaceShell
-        current={EXAMPLE_WORKSPACE}
-        all={[EXAMPLE_WORKSPACE]}
-        user={EXAMPLE_USER.name}
-        example
-      >
+      <WorkspaceShell current={current} all={[current]} user={EXAMPLE_USER.name} example>
         {children}
       </WorkspaceShell>
     );

@@ -24,7 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Clock, DotsSixVertical, Plus, WarningCircle } from '@phosphor-icons/react';
-import { useId, useState, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Avatar } from '../components/avatar';
 import { Badge } from '../components/badge';
 import { cn } from '../lib/cn';
@@ -293,8 +293,16 @@ export function PipelineBoard({
     setBoard(toBoard(columns));
   }
 
-  const columnOf = (id: string) =>
-    id in board ? id : Object.keys(board).find((key) => board[key]?.some((c) => c.id === id));
+  // The keyboard sensor keeps the coordinate getter from when the drag started, so it reads
+  // the board through a ref to see where the card is now.
+  const boardRef = useRef(board);
+  useLayoutEffect(() => {
+    boardRef.current = board;
+  }, [board]);
+
+  const columnIn = (b: Board, id: string) =>
+    id in b ? id : Object.keys(b).find((key) => b[key]?.some((c) => c.id === id));
+  const columnOf = (id: string) => columnIn(board, id);
 
   // Left and right move to the neighbouring stage, next to the card at the nearest height;
   // up and down reorder within the stage.
@@ -304,10 +312,11 @@ export function PipelineBoard({
     event.preventDefault();
     const { active, collisionRect, droppableRects } = args.context;
     if (!active || !collisionRect) return undefined;
+    const current = boardRef.current;
     const order = columns.map((c) => c.id);
-    const target = order[order.indexOf(columnOf(String(active.id)) ?? '') + step];
+    const target = order[order.indexOf(columnIn(current, String(active.id)) ?? '') + step];
     if (!target) return undefined;
-    const candidates = (board[target] ?? [])
+    const candidates = (current[target] ?? [])
       .filter((c) => c.id !== active.id)
       .map((c) => droppableRects.get(c.id));
     const nearest = candidates

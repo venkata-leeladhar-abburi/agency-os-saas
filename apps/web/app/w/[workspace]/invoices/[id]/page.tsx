@@ -1,0 +1,113 @@
+import { formatDate, formatMoney, minorDigits } from '@agency-os/core';
+import { Alert, Card, InvoiceSummary } from '@agency-os/ui';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { Submit } from '@/components/workspace/form-bits';
+import { getInvoice } from '@/lib/data';
+import { PAYMENT_METHODS } from '@/lib/forms';
+import { DOCUMENT_TYPE_LABELS, istDate } from '@/lib/data/views';
+import { issueInvoiceAction } from '../actions';
+import { PaymentDialog } from './payment-dialog';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const found = await getInvoice((await params).id);
+  return { title: `${found?.invoice.number ?? 'Draft invoice'} · Agency OS` };
+}
+
+function plain(minor: bigint, currency: string) {
+  const digits = minorDigits(currency);
+  const s = minor.toString().padStart(digits + 1, '0');
+  return `${s.slice(0, -digits)}.${s.slice(-digits)}`;
+}
+
+export default async function InvoicePage({
+  params,
+}: {
+  params: Promise<{ workspace: string; id: string }>;
+}) {
+  const { workspace, id } = await params;
+  const found = await getInvoice(id);
+  if (!found) notFound();
+  const { invoice, client, totals, state, settings } = found;
+  const isExport = totals.treatment === 'export_lut' || client.country !== 'IN';
+
+  return (
+    <div className="grid gap-6">
+      <Link href={`/w/${workspace}/invoices`} className="text-body-sm text-muted-foreground">
+        ← All invoices
+      </Link>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-title-lg">{invoice.number ?? 'Draft invoice'}</h1>
+          <p className="text-body text-muted-foreground">
+            <Link href={`/w/${workspace}/clients/${client.id}`}>{client.name}</Link>
+            {invoice.issuedOn ? ` · issued ${formatDate(invoice.issuedOn)}` : ''} · due{' '}
+            {formatDate(invoice.dueOn)}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {!invoice.number ? (
+            <form action={issueInvoiceAction.bind(null, workspace, invoice.id)}>
+              <Submit>Issue invoice</Submit>
+            </form>
+          ) : state.dueMinor > 0n ? (
+            <PaymentDialog
+              slug={workspace}
+              id={invoice.id}
+              number={invoice.number}
+              due={plain(state.dueMinor, invoice.currency)}
+              dueText={formatMoney(state.dueMinor, invoice.currency)}
+              today={istDate(new Date())}
+              isExport={isExport}
+            />
+          ) : null}
+        </div>
+      </div>
+      {state.status === 'overdue' ? (
+        <Alert tone="warning" title={`${state.statusText}`}>
+          Reminders go out 3 and 7 days after the due date.
+        </Alert>
+      ) : null}
+      {!invoice.number ? (
+        <Alert tone="info" title="This is a draft">
+          The client can’t see it yet. Issuing gives it the next number in the series.
+        </Alert>
+      ) : null}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <InvoiceSummary
+          type={DOCUMENT_TYPE_LABELS[totals.documentType]}
+          number={invoice.number ?? undefined}
+          status={state.status}
+          statusText={state.statusText}
+          totals={totals}
+          exchangeRate={invoice.exchangeRate ?? undefined}
+          lutArn={totals.treatment === 'export_lut' ? (settings.lutArn ?? undefined) : undefined}
+        />
+        <Card
+          title="Payments"
+          description={
+            invoice.payments.length
+              ? `${formatMoney(state.paidMinor, invoice.currency)} received`
+              : 'Nothing received yet.'
+          }
+          className="self-start"
+        >
+          <ul className="grid gap-2 p-0">
+            {invoice.payments.map((p) => (
+              <li key={p.id} className="flex justify-between gap-3 text-body">
+                <span>
+                  {formatDate(p.receivedOn)} ·{' '}
+                  {PAYMENT_METHODS.find((m) => m.value === p.method)?.label}
+                  {p.reference ? (
+                    <span className="text-muted-foreground"> · {p.reference}</span>
+                  ) : null}
+                </span>
+                <span className="tabular-nums">{formatMoney(p.amountMinor, invoice.currency)}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+    </div>
+  );
+}

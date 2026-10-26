@@ -1,0 +1,102 @@
+import { CalendarBlank, UsersThree } from '@phosphor-icons/react/dist/ssr';
+import { BLANK_TEMPLATE, formatDate, formatMoney, SEVEN_PHASES } from '@agency-os/core';
+import { Alert, Card, GateCard, PhaseStepper, Progress, RecordHeader } from '@agency-os/ui';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { Activities } from '@/components/workspace/activity';
+import { getProject } from '@/lib/data';
+import { budgetUsed, relativeTime } from '@/lib/data/views';
+import { RequestGateForm } from './request-gate';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const found = await getProject((await params).id);
+  return { title: `${found?.project.name ?? 'Project'} · Agency OS` };
+}
+
+export default async function ProjectPage({
+  params,
+}: {
+  params: Promise<{ workspace: string; id: string }>;
+}) {
+  const { workspace, id } = await params;
+  const found = await getProject(id);
+  if (!found) notFound();
+  const { project, client, health } = found;
+  const template = project.template === 'seven_phases' ? SEVEN_PHASES : BLANK_TEMPLATE;
+  const phases = template.phases.map((p) => p.name);
+  const gates = template.phases.flatMap((p, i) => (p.gate ? [i] : []));
+  const current = template.phases[project.phase];
+  const used = budgetUsed(project.usedMinor, project.budgetMinor);
+
+  return (
+    <div className="grid gap-6">
+      <Link href={`/w/${workspace}/projects`} className="text-body-sm text-muted-foreground">
+        ← All projects
+      </Link>
+      <RecordHeader
+        title={project.name}
+        status={health}
+        statusTone={health === 'On track' ? 'success' : health === 'Late' ? 'danger' : 'warning'}
+        meta={[
+          {
+            icon: UsersThree,
+            text: <Link href={`/w/${workspace}/clients/${client.id}`}>{client.name}</Link>,
+          },
+          { icon: CalendarBlank, text: `Due ${formatDate(project.dueOn)}` },
+        ]}
+      />
+      <Card title="Phases">
+        <PhaseStepper current={project.phase} phases={phases} gates={gates} />
+      </Card>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card title="Now">
+          <p className="text-body font-medium">{current?.name}</p>
+          <p className="text-body-sm text-muted-foreground">{current?.clientLine}</p>
+        </Card>
+        <Card title="Budget">
+          <Progress
+            value={used}
+            tone={used >= 90 ? 'danger' : 'default'}
+            label={`${formatMoney(project.usedMinor, 'INR', { decimals: 0 })} of ${formatMoney(project.budgetMinor, 'INR', { decimals: 0 })} used`}
+            showValue
+          />
+        </Card>
+        <Card title="Team">
+          <p className="text-body">Led by {project.lead}</p>
+          <p className="text-body-sm text-muted-foreground">
+            Started {formatDate(project.startOn)}
+          </p>
+        </Card>
+      </div>
+      {project.gate ? (
+        <GateCard
+          phase={`${current?.name ?? ''} gate`}
+          title={project.gate.title}
+          status={project.gate.status}
+          approver={project.gate.approver}
+          when={
+            project.gate.sentAt
+              ? `sent ${relativeTime(project.gate.sentAt).replace(/^Just now$/, 'just now')}`
+              : undefined
+          }
+        />
+      ) : current?.gate ? (
+        <Card title="Client sign-off" description={`This phase ends with “${current.gate.title}”.`}>
+          <RequestGateForm
+            slug={workspace}
+            id={project.id}
+            approver={client.contactName}
+            suggestion={current.gate.title}
+          />
+        </Card>
+      ) : (
+        <Alert tone="info" title="No sign-off in this phase">
+          The next client approval comes in a later phase.
+        </Alert>
+      )}
+      <Card title="Activity">
+        <Activities items={project.activities} />
+      </Card>
+    </div>
+  );
+}

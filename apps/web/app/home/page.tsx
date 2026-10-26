@@ -1,12 +1,12 @@
 import { myWorkspaces, withUser } from '@agency-os/db';
 import { redirect } from 'next/navigation';
-import { EXAMPLE_WORKSPACE, exampleMode } from '@/lib/data';
+import { EXAMPLE_SLUG, exampleMode } from '@/lib/data';
 import { database } from '@/lib/server/db';
 import { currentUser } from '@/lib/supabase/server';
 
 /** After sign-in: go to the workspace you last used, or set one up. */
 export default async function HomePage() {
-  if (exampleMode()) redirect(`/w/${EXAMPLE_WORKSPACE.slug}`);
+  if (exampleMode()) redirect(`/w/${EXAMPLE_SLUG}`);
   const user = await currentUser();
   if (!user) redirect('/sign-in');
   const db = database();

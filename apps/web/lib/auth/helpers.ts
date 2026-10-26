@@ -20,3 +20,9 @@ export function isEmail(input: string): boolean {
 export function phoneOtpEnabled(): boolean {
   return process.env.NEXT_PUBLIC_PHONE_OTP === 'true';
 }
+
+/** +919014952056 → "+91 90149 52056" (content-style.md); other numbers are shown as stored. */
+export function formatPhone(phone: string): string {
+  const m = /^\+91([6-9]\d{4})(\d{5})$/.exec(phone);
+  return m ? `+91 ${m[1]} ${m[2]}` : phone;
+}

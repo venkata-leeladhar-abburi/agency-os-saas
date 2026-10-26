@@ -1,21 +1,15 @@
-import { Card, Input, PageHeader } from '@agency-os/ui';
-import { EXAMPLE_WORKSPACE } from '@/lib/data';
+import { PageHeader } from '@agency-os/ui';
+import { settings } from '@/lib/data';
+import { SettingsForm } from './settings-form';
 
 export const metadata = { title: 'Settings · Agency OS' };
 
-export default function SettingsPage() {
+export default async function SettingsPage({ params }: { params: Promise<{ workspace: string }> }) {
+  const { workspace } = await params;
   return (
     <>
-      <PageHeader title="Settings" subtitle="Workspace profile" className="mb-4" />
-      <Card title="Workspace" description="Shown on proposals, invoices and the client portal.">
-        <div className="grid max-w-lg gap-4">
-          <Input label="Workspace name" defaultValue={EXAMPLE_WORKSPACE.name} readOnly />
-          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-            <Input label="Currency" defaultValue="INR" readOnly />
-            <Input label="Time zone" defaultValue="Asia/Kolkata" readOnly />
-          </div>
-        </div>
-      </Card>
+      <PageHeader title="Settings" subtitle="Workspace, tax and invoices" className="mb-4" />
+      <SettingsForm slug={workspace} settings={await settings()} />
     </>
   );
 }

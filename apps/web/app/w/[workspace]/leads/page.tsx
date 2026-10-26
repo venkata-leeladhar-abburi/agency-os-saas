@@ -1,5 +1,7 @@
+import { Plus } from '@phosphor-icons/react/dist/ssr';
 import { formatMoney } from '@agency-os/core';
-import { PageHeader } from '@agency-os/ui';
+import { buttonVariants, PageHeader } from '@agency-os/ui';
+import Link from 'next/link';
 import { Empty, ViewTabs } from '@/components/workspace/page-bits';
 import { LeadsBoard, LeadsTable } from '@/components/workspace/tables';
 import { leads } from '@/lib/data';
@@ -14,6 +16,7 @@ export default async function LeadsPage({
   searchParams: Promise<{ view?: string }>;
 }) {
   const [{ workspace }, { view }] = await Promise.all([params, searchParams]);
+  const base = `/w/${workspace}/leads`;
   const { rows, board } = await leads();
   const open = rows.filter((r) => r.stage !== 'Won' && r.stage !== 'Lost');
   const total = open.reduce((sum, r) => sum + r.valueMinor, 0n);
@@ -22,13 +25,14 @@ export default async function LeadsPage({
       <PageHeader
         title="Leads"
         subtitle={`${open.length} open · ${formatMoney(total, 'INR', { compact: true })} in the pipeline`}
+        actions={
+          <Link href={`${base}/new`} className={buttonVariants({ variant: 'primary' })}>
+            <Plus size={16} aria-hidden="true" /> Add lead
+          </Link>
+        }
         className="mb-4"
       />
-      <ViewTabs
-        base={`/w/${workspace}/leads`}
-        view={view === 'table' ? 'table' : 'board'}
-        label="Leads view"
-      />
+      <ViewTabs base={base} view={view === 'table' ? 'table' : 'board'} label="Leads view" />
       {rows.length === 0 ? (
         <Empty
           icon="leads"
@@ -36,9 +40,9 @@ export default async function LeadsPage({
           text="Add your first lead, share your enquiry form, or import a CSV."
         />
       ) : view === 'table' ? (
-        <LeadsTable rows={rows} />
+        <LeadsTable rows={rows} base={base} />
       ) : (
-        <LeadsBoard columns={board} />
+        <LeadsBoard columns={board} base={base} />
       )}
     </>
   );

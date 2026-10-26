@@ -219,3 +219,10 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Plans:** the limits in `defaults-and-content.md` §8 are confirmed as enforced since M6 (open question 5).
 - **Message notifications:** a new message in a project thread notifies the other side in the app and by email. The team gets the in-app list and email; the client gets the portal and email. Each person can turn it off in Settings (open question 17). It's added to the notification defaults with M14.
 - **Database access from cloud sessions:** these sessions allow only HTTPS, so migrations run on the Supabase project from a GitHub Actions workflow started by hand (`DATABASE_URL_DIRECT` as a repository secret). The app talks to Supabase Auth and Storage over HTTPS.
+
+### D-041 Building the workspace screens before the database is reachable
+**Status:** Accepted (founder asked to build with example data) · **Date:** 26 Oct 2026
+- **Example mode:** with `EXAMPLE_MODE=true` the app skips sign-in and opens the example workspace at `/w/one-stop`. Every screen shows the "Example data" badge. Never set in production.
+- **One data layer:** screens read and write only through `apps/web/lib/data`. Today it works on an in-memory example store (`example-store.ts`), so forms really save during review; it resets when the server restarts. Each function is swapped for its `packages/db` query (through `withUser`) as screens are wired up; what the screens receive stays the same.
+- **Rules stay in one place:** form checks live in `apps/web/lib/forms.ts` and call `packages/core` for money, GSTIN, invoice prefixes and payments; the display rules (follow-ups, invoice status, GST treatment per client) live in `lib/data/views.ts`. Both are unit-tested, and the server actions run the same checks.
+- **Server and client parts:** server pages pass icons to client components by name only, because components can't cross from the server to the browser.
