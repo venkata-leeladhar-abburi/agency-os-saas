@@ -2,7 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { clientOptions, createInvoice, getInvoice, issueInvoice, recordPayment } from '@/lib/data';
+import {
+  clientOptions,
+  createInvoice,
+  getInvoice,
+  issueInvoice,
+  recordPayment,
+  setInvoiceReminders,
+} from '@/lib/data';
 import { formatMoney } from '@agency-os/core';
 import { audit } from '@/lib/data/audit';
 import { callerIp } from '@/lib/origin';
@@ -75,4 +82,9 @@ export async function recordPaymentAction(
   );
   revalidatePath(`/w/${slug}`, 'layout');
   redirect(`/w/${slug}/invoices/${id}`);
+}
+
+export async function setRemindersAction(slug: string, id: string, on: boolean) {
+  await setInvoiceReminders(id, on);
+  revalidatePath(`/w/${slug}/invoices/${id}`);
 }

@@ -3,7 +3,15 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { isEmail, normaliseIndianPhone } from '@/lib/auth/helpers';
-import { decideGate, examplePayment, saveContact, sendMessage } from '@/lib/data/portal';
+import { exampleMode } from '@/lib/data';
+import { isOnlineMethod } from '@/lib/data/pay-methods';
+import {
+  decideGate,
+  examplePayment,
+  portalInvoice,
+  saveContact,
+  sendMessage,
+} from '@/lib/data/portal';
 import { fields, type Errors } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
 import { currentPortal } from '@/lib/portal-session';
@@ -32,12 +40,24 @@ export async function decideGateAction(
   return { done: Date.now() };
 }
 
-export async function payAction(slug: string, invoiceId: string): Promise<FormState> {
+export async function payAction(
+  slug: string,
+  invoiceId: string,
+  _prev: FormState,
+  form: FormData,
+): Promise<FormState> {
   const s = await session(slug);
-  const result = await examplePayment(s.clientId, invoiceId);
+  // Real payments go through Razorpay and come back by its redirect and webhook.
+  if (!exampleMode()) return { message: 'Online payment isn’t set up yet. Pay by bank transfer.' };
+  const method = form.get('method');
+  if (!isOnlineMethod(method)) return { message: 'Choose UPI, card or net banking.' };
+  // Only the signed-in client's own issued invoices.
+  if (!(await portalInvoice(s.clientId, invoiceId)))
+    return { message: 'This invoice isn’t yours.' };
+  const result = await examplePayment(s.clientId, invoiceId, method);
   if (!result.ok) return { message: result.error };
   revalidatePath(`/p/${slug}`, 'layout');
-  redirect(`/p/${slug}/payments/${invoiceId}?paid=1`);
+  redirect(`/p/${slug}/payments/${invoiceId}?payment=paid`);
 }
 
 export async function sendMessageAction(

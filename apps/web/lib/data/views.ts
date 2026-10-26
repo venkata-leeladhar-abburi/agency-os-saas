@@ -294,3 +294,33 @@ export function dueIn(at: string, now = new Date()): string {
 export function relativeInSentence(at: string, now = new Date()): string {
   return relativeTime(at, now).replace(/^(Just now|Yesterday)$/, (m) => m.toLowerCase());
 }
+
+/** The WhatsApp message the agency sends with the pay link (plain, no emoji). */
+export function reminderMessage(p: {
+  contactName: string;
+  number: string;
+  amountDue: string;
+  dueOn: string;
+  payUrl: string;
+  now?: Date;
+}): string {
+  const first = p.contactName.trim().split(/\s+/)[0] ?? p.contactName;
+  const late = p.dueOn < istDate(p.now ?? new Date());
+  const when = `${late ? 'was' : 'is'} due on ${formatDate(p.dueOn)}`;
+  return `Hi ${first}, invoice ${p.number} for ${p.amountDue} ${when}. You can pay it or download it here: ${p.payUrl}`;
+}
+
+/** A wa.me link: straight to the client's chat when we have their number with its country code. */
+export function whatsappLink(phone: string | null, message: string): string {
+  const digits = phone?.replace(/\D/g, '') ?? '';
+  const to = phone?.trim().startsWith('+') && /^\d{8,15}$/.test(digits) ? digits : '';
+  return `https://wa.me/${to}?text=${encodeURIComponent(message)}`;
+}
+
+export const REMINDER_STATE_LABELS = {
+  sent: 'Sent',
+  due: 'Due today',
+  scheduled: 'Scheduled',
+  skipped: 'Skipped',
+  cancelled: 'Not needed',
+} as const;

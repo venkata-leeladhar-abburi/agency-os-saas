@@ -1,14 +1,32 @@
 import { formatDate, formatMoney, minorDigits } from '@agency-os/core';
 import { DownloadSimple } from '@phosphor-icons/react/dist/ssr';
-import { Alert, buttonVariants, Card, InvoiceSummary } from '@agency-os/ui';
+import { Alert, Badge, buttonVariants, Card, InvoiceSummary, type BadgeProps } from '@agency-os/ui';
+import type { ReminderState } from '@agency-os/core';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Submit } from '@/components/workspace/form-bits';
 import { getInvoice } from '@/lib/data';
 import { PAYMENT_METHODS } from '@/lib/forms';
-import { DOCUMENT_TYPE_LABELS, istDate } from '@/lib/data/views';
+import {
+  DOCUMENT_TYPE_LABELS,
+  istDate,
+  REMINDER_STATE_LABELS,
+  reminderMessage,
+  whatsappLink,
+} from '@/lib/data/views';
+import { emailReady } from '@/lib/email';
+import { siteOrigin } from '@/lib/origin';
 import { issueInvoiceAction } from '../actions';
 import { PaymentDialog } from './payment-dialog';
+import { RemindersSwitch, ShareLink } from './reminders';
+
+const REMINDER_TONE: Record<ReminderState, BadgeProps['tone']> = {
+  sent: 'success',
+  due: 'warning',
+  scheduled: 'neutral',
+  skipped: 'neutral',
+  cancelled: 'neutral',
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const found = await getInvoice((await params).id);
@@ -29,7 +47,9 @@ export default async function InvoicePage({
   const { workspace, id } = await params;
   const found = await getInvoice(id);
   if (!found) notFound();
-  const { invoice, client, totals, state, settings } = found;
+  const { invoice, client, totals, state, settings, reminders } = found;
+  const payUrl = `${await siteOrigin()}/pay/${invoice.payToken}`;
+  const nextReminder = reminders?.find((r) => r.state === 'due' || r.state === 'scheduled');
   const isExport = totals.treatment === 'export_lut' || client.country !== 'IN';
 
   return (
@@ -74,7 +94,9 @@ export default async function InvoicePage({
       </div>
       {state.status === 'overdue' ? (
         <Alert tone="warning" title={`${state.statusText}`}>
-          Reminders go out 3 and 7 days after the due date.
+          {nextReminder
+            ? `The next reminder is due ${formatDate(nextReminder.on)}. You can also send the pay link on WhatsApp below.`
+            : 'No more reminders are scheduled. Send the pay link on WhatsApp below.'}
         </Alert>
       ) : null}
       {!invoice.number ? (
@@ -117,6 +139,61 @@ export default async function InvoicePage({
           </ul>
         </Card>
       </div>
+      {invoice.number && reminders ? (
+        <div className="grid gap-4 xl:grid-cols-2">
+          <Card
+            title="Reminders"
+            description={`By email to ${client.contactName}${client.email ? ` (${client.email})` : ''}.`}
+          >
+            <div className="grid gap-4">
+              <RemindersSwitch slug={workspace} id={invoice.id} on={invoice.reminders} />
+              <ul className="grid gap-2 p-0" aria-label="Reminder schedule">
+                {reminders.map((r) => (
+                  <li key={r.on} className="flex items-center justify-between gap-3 text-body">
+                    <span>
+                      {r.label} <span className="text-muted-foreground">· {formatDate(r.on)}</span>
+                    </span>
+                    <Badge tone={REMINDER_TONE[r.state]}>
+                      {r.state === 'sent' && r.sentAt
+                        ? `Sent ${formatDate(r.sentAt, { year: false })}`
+                        : r.state === 'due' && !emailReady()
+                          ? 'Waiting for email setup'
+                          : REMINDER_STATE_LABELS[r.state]}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+              {!emailReady() ? (
+                <p className="text-body-sm text-muted-foreground">
+                  Reminder emails start once email sending is set up. Until then, send the pay link
+                  yourself.
+                </p>
+              ) : null}
+            </div>
+          </Card>
+          {state.dueMinor > 0n ? (
+            <Card
+              title="Send to the client"
+              description="The pay link opens this invoice to pay or download."
+            >
+              <ShareLink
+                link={payUrl}
+                whatsapp={whatsappLink(
+                  client.phone,
+                  reminderMessage({
+                    contactName: client.contactName,
+                    number: invoice.number,
+                    amountDue: formatMoney(state.dueMinor, invoice.currency),
+                    dueOn: invoice.dueOn,
+                    payUrl,
+                  }),
+                )}
+                previewHref={`/w/${workspace}/invoices/${invoice.id}/reminder`}
+              />
+            </Card>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

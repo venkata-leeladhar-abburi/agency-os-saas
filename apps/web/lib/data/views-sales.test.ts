@@ -7,7 +7,9 @@ import {
   proposalStatus,
   quoteTotals,
   relativeInSentence,
+  reminderMessage,
   taskDue,
+  whatsappLink,
 } from './views';
 
 const now = new Date('2026-10-26T04:30:00Z'); // 10:00 IST
@@ -86,5 +88,30 @@ describe('dueIn and relativeInSentence', () => {
     expect(dueIn('2026-10-24T06:00:00Z', now)).toBe('2 days ago');
     expect(relativeInSentence('2026-10-24T06:00:00Z', now)).toBe('Sat');
     expect(relativeInSentence('2026-10-25T06:00:00Z', now)).toBe('yesterday');
+  });
+});
+
+describe('reminder sharing', () => {
+  const now = new Date('2026-10-26T06:00:00Z');
+  const base = {
+    contactName: 'Srinivas Beere',
+    number: 'OSS/26-27/014',
+    amountDue: '₹29,500.00',
+    payUrl: 'https://app.example/pay/abc',
+    now,
+  };
+  it('writes the message in the right tense', () => {
+    expect(reminderMessage({ ...base, dueOn: '2026-10-20' })).toBe(
+      'Hi Srinivas, invoice OSS/26-27/014 for ₹29,500.00 was due on 20 Oct 2026. You can pay it or download it here: https://app.example/pay/abc',
+    );
+    expect(reminderMessage({ ...base, dueOn: '2026-10-26' })).toContain('is due on 26 Oct 2026');
+  });
+  it('opens the client’s chat when the number has its country code, else lets you pick', () => {
+    expect(whatsappLink('+91 90149 52056', 'Hi there')).toBe(
+      'https://wa.me/919014952056?text=Hi%20there',
+    );
+    expect(whatsappLink('+44 20 7946 0000', 'x')).toBe('https://wa.me/442079460000?text=x');
+    expect(whatsappLink('98480 22338', 'x')).toBe('https://wa.me/?text=x');
+    expect(whatsappLink(null, 'a&b')).toBe('https://wa.me/?text=a%26b');
   });
 });

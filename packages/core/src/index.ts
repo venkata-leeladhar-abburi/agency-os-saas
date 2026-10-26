@@ -15,3 +15,4 @@ export * from './lead-import';
 export * from './sales-docs';
 export * from './phases';
 export * from './colour';
+export * from './reminders';

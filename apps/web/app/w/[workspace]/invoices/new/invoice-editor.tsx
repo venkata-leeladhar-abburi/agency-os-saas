@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, buttonVariants, Input, InvoiceSummary, Select } from '@agency-os/ui';
+import { Alert, buttonVariants, Checkbox, Input, InvoiceSummary, Select } from '@agency-os/ui';
 import Link from 'next/link';
 import { useActionState, useMemo, useState } from 'react';
 import { FormMessage, Submit } from '@/components/workspace/form-bits';
@@ -107,6 +107,13 @@ export function InvoiceEditor({
         <p className="text-body-sm text-muted-foreground">
           GST is 18% on each line. The number {nextNumber} is given when you issue it.
         </p>
+        <Checkbox
+          name="reminders"
+          label="Send reminders: 3 days before, on the due date, 3 and 7 days after"
+          description="By email to the client. They stop once the invoice is paid."
+          // After a failed save, keep what was chosen; a new invoice starts with them on.
+          defaultChecked={state.values ? v.reminders === 'on' : true}
+        />
         <div className="flex flex-wrap justify-end gap-2">
           <Link href={`/w/${slug}/invoices`} className={buttonVariants({ variant: 'ghost' })}>
             Cancel

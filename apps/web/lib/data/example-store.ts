@@ -341,6 +341,13 @@ function seed(): ExampleStore {
       lines: [web('Design phase, milestone 1', 25_000)],
       exchangeRate: null,
       payments: [],
+      reminders: true,
+      remindersSent: [
+        { on: date(-9), sentAt: iso(-9, 9) },
+        { on: date(-6), sentAt: iso(-6, 9) },
+        { on: date(-3), sentAt: iso(-3, 9) },
+      ],
+      payToken: 'example-pay-14-K7d2Qx',
       createdAt: iso(-13),
     },
     {
@@ -353,6 +360,9 @@ function seed(): ExampleStore {
       lines: [web('Website, 5 pages', 30_000), web('Copywriting', 2_000, 5)],
       exchangeRate: null,
       payments: [],
+      reminders: true,
+      remindersSent: [],
+      payToken: 'example-pay-15-K7d2Qx',
       createdAt: iso(0),
     },
     {
@@ -375,6 +385,9 @@ function seed(): ExampleStore {
       payments: [
         { id: 'p1', amountMinor: 80_000n, receivedOn: date(-2), method: 'wise', reference: null },
       ],
+      reminders: true,
+      remindersSent: [],
+      payToken: 'example-pay-16-K7d2Qx',
       createdAt: iso(-4),
     },
     {
@@ -395,6 +408,9 @@ function seed(): ExampleStore {
           reference: 'UPI 6021',
         },
       ],
+      reminders: true,
+      remindersSent: [{ on: date(-21), sentAt: iso(-21, 9) }],
+      payToken: 'example-pay-13-K7d2Qx',
       createdAt: iso(-25),
     },
     {
@@ -407,6 +423,9 @@ function seed(): ExampleStore {
       lines: [web('Booking app, discovery', 30_000)],
       exchangeRate: null,
       payments: [],
+      reminders: true,
+      remindersSent: [],
+      payToken: 'example-pay-draft-K7d2Qx',
       createdAt: iso(-1),
     },
   ];

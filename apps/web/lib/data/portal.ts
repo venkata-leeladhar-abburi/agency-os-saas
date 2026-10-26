@@ -3,6 +3,7 @@
 // the same with the portal RLS policies).
 import { formatDate, formatMoney } from '@agency-os/core';
 import { notify } from './notifications';
+import { ONLINE_METHODS, type OnlineMethod } from './pay-methods';
 import { phaseNames } from './project-phases';
 import { activity, newId, store } from './shared';
 import type { Client, Invoice, Project } from './types';
@@ -211,23 +212,30 @@ export async function portalInvoice(clientId: string, invoiceId: string) {
  * Example mode only: records the full amount as paid by UPI, so the portal's pay flow can be
  * tried. Real payments come from Razorpay (test keys needed) and its webhook.
  */
-export async function examplePayment(clientId: string, invoiceId: string): Promise<Outcome> {
-  const found = await portalInvoice(clientId, invoiceId);
-  if (!found) return { ok: false, error: 'This invoice isn’t yours.' };
-  if (found.state.dueMinor <= 0n) return { ok: false, error: 'This invoice is already paid.' };
-  const c = client(clientId)!;
-  found.invoice.payments.push({
+export async function examplePayment(
+  clientId: string,
+  invoiceId: string,
+  method: OnlineMethod = 'upi',
+): Promise<Outcome> {
+  const c = client(clientId) ?? store().clients.find((x) => x.id === clientId);
+  const inv = store().invoices.find(
+    (i) => i.id === invoiceId && i.clientId === clientId && i.number,
+  );
+  if (!c || !inv) return { ok: false, error: 'This invoice isn’t yours.' };
+  const { state } = invoiceView(inv, c);
+  if (state.dueMinor <= 0n) return { ok: false, error: 'This invoice is already paid.' };
+  inv.payments.push({
     id: newId('pay'),
-    amountMinor: found.state.dueMinor,
+    amountMinor: state.dueMinor,
     receivedOn: istDate(new Date()),
-    method: 'upi',
+    method,
     reference: 'Example payment',
   });
   notify(
     'payment_received',
-    `Payment received: ${formatMoney(found.state.dueMinor, found.invoice.currency)} for ${found.invoice.number}`,
-    `${c.name} · UPI`,
-    `/invoices/${found.invoice.id}`,
+    `Payment received: ${formatMoney(state.dueMinor, inv.currency)} for ${inv.number}`,
+    `${c.name} · ${ONLINE_METHODS.find((m) => m.value === method)!.label}`,
+    `/invoices/${inv.id}`,
   );
   return { ok: true };
 }

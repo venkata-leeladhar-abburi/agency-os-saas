@@ -59,6 +59,9 @@ describe('onboarding', () => {
       lines: [],
       exchangeRate: null,
       payments: [],
+      reminders: true,
+      remindersSent: [],
+      payToken: 'mine-token',
       createdAt: new Date().toISOString(),
     });
     const id = await createLead(lead);

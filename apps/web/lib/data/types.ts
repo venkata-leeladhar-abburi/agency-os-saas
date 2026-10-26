@@ -122,7 +122,8 @@ export type Project = {
   example?: boolean;
 };
 
-export type PaymentMethod = 'bank_transfer' | 'upi' | 'card' | 'cash' | 'wise' | 'paypal' | 'other';
+export type PaymentMethod =
+  'bank_transfer' | 'upi' | 'card' | 'net_banking' | 'cash' | 'wise' | 'paypal' | 'other';
 
 export type Payment = {
   id: string;
@@ -144,6 +145,12 @@ export type Invoice = {
   /** INR per unit of the invoice currency, for invoices outside India. */
   exchangeRate: string | null;
   payments: Payment[];
+  /** Email reminders before and after the due date; on by default. */
+  reminders: boolean;
+  /** Reminders that went out, by their scheduled date. */
+  remindersSent: { on: string; sentAt: string }[];
+  /** The unguessable part of the pay link (the database keeps only its hash). */
+  payToken: string;
   createdAt: string;
   /** Example data: removed with "Remove example data". */
   example?: boolean;

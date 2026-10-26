@@ -269,6 +269,8 @@ export type InvoiceInput = {
   exchangeRate: string | null;
   lines: InvoiceLineInput[];
   issue: boolean;
+  /** Email reminders around the due date (on unless unticked). */
+  reminders: boolean;
 };
 
 export function checkLines(
@@ -340,6 +342,7 @@ export function checkInvoice(
       exchangeRate,
       lines,
       issue: f.intent === 'issue',
+      reminders: f.reminders === 'on',
     },
   };
 }
@@ -348,6 +351,7 @@ export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'bank_transfer', label: 'Bank transfer' },
   { value: 'upi', label: 'UPI' },
   { value: 'card', label: 'Card' },
+  { value: 'net_banking', label: 'Net banking' },
   { value: 'cash', label: 'Cash' },
   { value: 'wise', label: 'Wise' },
   { value: 'paypal', label: 'PayPal' },

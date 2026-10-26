@@ -1,12 +1,12 @@
-import { formatDate, formatMoney } from '@agency-os/core';
-import { DownloadSimple } from '@phosphor-icons/react/dist/ssr';
-import { Alert, buttonVariants, Card, InvoiceSummary, Progress } from '@agency-os/ui';
+import { formatMoney } from '@agency-os/core';
+import { Alert } from '@agency-os/ui';
 import { notFound } from 'next/navigation';
+import { InvoicePayView } from '@/components/invoice/invoice-pay-view';
+import { PayForm } from '@/components/invoice/pay-form';
 import { exampleMode } from '@/lib/data';
 import { portalInvoice } from '@/lib/data/portal';
-import { DOCUMENT_TYPE_LABELS } from '@/lib/data/views';
 import { currentPortal } from '@/lib/portal-session';
-import { PayButton } from './pay-button';
+import { payAction } from '../../actions';
 
 export const metadata = { title: 'Invoice' };
 
@@ -15,75 +15,38 @@ export default async function PortalInvoice({
   searchParams,
 }: {
   params: Promise<{ workspace: string; id: string }>;
-  searchParams: Promise<{ paid?: string }>;
+  searchParams: Promise<{ payment?: string }>;
 }) {
-  const [{ workspace, id }, { paid }] = await Promise.all([params, searchParams]);
+  const [{ workspace, id }, { payment }] = await Promise.all([params, searchParams]);
   const session = (await currentPortal(workspace))!;
   const found = await portalInvoice(session.clientId, id);
   if (!found) notFound();
-  const { invoice, totals, state, settings } = found;
-  const due = formatMoney(state.dueMinor, invoice.currency);
+  const { invoice, state } = found;
+  const example = exampleMode();
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-title-lg">Invoice {invoice.number}</h1>
-        <a
-          href={`/p/${workspace}/payments/${invoice.id}/pdf`}
-          download
-          className={buttonVariants({ size: 'lg' })}
-        >
-          <DownloadSimple size={18} aria-hidden="true" />
-          Download PDF
-        </a>
-      </div>
-      {paid === '1' && state.status === 'paid' ? (
-        <Alert
-          tone="success"
-          title={`Payment received: ${formatMoney(totals.total.amountMinor, invoice.currency)}`}
-        >
-          Thank you. {session.agency} has been told.
-        </Alert>
-      ) : null}
-      {state.status === 'overdue' ? (
-        <Alert tone="warning" title={`This invoice was due on ${formatDate(invoice.dueOn)}`}>
-          You can still pay it below.
-        </Alert>
-      ) : null}
-      <InvoiceSummary
-        type={DOCUMENT_TYPE_LABELS[totals.documentType]}
-        number={invoice.number ?? undefined}
-        status={state.status}
-        statusText={state.statusText}
-        totals={totals}
-        exchangeRate={invoice.exchangeRate ?? undefined}
-        lutArn={totals.treatment === 'export_lut' ? (settings.lutArn ?? undefined) : undefined}
+      <h1 className="text-title-lg">Invoice {invoice.number}</h1>
+      <InvoicePayView
+        {...found}
+        pdfHref={`/p/${workspace}/payments/${invoice.id}/pdf`}
+        outcome={payment === 'paid' ? 'paid' : payment === 'failed' ? 'failed' : undefined}
+        payNote={
+          example ? (
+            <Alert tone="info" title="Example mode: no money moves">
+              Paying here records an example payment. Real payments by UPI, card and net banking
+              start once Razorpay is connected.
+            </Alert>
+          ) : null
+        }
+        payForm={
+          example ? (
+            <PayForm
+              action={payAction.bind(null, workspace, invoice.id)}
+              label={`Pay ${formatMoney(state.dueMinor, invoice.currency)}`}
+            />
+          ) : null
+        }
       />
-      {state.dueMinor > 0n ? (
-        <Card title={state.paidMinor > 0n ? 'Pay the rest' : 'Pay now'} as="h2">
-          <div className="grid gap-4">
-            {state.paidMinor > 0n ? (
-              <Progress
-                value={Number((state.paidMinor * 100n) / totals.total.amountMinor)}
-                label={`${formatMoney(state.paidMinor, invoice.currency)} of ${formatMoney(totals.total.amountMinor, invoice.currency)} paid`}
-                showValue
-              />
-            ) : null}
-            {exampleMode() ? (
-              <>
-                <Alert tone="info" title="Example mode: no money moves">
-                  Paying here records an example UPI payment. Real payments by UPI, card and net
-                  banking start once Razorpay is connected.
-                </Alert>
-                <PayButton slug={workspace} id={invoice.id} label={`Pay ${due}`} />
-              </>
-            ) : (
-              <p className="text-body text-muted-foreground">
-                Online payment isn’t set up yet. Ask {session.agency} for their bank details.
-              </p>
-            )}
-          </div>
-        </Card>
-      ) : null}
     </>
   );
 }

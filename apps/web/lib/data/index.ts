@@ -3,12 +3,15 @@
 // forms can be built and used before the database is reachable. Each one is swapped for its
 // query in packages/db (withUser + the matching function) as the screens are wired up; the
 // shapes the screens receive stay the same.
+import { randomBytes } from 'node:crypto';
 import {
   formatDate,
   formatInvoiceNumber,
   formatMoney,
   LEAD_SOURCE_LABELS,
   PLAN_DETAILS,
+  reminderSchedule,
+  reminderStates,
 } from '@agency-os/core';
 import type {
   ClientInput,
@@ -390,7 +393,12 @@ export async function invoices(): Promise<InvoiceRow[]> {
 export async function getInvoice(id: string) {
   const inv = store().invoices.find((i) => i.id === id);
   if (!inv) return null;
-  return { ...invoiceView(inv), settings: store().settings };
+  const view = invoiceView(inv);
+  return {
+    ...view,
+    settings: store().settings,
+    reminders: invoiceReminders(inv, view.state.status === 'paid'),
+  };
 }
 
 /** The number the next issued invoice gets, for the editor's subtitle. */
@@ -418,9 +426,27 @@ export async function createInvoice(input: InvoiceInput): Promise<string> {
     lines: input.lines,
     exchangeRate: input.exchangeRate,
     payments: [],
+    reminders: input.reminders,
+    remindersSent: [],
+    payToken: randomBytes(16).toString('base64url'),
     createdAt: new Date().toISOString(),
   });
   return id;
+}
+
+/** Where each reminder for an issued invoice stands today; null for drafts. */
+export function invoiceReminders(inv: Invoice, paid: boolean, now = new Date()) {
+  if (!inv.issuedOn) return null;
+  return reminderStates(
+    reminderSchedule({ issuedOn: inv.issuedOn, dueOn: inv.dueOn }),
+    inv.remindersSent,
+    { today: istDate(now), paid, enabled: inv.reminders },
+  );
+}
+
+export async function setInvoiceReminders(id: string, on: boolean) {
+  const inv = store().invoices.find((i) => i.id === id);
+  if (inv) inv.reminders = on;
 }
 
 export async function issueInvoice(id: string) {
