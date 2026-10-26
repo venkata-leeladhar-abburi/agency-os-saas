@@ -1,0 +1,3 @@
+#!/bin/sh
+# Blocks commits that contain env files or secret-looking text.
+exec node scripts/check-secrets.mjs --staged
