@@ -37,5 +37,13 @@ test('follows the device setting by default', async ({ browser }) => {
 
 test('health route answers', async ({ request }) => {
   const res = await request.get('/api/health');
-  expect(await res.json()).toEqual({ ok: true });
+  expect(await res.json()).toMatchObject({ ok: true });
+});
+
+test('Razorpay webhook refuses requests it cannot verify', async ({ request }) => {
+  const res = await request.post('/api/webhooks/razorpay', {
+    data: { event: 'subscription.activated' },
+  });
+  // 503 when the database or secret is not configured here; 401 when it is.
+  expect([401, 503]).toContain(res.status());
 });

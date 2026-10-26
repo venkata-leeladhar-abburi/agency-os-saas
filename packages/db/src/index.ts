@@ -1,6 +1,7 @@
 export * from './accounts';
 export {
   connect,
+  pingDatabase,
   withService,
   withUser,
   type Connection,
@@ -11,3 +12,5 @@ export {
 export { migrate, migrationsFolder } from './migrate';
 export * as schema from './schema';
 export { hashToken, newToken } from './tokens';
+export * from './platform';
+export * from './billing';

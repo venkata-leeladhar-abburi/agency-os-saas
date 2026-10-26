@@ -20,6 +20,9 @@ importers:
       '@agency-os/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@agency-os/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@agency-os/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens

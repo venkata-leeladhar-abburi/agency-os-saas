@@ -47,6 +47,8 @@ beforeAll(async () => {
   arjun = { userId: await t.createUser('arjun@onestop.in'), email: 'arjun@onestop.in' };
   wsA = await as(kiran, (tx) => createWorkspace(tx, { name: 'One Stop Solutions' }));
   wsB = await as(sarah, (tx) => createWorkspace(tx, { name: 'Northwind Studio', country: 'GB' }));
+  // Free allows one member; these tests invite several.
+  await t.admin`update workspaces set plan = 'growth' where id = ${wsA}`;
   const { token } = await as(kiran, (tx) =>
     inviteMember(tx, {
       workspaceId: wsA,
@@ -143,6 +145,18 @@ describe('tenant isolation (row-level security)', () => {
           email: 'x@example.com',
           role: 'admin',
           invitedBy: kiran.userId,
+        }),
+      ),
+    ).rejects.toMatchObject({ code: 'no_access' });
+    await expect(
+      as(kiran, (tx) =>
+        tx.insert(invitations).values({
+          workspaceId: wsB,
+          email: 'x@example.com',
+          role: 'admin',
+          tokenHash: 'x',
+          invitedBy: kiran.userId,
+          expiresAt: new Date(),
         }),
       ),
     ).rejects.toMatchObject(denied);
