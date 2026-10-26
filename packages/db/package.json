@@ -4,15 +4,28 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "generate": "drizzle-kit generate",
+    "migrate": "node --experimental-strip-types src/migrate-cli.ts"
   },
   "devDependencies": {
     "@agency-os/config": "workspace:*",
     "eslint": "9.39.5",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "drizzle-kit": "0.31.11",
+    "vitest": "5.0.5",
+    "@types/node": "22.19.0"
+  },
+  "dependencies": {
+    "@agency-os/core": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "postgres": "3.4.9",
+    "uuid": "14.0.3"
   }
 }
