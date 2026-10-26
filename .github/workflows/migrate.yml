@@ -1,0 +1,31 @@
+name: Migrate database
+# Applies packages/db migrations to the Supabase project. Started by hand from the Actions tab.
+# Cloud sessions can't reach Postgres directly (HTTPS only), so migrations run here.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type "migrate" to apply migrations to the dev project
+        required: true
+jobs:
+  migrate:
+    if: github.event.inputs.confirm == 'migrate'
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply migrations
+        env:
+          DATABASE_URL_DIRECT: ${{ secrets.DATABASE_URL_DIRECT }}
+        run: |
+          if [ -z "$DATABASE_URL_DIRECT" ]; then
+            echo "::error::Add DATABASE_URL_DIRECT as a secret of the dev environment (Settings, Environments, dev)."
+            exit 1
+          fi
+          pnpm --filter @agency-os/db migrate

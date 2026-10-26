@@ -205,3 +205,17 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Portal:** `portal_projects()` gives the client phases, client lines, deliverables, gates and progress, never the checklist, budget or team.
 - **Notifications:** members can't write notifications, so user actions (gate requests and decisions) return a notification event. A job delivers it as the service role with `notify()`.
 - **Consequences:** M12 links tasks to phases; M14 builds the portal approval screens on these functions.
+
+### D-035 Tasks, comments and the team (M12 part 1)
+**Status:** Accepted · **Date:** 26 Oct 2026
+- **Tasks:** statuses and priorities match the approved prototype (To do, In progress, In review, Done; Low, Normal, High). A task belongs to a project, optionally a phase of that project, and optionally a parent task in the same project. Subtasks go one level deep. Board order uses fractional-index keys (`COLLATE "C"`). `completed_at` is set when a task moves to Done and cleared when it moves back. Deleting a task is a soft delete that needs `tasks.delete` and takes its subtasks with it.
+- **Access:** the project's team sees and edits its tasks (`own` scope = on the project). Someone assigned a task on another project sees that task only. Assignees must be active members.
+- **Comments:** authors edit and delete their own. Mentions keep only members of the workspace and notify them (the "task assigned or mentioned" notification). As with gates, the function returns the event and a job delivers it.
+- **Daily updates:** one per member, day and project, saved again to update it. The member sees their own, the project's lead sees the project's, and people with `members.write` see all.
+- **Team page:** `team_overview()` gives each member's role, active projects and open tasks as counts only, to anyone with `members.read`.
+
+### D-040 Founder answers: plan limits and message notifications
+**Status:** Approved by the founder · **Date:** 26 Oct 2026
+- **Plans:** the limits in `defaults-and-content.md` §8 are confirmed as enforced since M6 (open question 5).
+- **Message notifications:** a new message in a project thread notifies the other side in the app and by email. The team gets the in-app list and email; the client gets the portal and email. Each person can turn it off in Settings (open question 17). It's added to the notification defaults with M14.
+- **Database access from cloud sessions:** these sessions allow only HTTPS, so migrations run on the Supabase project from a GitHub Actions workflow started by hand (`DATABASE_URL_DIRECT` as a repository secret). The app talks to Supabase Auth and Storage over HTTPS.

@@ -9,7 +9,6 @@ Claude adds questions here and asks them in one batch. The founder answers inlin
 | 2 | **Name and domain:** is "Agency OS" the final product name? Which domain will the product use? | M16 | Vercel URLs until decided |
 | 3 | **Fonts:** Geist and Geist Mono (free) are chosen. Do you want a paid display face for marketing headlines? If yes, send the font files and the web licence. | G1 | Geist everywhere |
 | 4 | **Logo:** the One Stop glyph plus the "Agency OS" wordmark is used for now. Do you want a dedicated Agency OS logo? | G2 | Keep the current lockup |
-| 5 | **Pricing:** what goes into Free (Q1)? What is the Solo price (Q2)? Do Starter ₹1,499 and Growth ₹3,499 stand? | M6 | The proposed limits in `../02-product/defaults-and-content.md` §8 (Free: 1 member, 1 client with a portal, 25 open leads, 3 quotes, proposals and invoices a month). Note: the brief doesn't say whether Free can send quotes and invoices, but activation needs it. Solo hidden until research (A5) |
 | 6 | **Q4 to Q6 from the deck:** how hirers reach agencies, what earns the verified badge, mobile app or mobile web first | R3 planning | Mobile web first (the portal is phone-first); R3 questions wait for research |
 | 7 | **Accounts:** please create GitHub (repo), Vercel, Supabase (two projects, Mumbai), Inngest, Resend, PostHog, Sentry and Upstash, and add the keys as described in `../04-engineering/environments-and-deploy.md` | M0 (GitHub, Vercel), M5 (Supabase), later others | Claude builds with local or mock services where possible and lists what is waiting |
 | 8 | **Razorpay:** create a Razorpay account (test keys now, KYC and live keys before G3) for Agency OS subscriptions | M6 test, G3 live | Test mode only |
@@ -27,3 +26,7 @@ Claude adds questions here and asks them in one batch. The founder answers inlin
 Move answered questions here with the date and the answer, and add a decision to `decisions.md` when the answer changes the plan.
 
 - **13 Pull requests** (25 Oct 2026): Claude merges its own PRs when CI is green; gate milestones wait for the founder. Recorded as D-021.
+- **5 Pricing and Free plan** (26 Oct 2026): the proposed limits stand (Free: 1 member, 1 client with a portal, 25 open leads, 3 quotes, proposals and invoices a month; Starter ₹1,499, Growth ₹3,499; Solo hidden until research). Recorded as D-040.
+- **17 Message notifications** (26 Oct 2026): both sides get them in the app and by email. Team: in-app and email. Client: in the portal and by email. Recorded as D-040.
+- **18** was a reminder about question 5; answered with it.
+

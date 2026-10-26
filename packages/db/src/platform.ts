@@ -312,6 +312,9 @@ async function moreTables(tx: Tx, workspaceId: string) {
     phases: await all('phases'),
     checklist_items: await all('checklist_items'),
     gates: await all('gates'),
+    tasks: await all('tasks'),
+    comments: await all('comments'),
+    daily_updates: await all('daily_updates'),
   };
 }
 
