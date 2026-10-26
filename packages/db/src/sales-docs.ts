@@ -58,26 +58,36 @@ export type QuoteOptions = {
 const DAY = 86_400_000;
 const dateOnly = (d: Date) => d.toISOString().slice(0, 10);
 
-async function workspaceTax(tx: Tx, workspaceId: string) {
+/** Today's date (YYYY-MM-DD) in a time zone. */
+export function localDate(now: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+}
+
+export async function workspaceTax(tx: Tx, workspaceId: string) {
   const [ws] = await tx.select().from(workspaces).where(eq(workspaces.id, workspaceId));
   if (!ws) throw new AccountError('no_access');
   return ws;
 }
 
-function lutValidOn(ws: typeof workspaces.$inferSelect, on: Date) {
+export function lutValidOn(ws: typeof workspaces.$inferSelect, on: Date) {
   const day = dateOnly(on);
   return Boolean(
     ws.lutArn && ws.lutValidFrom && ws.lutValidTo && ws.lutValidFrom <= day && day <= ws.lutValidTo,
   );
 }
 
-function placeOf(q: Pick<Quote, 'placeOfSupplyCode' | 'exportCountry'>): PlaceOfSupply {
+export function placeOf(q: Pick<Quote, 'placeOfSupplyCode' | 'exportCountry'>): PlaceOfSupply {
   return q.placeOfSupplyCode
     ? { kind: 'india', stateCode: q.placeOfSupplyCode }
     : { kind: 'export', country: q.exportCountry ?? 'ZZ' };
 }
 
-function totalsFor(
+export function totalsFor(
   q: Pick<
     Quote,
     | 'currency'
@@ -298,7 +308,7 @@ export async function listQuotes(
 }
 
 /** The start of this calendar month in the workspace's time zone. */
-async function monthStart(tx: Tx, workspaceId: string, now: Date) {
+export async function monthStart(tx: Tx, workspaceId: string, now: Date) {
   const ws = await workspaceTax(tx, workspaceId);
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: ws.timeZone,

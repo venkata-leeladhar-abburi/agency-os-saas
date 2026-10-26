@@ -315,6 +315,11 @@ async function moreTables(tx: Tx, workspaceId: string) {
     tasks: await all('tasks'),
     comments: await all('comments'),
     daily_updates: await all('daily_updates'),
+    invoices: await all('invoices', ['public_token_hash']),
+    invoice_items: await all('invoice_items'),
+    payments: await all('payments'),
+    payment_links: await all('payment_links'),
+    reminders: await all('reminders'),
   };
 }
 

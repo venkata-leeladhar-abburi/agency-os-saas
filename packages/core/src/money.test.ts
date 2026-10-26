@@ -10,6 +10,7 @@ import {
   parseMoney,
   subtractMoney,
   sumMoney,
+  formatAmount,
 } from './money';
 import {
   amountInWords,
@@ -119,5 +120,13 @@ describe('L. amounts in words', () => {
   it('refuses unknown currencies and negative amounts', () => {
     expect(() => amountInWords(1, 'XYZ')).toThrow('No words');
     expect(() => amountInWords(-1, 'INR')).toThrow('negative');
+  });
+});
+
+describe('formatAmount', () => {
+  it('drops zero paise only', () => {
+    expect(formatAmount(11_800_000n, 'INR')).toBe('₹1,18,000');
+    expect(formatAmount(11_800_050n, 'INR')).toBe('₹1,18,000.50');
+    expect(formatAmount(1_200n, 'JPY')).toBe('¥1,200');
   });
 });

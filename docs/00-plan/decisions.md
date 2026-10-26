@@ -213,3 +213,15 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Comments:** authors edit and delete their own. Mentions keep only members of the workspace and notify them (the "task assigned or mentioned" notification). As with gates, the function returns the event and a job delivers it.
 - **Daily updates:** one per member, day and project, saved again to update it. The member sees their own, the project's lead sees the project's, and people with `members.write` see all.
 - **Team page:** `team_overview()` gives each member's role, active projects and open tasks as counts only, to anyone with `members.read`.
+
+### D-036 Invoices and payments (M13 part 1)
+**Status:** Accepted · **Date:** 26 Oct 2026
+- **Drafts and issuing:** a draft has no number. Issuing takes the next number from `document_sequences`. Tax invoices, bills of supply and exports share the `OSS/26-27/001` series, and proformas have their own (`OSS/PF26-27/001`) so they never leave gaps in the tax series. Issuing also fixes the bill-to details, sets the due date from the payment terms (on receipt, 7, 15 or 30 days; default 7) and schedules the default reminders. An invoice in another currency needs an exchange rate to INR when issued, and the INR total is stored.
+- **Type** comes from the GST treatment: same or different state gives a tax invoice; an export with a LUT valid on the date is `export_lut` (IGST 0%, the ARN on the invoice); an export without one is a tax invoice with IGST; no GSTIN gives a bill of supply.
+- **Locks:** an issued invoice never changes, apart from status, payments, cancellation, PDF and link. It can't be deleted; only a draft can. It can be cancelled with a reason while nothing has been paid. Credit notes come later.
+- **Overdue** is worked out (issued or part-paid and past the due date in the workspace's time zone), not stored.
+- **Payments** go in only through `record_invoice_payment()`. Members need `invoices.write`; the Razorpay webhook calls it as the service role. It locks the invoice, refuses amounts above what is due or in another currency, ignores a repeated provider payment id, sets part-paid or paid, cancels pending reminders once paid, and writes the timeline and the audit log. The amount rules and their messages are in core (`applyPayment`); the function is the safety net.
+- **Access:** project leads see the invoices of their own projects. Payments, items, links and reminders follow the invoice. The portal shows a client's issued invoices with what's due and the pay link.
+- **Messages and notifications** show whole amounts without zero paise (`formatAmount`: ₹1,18,000).
+- **Free plan:** 3 issued invoices a month; proformas don't count.
+- **Not yet (part 2):** the agency's own Razorpay keys go in Supabase Vault (`api-and-integrations.md`). Creating payment links, the per-workspace webhook secret, PDFs and reminder emails need the Supabase project and Resend.

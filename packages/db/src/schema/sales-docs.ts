@@ -39,7 +39,7 @@ const minor = (name: string) =>
     .notNull()
     .default(sql`0`);
 
-export const documentKindEnum = pgEnum('document_kind', ['quote', 'invoice']);
+export const documentKindEnum = pgEnum('document_kind', ['quote', 'invoice', 'proforma']);
 export const quoteStatusEnum = pgEnum('quote_status', [
   'draft',
   'sent',

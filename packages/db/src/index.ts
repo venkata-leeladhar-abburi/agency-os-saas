@@ -19,3 +19,4 @@ export * from './clients';
 export * from './sales-docs';
 export * from './projects';
 export * from './tasks';
+export * from './invoices';

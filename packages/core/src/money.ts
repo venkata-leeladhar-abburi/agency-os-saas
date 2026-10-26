@@ -105,3 +105,9 @@ export function convertMoney(from: Money, rate: string, to: CurrencyCode): Money
   const denominator = 10n ** 8n * 10n ** BigInt(fromDigits);
   return money(divRoundHalfUp(numerator, denominator), to);
 }
+
+/** For messages and notifications: whole amounts without the zero paise (₹1,18,000), others in full. */
+export function formatAmount(minor: bigint, currency: CurrencyCode, locale?: string): string {
+  const whole = minor % 10n ** BigInt(minorDigits(currency)) === 0n;
+  return formatMoney(minor, currency, { locale, ...(whole ? { decimals: 0 } : {}) });
+}

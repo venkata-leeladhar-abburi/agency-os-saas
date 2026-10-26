@@ -81,6 +81,17 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   comment_required: 'Write a comment first.',
   comment_not_found: 'That comment doesn’t exist or isn’t yours.',
   daily_update_empty: 'Add what you did, what’s next or what’s blocking you.',
+  invoice_not_found: 'That invoice doesn’t exist or you can’t open it.',
+  invoice_mismatch:
+    'Pick a client, project and quote from this workspace (the project must be the client’s).',
+  invoice_locked: 'This invoice was issued, so it can’t change. Cancel it and issue a new one.',
+  invoice_payment_locked: 'Payments are recorded with Record payment, not by editing the invoice.',
+  invoice_not_ready: 'Issue the invoice from the editor so it gets a number and dates.',
+  invoice_cannot_cancel: 'Only issued invoices with no payments can be cancelled.',
+  invoice_not_payable: 'Payments can only be recorded on issued invoices.',
+  payment_invalid: 'Check the amount and currency.',
+  exchange_rate_required: 'Add the exchange rate to INR for this currency.',
+  cancel_reason_required: 'Say why the invoice is cancelled.',
   portal_email_required: 'Add an email for this contact. The portal sign-in link goes to it.',
   portal_user_locked:
     'A portal login is linked when the contact signs in. It can’t be set by hand.',
