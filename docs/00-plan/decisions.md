@@ -239,3 +239,13 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **At risk:** an active project with an open task past its due date, an unfinished phase past its end date (named by its gate when it has one), or past its own due date. The reasons are listed in plain words.
 - **Today** shows one person's follow-ups (their own and unowned), tasks due today or earlier, internal gates waiting on them, client gates waiting on projects they lead, and invoices due or overdue. Meetings come with Google Calendar later.
 - **Access:** everything runs as the signed-in user, so each number counts only what that person can see. Each figure maps to a filtered list the screens link to.
+
+### D-039 Onboarding and example data (M7 part 1)
+**Status:** Accepted · **Date:** 26 Oct 2026
+- **Checklist:** the five steps from `defaults-and-content.md` §5, ticked from real records only: a logo is uploaded; a lead exists; a quote or proposal has been sent; a client contact has been invited to the portal; an invoice exists. It shows until complete or dismissed. Dismissing needs `workspace.manage`, and Help brings it back.
+- **Example data:**
+  - One example client (Kite & Co), two leads (Northwind, Lumen Foods), a Website redesign project in Design with its sign-off waiting, three tasks, and one paid and one pending invoice. These are the names from the design reference, and every record is `is_example`.
+  - A job loads the set as the service role; loading twice adds nothing.
+  - Example invoices are numbered `EXAMPLE-001` and `EXAMPLE-002`, outside the real tax series.
+  - Example records never count towards plan limits or tick checklist steps.
+  - Removing the set deletes example rows only, including their timeline entries. Real issued invoices and payments still can't be deleted; the database allows it only for example invoices.

@@ -22,3 +22,4 @@ export * from './tasks';
 export * from './invoices';
 export * from './portal';
 export * from './dashboard';
+export * from './onboarding';
