@@ -117,11 +117,8 @@ export function InvoicePayView({
     <a
       href={pdfHref}
       download
-      className={buttonVariants({
-        variant: paid ? 'secondary' : 'link',
-        size: paid ? 'xl' : 'md',
-        block: paid,
-      })}
+      // min-h keeps the link a 44px target on phones (the link style drops the height).
+      className={`${buttonVariants({ variant: paid ? 'secondary' : 'link', size: 'xl', block: paid })} min-h-control-xl`}
     >
       <DownloadSimple size={paid ? 20 : 16} aria-hidden="true" />
       Download PDF

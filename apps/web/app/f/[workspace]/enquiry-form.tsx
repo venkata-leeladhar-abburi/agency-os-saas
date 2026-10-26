@@ -45,6 +45,7 @@ export function EnquiryForm({ workspace }: { workspace: string }) {
         label="Email or phone"
         name="contact"
         required
+        autoComplete="email"
         size="xl"
         defaultValue={v.contact}
         error={e.contact}

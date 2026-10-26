@@ -1,9 +1,10 @@
 'use server';
 
-import { allowEnquiry, submitEnquiry } from '@/lib/data/enquiry';
+import { submitEnquiry } from '@/lib/data/enquiry';
 import { checkEnquiry, fields } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
 import { callerIp } from '@/lib/origin';
+import { allow } from '@/lib/rate-limit';
 
 export async function enquiryAction(_prev: FormState, form: FormData): Promise<FormState> {
   const f = fields(form);
@@ -11,7 +12,7 @@ export async function enquiryAction(_prev: FormState, form: FormData): Promise<F
   if (f.website) return { done: Date.now() };
   const checked = checkEnquiry(f);
   if (!checked.ok) return { errors: checked.errors, values: f };
-  if (!allowEnquiry(await callerIp()))
+  if (!(await allow('enquiries', await callerIp())))
     return {
       values: f,
       message: 'Too many enquiries from this network. Wait a minute and send it again.',

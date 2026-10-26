@@ -16,7 +16,7 @@ import {
 } from '@/lib/data/views';
 import { emailReady } from '@/lib/email';
 import { siteOrigin } from '@/lib/origin';
-import { issueInvoiceAction } from '../actions';
+import { issueInvoiceAction, newPayLinkAction } from '../actions';
 import { PaymentDialog } from './payment-dialog';
 import { RemindersSwitch, ShareLink } from './reminders';
 
@@ -189,6 +189,7 @@ export default async function InvoicePage({
                   }),
                 )}
                 previewHref={`/w/${workspace}/invoices/${invoice.id}/reminder`}
+                replace={newPayLinkAction.bind(null, workspace, invoice.id)}
               />
             </Card>
           ) : null}

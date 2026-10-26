@@ -8,6 +8,7 @@ import {
   getInvoice,
   issueInvoice,
   recordPayment,
+  newPayLink,
   setInvoiceReminders,
 } from '@/lib/data';
 import { formatMoney } from '@agency-os/core';
@@ -86,5 +87,12 @@ export async function recordPaymentAction(
 
 export async function setRemindersAction(slug: string, id: string, on: boolean) {
   await setInvoiceReminders(id, on);
+  revalidatePath(`/w/${slug}/invoices/${id}`);
+}
+
+export async function newPayLinkAction(slug: string, id: string) {
+  const number = await newPayLink(id);
+  if (number)
+    audit('invoice.link_replaced', number, 'The old link stopped working', await callerIp());
   revalidatePath(`/w/${slug}/invoices/${id}`);
 }

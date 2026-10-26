@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { STATIC_SECURITY_HEADERS } from './lib/security-headers';
 
 const config: NextConfig = {
   transpilePackages: [
@@ -8,6 +9,10 @@ const config: NextConfig = {
     '@agency-os/tokens',
     '@agency-os/ui',
   ],
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: '/:path*', headers: STATIC_SECURITY_HEADERS }];
+  },
   // react-pdf runs in Node and loads its own font and layout engines.
   serverExternalPackages: ['@react-pdf/renderer'],
   // The PDF routes read Geist's TTF files at run time; ship them with the functions.

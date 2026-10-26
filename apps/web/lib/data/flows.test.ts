@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { allowEnquiry } from './enquiry';
 import { resetExampleStore } from './example-store';
 import { importLeads } from './lead-import';
 import { acceptProposal, declineProposal, startSigning } from './sales';
@@ -74,15 +73,5 @@ describe('importLeads', () => {
       [6, 'Already a lead (same email).'],
       [7, 'Write the value as a number, like 4,86,000 or 4.86 L (was "eighty thousand").'],
     ]);
-  });
-});
-
-describe('allowEnquiry', () => {
-  it('lets five through a minute per network', () => {
-    const t = 1_000_000;
-    const results = Array.from({ length: 6 }, (_, i) => allowEnquiry('10.0.0.1', t + i));
-    expect(results).toEqual([true, true, true, true, true, false]);
-    expect(allowEnquiry('10.0.0.2', t)).toBe(true);
-    expect(allowEnquiry('10.0.0.1', t + 61_000)).toBe(true);
   });
 });

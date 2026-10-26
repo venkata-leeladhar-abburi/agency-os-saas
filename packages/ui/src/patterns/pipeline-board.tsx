@@ -73,6 +73,8 @@ export type PipelineBoardProps = {
   onAddLead?: (columnId: string) => void;
   size?: 'md' | 'sm';
   labels?: PipelineLabels;
+  /** The column headings' level: 2 when the board sits right under the page heading. */
+  headingLevel?: 2 | 3;
   className?: string;
 };
 
@@ -205,13 +207,16 @@ function Column({
   onOpen,
   onAddLead,
   labels,
+  headingLevel = 3,
 }: {
   column: PipelineColumn;
   cards: LeadCardData[];
   onOpen?: (id: string) => void;
   onAddLead?: (columnId: string) => void;
   labels?: PipelineLabels;
+  headingLevel?: 2 | 3;
 }) {
+  const Heading = headingLevel === 2 ? 'h2' : 'h3';
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const headingId = useId();
   return (
@@ -224,7 +229,7 @@ function Column({
       )}
     >
       <header className="flex items-center justify-between gap-2 px-1.5 pt-1 pb-0.5">
-        <h3 id={headingId} className="flex items-center gap-1.5 text-body-sm font-semibold">
+        <Heading id={headingId} className="flex items-center gap-1.5 text-body-sm font-semibold">
           {column.won ? (
             <span
               aria-hidden="true"
@@ -238,7 +243,7 @@ function Column({
               {labels?.count?.(cards.length) ?? `${cards.length} leads`}
             </span>
           </span>
-        </h3>
+        </Heading>
         {column.total ? (
           <span className="text-caption text-muted-foreground tabular-nums">{column.total}</span>
         ) : null}
@@ -282,6 +287,7 @@ export function PipelineBoard({
   onAddLead,
   size = 'md',
   labels,
+  headingLevel,
   className,
 }: PipelineBoardProps) {
   const [board, setBoard] = useState<Board>(() => toBoard(columns));
@@ -451,6 +457,7 @@ export function PipelineBoard({
             onOpen={onOpen}
             onAddLead={onAddLead}
             labels={labels}
+            headingLevel={headingLevel}
           />
         ))}
       </div>

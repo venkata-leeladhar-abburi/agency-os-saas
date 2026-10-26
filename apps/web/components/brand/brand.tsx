@@ -6,7 +6,7 @@ import { brandStyleSheet } from '@/lib/branding';
 export function BrandScope({ colour, children }: { colour: string | null; children: ReactNode }) {
   const sheet = brandStyleSheet(colour);
   return (
-    <div data-brand className="contents">
+    <div data-brand data-client className="contents">
       {sheet ? <style>{sheet}</style> : null}
       {children}
     </div>

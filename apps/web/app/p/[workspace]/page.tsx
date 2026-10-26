@@ -42,7 +42,10 @@ export default async function PortalHome({ params }: { params: Promise<{ workspa
           <div className="grid gap-4">
             <PhaseStepper current={p.current} phases={p.phases} compact />
             <Progress value={p.percent} label="Overall" showValue />
-            <Link href={`/p/${workspace}/projects/${p.id}`} className="text-body-medium">
+            <Link
+              href={`/p/${workspace}/projects/${p.id}`}
+              className="inline-flex min-h-control-xl items-center text-body-medium"
+            >
               Open the project
             </Link>
           </div>
@@ -68,7 +71,10 @@ export default async function PortalHome({ params }: { params: Promise<{ workspa
           />
         </Card>
       ) : null}
-      <Link href={`/p/${workspace}/account`} className="text-body-medium">
+      <Link
+        href={`/p/${workspace}/account`}
+        className="inline-flex min-h-control-xl items-center justify-self-start text-body-medium"
+      >
         Your account
       </Link>
     </>

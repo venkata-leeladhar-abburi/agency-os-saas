@@ -5,8 +5,10 @@ import { notFound } from 'next/navigation';
 import { AgencyMark, BrandScope } from '@/components/brand/brand';
 import { InvoicePayView } from '@/components/invoice/invoice-pay-view';
 import { PayForm } from '@/components/invoice/pay-form';
+import { TooManyTries } from '@/components/too-many-tries';
 import { exampleMode } from '@/lib/data';
 import { invoiceByPayToken } from '@/lib/data/pay';
+import { findByLink } from '@/lib/link-guard';
 import { payByLinkAction } from './actions';
 
 // Pay links are private: keep them out of search engines and other sites' referrers.
@@ -24,8 +26,10 @@ export default async function PayPage({
   searchParams: Promise<{ payment?: string }>;
 }) {
   const [{ token }, { payment }] = await Promise.all([params, searchParams]);
-  const found = await invoiceByPayToken(token);
-  if (!found) notFound();
+  const lookup = await findByLink(() => invoiceByPayToken(token));
+  if (!lookup) notFound();
+  if ('blocked' in lookup) return <TooManyTries />;
+  const found = lookup.found;
   const { invoice, state, brand } = found;
   const example = exampleMode();
   return (

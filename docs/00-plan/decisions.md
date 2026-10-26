@@ -286,3 +286,13 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Links:** every figure opens the list behind it: Received → invoices with a payment this month, Pending → due, Overdue → overdue, Pipeline → leads, a name in Team load → that person's tasks. The invoice list has status tabs (All, Due, Overdue, Paid, Drafts).
 - **First week:** with nothing quoted, billed or in the pipeline, the dashboard shows "Your numbers start here" (`defaults-and-content.md` §6) and links to the setup checklist instead of zeros.
 
+### D-048 Hardening pass, part 1 (no database needed)
+**Status:** Accepted · **Date:** 27 Oct 2026
+- **Headers:** a nonce-based CSP on every page, set in `proxy.ts` (`'strict-dynamic'`; inline styles allowed for React style attributes and the brand colour sheet; images from `data:` and `https:` for logos and signed storage URLs). Routes that answer with their own document (the email preview, PDFs) keep their own stricter policy. HSTS, `nosniff`, `Referrer-Policy`, `X-Frame-Options: DENY` and `Permissions-Policy` on every response; no `X-Powered-By`.
+- **Rate limits:** one module (`lib/rate-limit.ts`) for all public endpoints, counting in Upstash Redis when its keys are set and in memory otherwise. Limits in `LIMITS` (signing codes, signing tries, enquiries, links that open nothing). Results in `../04-engineering/hardening-2026-10.md`.
+- **Pay links** can be replaced from the invoice; the old link stops at once and the audit log records it.
+- **Dependencies:** `pnpm audit --prod --audit-level=high` in CI, Dependabot (weekly npm, monthly Actions) and CodeQL.
+- **Performance:** Geist Mono isn't preloaded (rarely on first paint). Budgets are judged with applied 4G throttling until Lighthouse CI runs on the preview; the simulated figures are recorded too.
+- **Accessibility:** the client-facing pages (portal, pay link, proposal link, enquiry form) use 16 px body text and 44 px targets on phones; autocomplete is set only on fields about the person filling the form in.
+- **Example data** dates follow the IST calendar (they used the UTC date, so tests and screens were a day off between midnight and 5:30 am IST), and today's example history is never in the future.
+

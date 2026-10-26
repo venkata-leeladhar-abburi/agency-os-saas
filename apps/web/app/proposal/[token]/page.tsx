@@ -5,8 +5,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { BrandScope } from '@/components/brand/brand';
 import { ProposalDocument } from '@/components/sales/proposal-document';
+import { TooManyTries } from '@/components/too-many-tries';
 import { exampleMode } from '@/lib/data';
 import { proposalByToken } from '@/lib/data/sales';
+import { findByLink } from '@/lib/link-guard';
 import { DeclineButton, SignPanel } from './sign-panel';
 
 // Proposal links are private: keep them out of search engines.
@@ -20,14 +22,16 @@ export default async function PublicProposalPage({
   searchParams: Promise<{ preview?: string }>;
 }) {
   const [{ token }, { preview }] = await Promise.all([params, searchParams]);
-  const found = await proposalByToken(token, preview !== '1');
-  if (!found) notFound();
+  const lookup = await findByLink(() => proposalByToken(token, preview !== '1'));
+  if (!lookup) notFound();
+  if ('blocked' in lookup) return <TooManyTries />;
+  const found = lookup.found;
   const { proposal: p, totals, status, workspace, brand } = found;
   const open = status === 'sent' || status === 'viewed';
 
   return (
     <BrandScope colour={brand.colour}>
-      <main className="mx-auto grid w-full max-w-prose gap-4 px-4 py-8">
+      <main className="mx-auto grid w-full max-w-prose grid-cols-[minmax(0,1fr)] gap-4 px-4 py-8">
         {exampleMode() || preview === '1' ? (
           <div className="flex flex-wrap items-center justify-between gap-2">
             {preview === '1' ? (

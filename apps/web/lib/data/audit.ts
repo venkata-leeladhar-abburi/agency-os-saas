@@ -13,6 +13,7 @@ export const AUDIT_ACTIONS: Record<string, string> = {
   'settings.saved': 'Changed workspace settings',
   'branding.saved': 'Changed the branding',
   'invoice.issued': 'Issued an invoice',
+  'invoice.link_replaced': 'Made a new pay link',
   'payment.recorded': 'Recorded a payment',
   'proposal.sent': 'Sent a proposal',
   'client.portal_invited': 'Invited a client to the portal',

@@ -28,6 +28,7 @@ export function SettingsForm({ slug, settings }: { slug: string; settings: Works
           <Input
             label="Workspace name"
             name="name"
+            autoComplete="organization"
             required
             defaultValue={value('name')}
             error={e.name}
@@ -52,6 +53,7 @@ export function SettingsForm({ slug, settings }: { slug: string; settings: Works
           <Textarea
             label="Address"
             name="address"
+            autoComplete="street-address"
             optional
             rows={2}
             defaultValue={value('address')}

@@ -465,6 +465,14 @@ export function invoiceReminders(inv: Invoice, paid: boolean, now = new Date()) 
   );
 }
 
+/** A new pay link: the old one stops working at once (for a link sent to the wrong person). */
+export async function newPayLink(id: string): Promise<string | null> {
+  const inv = store().invoices.find((i) => i.id === id);
+  if (!inv?.number) return null;
+  inv.payToken = randomBytes(16).toString('base64url');
+  return inv.number;
+}
+
 export async function setInvoiceReminders(id: string, on: boolean) {
   const inv = store().invoices.find((i) => i.id === id);
   if (inv) inv.reminders = on;

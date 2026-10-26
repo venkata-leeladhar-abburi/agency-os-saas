@@ -49,6 +49,8 @@ export function LeadsBoard({
     <PipelineBoard
       columns={columns}
       size={size}
+      // On the leads page the columns sit right under the page heading; on the dashboard, in a card.
+      headingLevel={size === 'sm' ? 3 : 2}
       onOpen={(id) => router.push(`${base}/${id}`)}
       onAddLead={size === 'sm' ? undefined : () => router.push(`${base}/new`)}
       onMove={(id, to) => {

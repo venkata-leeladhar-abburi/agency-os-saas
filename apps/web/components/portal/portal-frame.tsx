@@ -31,7 +31,7 @@ export function PortalFrame({
   const section = usePathname().split('/')[3] ?? 'home';
   const base = `/p/${slug}`;
   return (
-    <div data-brand className="contents">
+    <div data-brand data-client className="contents">
       {brandSheet ? <style>{brandSheet}</style> : null}
       <PortalShell
         agency={agency}

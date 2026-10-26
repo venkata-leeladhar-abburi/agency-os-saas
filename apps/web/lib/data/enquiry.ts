@@ -4,21 +4,6 @@ import type { EnquiryInput } from '../forms';
 import { notify } from './notifications';
 import { activity, brandOf, EXAMPLE_USER, newId, store } from './shared';
 
-const WINDOW_MS = 60_000;
-const MAX_PER_WINDOW = 5;
-
-/** Five enquiries a minute from one network, so a form left open to bots can't flood the board. */
-export function allowEnquiry(network: string, now = Date.now()): boolean {
-  const hits = store().enquiryHits;
-  const recent = (hits.get(network) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= MAX_PER_WINDOW) {
-    hits.set(network, recent);
-    return false;
-  }
-  hits.set(network, [...recent, now]);
-  return true;
-}
-
 export async function submitEnquiry(input: EnquiryInput): Promise<string> {
   const id = newId('lead');
   const now = new Date();

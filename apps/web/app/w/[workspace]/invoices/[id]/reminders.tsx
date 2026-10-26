@@ -29,12 +29,17 @@ export function ShareLink({
   link,
   whatsapp,
   previewHref,
+  replace,
 }: {
   link: string;
   whatsapp: string;
   previewHref: string;
+  /** Bound newPayLinkAction. */
+  replace: () => Promise<void>;
 }) {
   const [copied, setCopied] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [replacing, start] = useTransition();
   return (
     <div className="grid gap-3">
       <Input
@@ -63,6 +68,43 @@ export function ShareLink({
           <Envelope size={16} aria-hidden="true" /> Preview the reminder email
         </a>
       </div>
+      {confirming ? (
+        <div
+          className="grid gap-2 rounded-md border border-border p-3"
+          role="group"
+          aria-label="Make a new link"
+        >
+          <p className="text-body-sm">
+            The link above stops working at once. Send the new one to the client.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              loading={replacing}
+              onClick={() =>
+                start(async () => {
+                  await replace();
+                  setConfirming(false);
+                  setCopied(false);
+                })
+              }
+            >
+              Make a new link
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+              Keep this link
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          className="justify-self-start text-body-sm text-muted-foreground underline"
+        >
+          Sent it to the wrong person? Make a new link
+        </button>
+      )}
     </div>
   );
 }

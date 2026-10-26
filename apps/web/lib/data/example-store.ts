@@ -33,8 +33,6 @@ export type ExampleStore = {
   proposals: Proposal[];
   /** Last quote sequence used this financial year. */
   quoteSequence: number;
-  /** Enquiries per network in the last minute, to slow down spam. */
-  enquiryHits: Map<string, number[]>;
   notifications: Notification[];
   messages: Message[];
   members: Member[];
@@ -49,12 +47,28 @@ const DEVELOPER = 'Arjun Mehta';
 const PM = 'Meera Pillai';
 
 const day = 24 * 60 * 60 * 1000;
-const iso = (offsetDays: number, hour = 11) => {
-  const d = new Date(Date.now() + offsetDays * day);
-  d.setUTCHours(hour - 6, 30, 0, 0); // hh:00 IST is (hh − 5:30) UTC
-  return d.toISOString();
+const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+/** Today's calendar date in IST, as UTC midnight of that date (the screens count days in IST). */
+const istMidnight = () => {
+  const d = new Date(Date.now() + IST_OFFSET);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 };
-const date = (offsetDays: number) => iso(offsetDays).slice(0, 10);
+/** hh:00 IST, offsetDays from today in IST. */
+const iso = (offsetDays: number, hour = 11) =>
+  new Date(istMidnight() + offsetDays * day + hour * 60 * 60 * 1000 - IST_OFFSET).toISOString();
+/**
+ * Something that happened today at hh:00 IST, or minutesAgo ago if that hour hasn't come yet
+ * (just after midnight), so example history is never in the future.
+ */
+const todayAt = (hour: number, minutesAgo: number) => {
+  const at = iso(0, hour);
+  return Date.parse(at) <= Date.now()
+    ? at
+    : new Date(Date.now() - minutesAgo * 60_000).toISOString();
+};
+/** The IST calendar date offsetDays from today. */
+const date = (offsetDays: number) =>
+  new Date(istMidnight() + offsetDays * day).toISOString().slice(0, 10);
 const rupees = (n: number) => BigInt(n) * 100n;
 
 function lead(
@@ -363,7 +377,7 @@ function seed(): ExampleStore {
       reminders: true,
       remindersSent: [],
       payToken: 'example-pay-15-K7d2Qx',
-      createdAt: iso(0),
+      createdAt: todayAt(11, 30),
     },
     {
       id: 'inv-16',
@@ -470,7 +484,7 @@ function seed(): ExampleStore {
           text: '@Ananya Iyer can we keep it under 8 words?',
           at: iso(-1, 16),
         },
-        { id: 'c2', who: DESIGNER, text: 'Yes, both options are 7 words.', at: iso(0, 9) },
+        { id: 'c2', who: DESIGNER, text: 'Yes, both options are 7 words.', at: todayAt(9, 60) },
       ],
     }),
     task('t2', 'Fix checkout bug', 'northwind-app', 'Build', DEVELOPER, 0, 'high', 'todo'),
@@ -533,14 +547,20 @@ function seed(): ExampleStore {
       blocks,
       token: 'example-northwind-7Hq2xP9',
       views: 3,
-      lastViewedAt: iso(0, 8),
+      lastViewedAt: todayAt(8, 90),
       sentAt: iso(-4),
       validUntil: date(10),
       signature: null,
       declineReason: null,
       pendingCode: null,
       activities: [
-        { id: 'pa2', kind: 'viewed', who: 'Northwind', text: 'viewed the proposal', at: iso(0, 8) },
+        {
+          id: 'pa2',
+          kind: 'viewed',
+          who: 'Northwind',
+          text: 'viewed the proposal',
+          at: todayAt(8, 90),
+        },
         { id: 'pa1', kind: 'sent', who: OWNER, text: 'sent the proposal', at: iso(-4) },
       ],
       createdAt: iso(-5),
@@ -554,7 +574,7 @@ function seed(): ExampleStore {
       title: 'Northwind viewed your proposal',
       detail: 'Opened 3 times',
       href: '/sales/proposals/p-northwind',
-      at: iso(0, 8),
+      at: todayAt(8, 90),
       read: false,
     },
     {
@@ -662,7 +682,7 @@ function seed(): ExampleStore {
       done: 'Homepage hero, both options',
       next: 'Mobile layouts for Acme Labs',
       blockers: '',
-      at: iso(0, 10),
+      at: todayAt(10, 45),
     },
     {
       id: 'd2',
@@ -671,7 +691,7 @@ function seed(): ExampleStore {
       done: 'Checkout API fix',
       next: 'QA on Android',
       blockers: 'Waiting for Northwind’s payment keys',
-      at: iso(0, 10),
+      at: todayAt(10, 45),
     },
   ];
 
@@ -730,7 +750,6 @@ function seed(): ExampleStore {
     quotes,
     proposals,
     quoteSequence: 4,
-    enquiryHits: new Map(),
     notifications,
     messages,
     members,
