@@ -23,7 +23,10 @@ export type TestDb = Connection & {
 export async function createTestDb(): Promise<TestDb> {
   const name = `agency_os_test_${uuidv7().replace(/-/g, '').slice(-12)}`;
   const server = postgres(ADMIN_URL, { max: 1, onnotice: () => {} });
-  await server.unsafe(`create database ${name}`);
+  // A linguistic collation, as on most servers, so tests catch ordering that needs "C".
+  await server.unsafe(
+    `create database ${name} template template0 locale_provider icu icu_locale 'en-US' locale 'C.UTF-8'`,
+  );
   await server.end();
   const url = ADMIN_URL.replace(/\/[^/]*$/, `/${name}`);
   const admin = postgres(url, { max: 1, onnotice: () => {} });

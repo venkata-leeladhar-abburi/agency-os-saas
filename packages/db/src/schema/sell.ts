@@ -56,6 +56,7 @@ export const pipelineStages = pgTable(
     id: id(),
     workspaceId: workspaceId(),
     name: text('name').notNull(),
+    /** Fractional-index key; COLLATE "C" is set in migrations/0005 so it sorts byte by byte. */
     position: text('position').notNull(),
     kind: stageKindEnum('kind').notNull().default('open'),
     ...timestamps,
@@ -71,6 +72,7 @@ export const leads = pgTable(
     stageId: uuid('stage_id')
       .notNull()
       .references(() => pipelineStages.id, { onDelete: 'restrict' }),
+    /** Fractional-index key; COLLATE "C" is set in migrations/0005 so it sorts byte by byte. */
     position: text('position').notNull(),
     name: text('name').notNull(),
     company: text('company'),
