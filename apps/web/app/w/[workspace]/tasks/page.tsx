@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Empty } from '@/components/workspace/page-bits';
 import { TaskBoard, TasksTable } from '@/components/workspace/tables';
 import { EXAMPLE_USER } from '@/lib/data';
+import { member } from '@/lib/data/team';
 import { tasks } from '@/lib/data/tasks';
 
 export const metadata = { title: 'Tasks · Agency OS' };
@@ -18,7 +19,10 @@ export default async function TasksPage({
   const [{ workspace }, { view, who }] = await Promise.all([params, searchParams]);
   const base = `/w/${workspace}/tasks`;
   const mine = who === 'me';
-  const rows = await tasks(mine ? { assignee: EXAMPLE_USER.name } : {});
+  // ?who=<member id> from the dashboard's team load: one person's tasks.
+  const person = !mine && who ? await member(who) : null;
+  const assignee = mine ? EXAMPLE_USER.name : person?.name;
+  const rows = await tasks(assignee ? { assignee } : {});
   const open = rows.filter((t) => t.status !== 'Done');
   const overdue = rows.filter((t) => t.overdue).length;
   const q = (v: string | undefined, w: boolean) =>
@@ -26,7 +30,7 @@ export default async function TasksPage({
   return (
     <>
       <PageHeader
-        title={mine ? 'My tasks' : 'Tasks'}
+        title={mine ? 'My tasks' : person ? `Tasks for ${person.name}` : 'Tasks'}
         subtitle={`${open.length} open · ${overdue} overdue`}
         actions={
           <Link href={`${base}/new`} className={buttonVariants({ variant: 'primary' })}>
@@ -46,7 +50,7 @@ export default async function TasksPage({
         <TabLinks
           label="Whose tasks"
           items={[
-            { label: 'Everyone', href: q(view, false), active: !mine },
+            { label: 'Everyone', href: q(view, false), active: !mine && !person },
             { label: 'Mine', href: q(view, true), active: mine },
           ]}
         />
@@ -54,7 +58,13 @@ export default async function TasksPage({
       {rows.length === 0 ? (
         <Empty
           icon="tasks"
-          title={mine ? 'Nothing assigned to you' : 'No tasks yet'}
+          title={
+            mine
+              ? 'Nothing assigned to you'
+              : person
+                ? `Nothing assigned to ${person.name}`
+                : 'No tasks yet'
+          }
           text="Add tasks to a project phase to plan the work."
         />
       ) : view === 'table' ? (

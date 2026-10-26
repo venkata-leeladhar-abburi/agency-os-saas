@@ -510,24 +510,33 @@ export function TodayList({ items, limit }: { items: TodayItem[]; limit?: number
 }
 
 /** Open tasks per person, as bars against the busiest person. */
-export function TeamLoad({ rows }: { rows: { name: string; open: number }[] }) {
+export function TeamLoad({
+  rows,
+  base,
+}: {
+  rows: { id: string; name: string; open: number }[];
+  /** The tasks page: each name opens that person's tasks. */
+  base: string;
+}) {
   const most = Math.max(1, ...rows.map((r) => r.open));
   return (
-    <div className="grid gap-3">
+    <ul className="grid gap-3 p-0">
       {rows.map((row) => (
-        <div
-          key={row.name}
+        <li
+          key={row.id}
           className="grid grid-cols-[112px_1fr_32px] items-center gap-3 text-body-sm"
         >
-          <span className="truncate">{row.name}</span>
+          <Link href={`${base}?who=${row.id}`} className="truncate">
+            {row.name}
+          </Link>
           <Progress
             value={Math.round((row.open / most) * 100)}
-            label={<span className="sr-only">{row.name}</span>}
+            label={<span className="sr-only">{`${row.name}: ${row.open} open`}</span>}
           />
           <span className="text-right text-muted-foreground tabular-nums">{row.open}</span>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -542,14 +551,18 @@ export function DashboardMetrics({
 }) {
   return (
     <div className="mb-4 grid grid-cols-4 gap-3 max-xl:grid-cols-2 max-sm:grid-cols-1">
-      <MetricCard {...metrics.revenue} icon={CurrencyInr} href={`${base}/invoices`} />
-      <MetricCard {...metrics.pending} icon={Receipt} href={`${base}/invoices`} />
+      <MetricCard
+        {...metrics.revenue}
+        icon={CurrencyInr}
+        href={`${base}/invoices?status=received`}
+      />
+      <MetricCard {...metrics.pending} icon={Receipt} href={`${base}/invoices?status=due`} />
       <MetricCard
         {...metrics.overdue}
         icon={Receipt}
         tone="danger"
         inverse
-        href={`${base}/invoices`}
+        href={`${base}/invoices?status=overdue`}
       />
       <MetricCard {...metrics.pipeline} icon={FunnelSimple} href={`${base}/leads`} />
     </div>

@@ -9,6 +9,12 @@ export async function people(): Promise<string[]> {
   return store().members.map((m) => m.name);
 }
 
+/** One member by id, for links like "this person's tasks". */
+export async function member(id: string) {
+  const m = store().members.find((x) => x.id === id);
+  return m ? { id: m.id, name: m.name } : null;
+}
+
 export type InviteRow = Invitation & {
   state: 'pending' | 'expired';
   sent: string;

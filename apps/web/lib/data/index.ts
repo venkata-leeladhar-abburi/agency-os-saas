@@ -10,8 +10,10 @@ import {
   formatMoney,
   LEAD_SOURCE_LABELS,
   PLAN_DETAILS,
+  moneySummary,
   reminderSchedule,
   reminderStates,
+  winRate,
 } from '@agency-os/core';
 import type {
   ClientInput,
@@ -281,14 +283,28 @@ export type ProjectRow = {
   progress: number;
 };
 
-function projectHealth(p: Project) {
-  const late =
-    p.gate?.status === 'waiting' && p.gate.sentAt
-      ? Date.now() - new Date(p.gate.sentAt).getTime() > 24 * 60 * 60 * 1000
-      : false;
-  const overBudget = budgetUsed(p.usedMinor, p.budgetMinor) >= 90;
-  if (istDate(new Date()) > p.dueOn) return 'Late' as const;
-  return late || overBudget ? ('At risk' as const) : ('On track' as const);
+/** Why a project needs attention (prd-mvp.md E1.9: overdue gates or tasks), most urgent first. */
+export function projectRisks(p: Project, now = new Date()): string[] {
+  const todayOn = istDate(now);
+  const reasons: string[] = [];
+  if (todayOn > p.dueOn)
+    reasons.push(`Past its due date (${formatDate(p.dueOn, { year: false })})`);
+  if (p.gate?.status === 'waiting' && p.gate.sentAt) {
+    const days = Math.floor((now.getTime() - new Date(p.gate.sentAt).getTime()) / 86_400_000);
+    if (days >= 1) reasons.push(`${p.gate.title}: waiting ${days} ${days === 1 ? 'day' : 'days'}`);
+  }
+  const late = store().tasks.filter(
+    (t) => t.projectId === p.id && t.status !== 'done' && t.dueOn && t.dueOn < todayOn,
+  ).length;
+  if (late) reasons.push(`${late} ${late === 1 ? 'task' : 'tasks'} overdue`);
+  const used = budgetUsed(p.usedMinor, p.budgetMinor);
+  if (used >= 90) reasons.push(`Budget ${used}% used`);
+  return reasons;
+}
+
+function projectHealth(p: Project, now = new Date()) {
+  if (istDate(now) > p.dueOn) return 'Late' as const;
+  return projectRisks(p, now).length ? ('At risk' as const) : ('On track' as const);
 }
 
 export async function projects(): Promise<ProjectRow[]> {
@@ -364,6 +380,8 @@ export type InvoiceRow = {
   due: string;
   status: 'draft' | 'due' | 'overdue' | 'paid' | 'partially_paid';
   statusText: string;
+  /** A payment came in this calendar month (IST): the dashboard's "Received". */
+  paidThisMonth: boolean;
 };
 
 function invoiceView(inv: Invoice) {
@@ -386,6 +404,9 @@ export async function invoices(): Promise<InvoiceRow[]> {
       due: formatDate(inv.dueOn, { year: false }),
       status: state.status,
       statusText: state.statusText,
+      paidThisMonth: inv.payments.some(
+        (p) => p.receivedOn.slice(0, 7) === istDate(new Date()).slice(0, 7),
+      ),
     };
   });
 }
@@ -485,41 +506,60 @@ export async function saveLogo(logo: WorkspaceSettings['logo']) {
   store().settings.logo = logo;
 }
 
-export async function dashboard() {
-  const due = store()
-    .invoices.map(invoiceView)
-    .filter((v) => v.invoice.number && v.invoice.currency === 'INR');
-  const sum = (list: typeof due) => list.reduce((t, v) => t + v.state.dueMinor, 0n);
-  const pending = due.filter(
-    (v) => v.state.status === 'due' || v.state.status === 'partially_paid',
+/** When a lead was won or lost: its won/lost activity, else its latest activity. */
+function decidedAt(l: Lead): string {
+  return (
+    l.activities.find((a) => a.kind === 'won' || a.kind === 'lost')?.at ??
+    l.activities[0]?.at ??
+    l.createdAt
   );
-  const overdue = due.filter((v) => v.state.status === 'overdue');
-  const paidThisMonth = store()
-    .invoices.flatMap((i) => (i.currency === 'INR' ? i.payments : []))
-    .filter((p) => p.receivedOn.slice(0, 7) === istDate(new Date()).slice(0, 7))
-    .reduce((t, p) => t + p.amountMinor, 0n);
-  const open = store().leads.filter((l) => l.stage !== 'won' && l.stage !== 'lost');
-  const decided = store().leads.filter((l) => l.stage === 'won' || l.stage === 'lost');
-  const winRate = decided.length
-    ? Math.round((decided.filter((l) => l.stage === 'won').length / decided.length) * 100)
-    : null;
-  const atRisk = (await projects()).filter((p) => p.health !== 'On track');
+}
+
+export async function dashboard(now = new Date()) {
+  const s = store();
+  const views = s.invoices.map(invoiceView);
+  const month = istDate(now).slice(0, 7);
+  const money = moneySummary(
+    views.map((v) => ({
+      currency: v.invoice.currency,
+      exchangeRate: v.invoice.exchangeRate,
+      status: v.state.status,
+      dueMinor: v.state.dueMinor,
+      payments: v.invoice.payments,
+    })),
+    { month, base: 'INR' },
+  );
+  const inr = (m: bigint) => formatMoney(m, 'INR', { decimals: 0 });
+  const invoicesNote = (n: number) => `${n} ${n === 1 ? 'invoice' : 'invoices'}`;
+  const open = s.leads.filter((l) => l.stage !== 'won' && l.stage !== 'lost');
+  const rate = winRate(
+    s.leads
+      .filter((l) => l.stage === 'won' || l.stage === 'lost')
+      .map((l) => ({ decidedAt: decidedAt(l), won: l.stage === 'won' })),
+    { now },
+  );
+  const atRisk = s.projects
+    .map((p) => ({ p, reasons: projectRisks(p, now) }))
+    .filter((x) => x.reasons.length);
+  const hasMoney = views.some((v) => v.invoice.number) || s.quotes.length > 0;
   return {
+    /** Nothing billed or quoted yet: the first-week empty state instead of zeros. */
+    empty: !hasMoney && open.length === 0,
     metrics: {
       revenue: {
-        label: `Received · ${new Intl.DateTimeFormat('en-IN', { month: 'long', timeZone: 'Asia/Kolkata' }).format(new Date())}`,
-        value: formatMoney(paidThisMonth, 'INR', { decimals: 0 }),
-        note: 'Payments in rupees',
+        label: `Received · ${new Intl.DateTimeFormat('en-IN', { month: 'long', timeZone: 'Asia/Kolkata' }).format(now)}`,
+        value: inr(money.received.minor),
+        note: `${money.received.count} ${money.received.count === 1 ? 'payment' : 'payments'}`,
       },
       pending: {
         label: 'Pending',
-        value: formatMoney(sum(pending), 'INR', { decimals: 0 }),
-        note: `${pending.length} ${pending.length === 1 ? 'invoice' : 'invoices'}`,
+        value: inr(money.pending.minor),
+        note: invoicesNote(money.pending.count),
       },
       overdue: {
         label: 'Overdue',
-        value: formatMoney(sum(overdue), 'INR', { decimals: 0 }),
-        note: `${overdue.length} ${overdue.length === 1 ? 'invoice' : 'invoices'}`,
+        value: inr(money.overdue.minor),
+        note: invoicesNote(money.overdue.count),
       },
       pipeline: {
         label: 'Pipeline value',
@@ -528,20 +568,23 @@ export async function dashboard() {
           'INR',
           { compact: true },
         ),
-        note: winRate === null ? 'No decided leads yet' : `Win rate ${winRate}%`,
+        note: rate ? `Win rate ${rate.percent}% (90 days)` : 'No leads won or lost in 90 days',
       },
     },
-    atRisk: atRisk.map((p) => ({
+    /** Invoices in another currency without a rate, left out of the money figures. */
+    unconverted: money.unconverted,
+    atRisk: atRisk.map(({ p, reasons }) => ({
       id: p.id,
-      client: p.client,
+      client: s.clients.find((c) => c.id === p.clientId)?.name ?? '—',
       project: p.name,
-      why: p.nextGate !== '—' && p.health === 'At risk' ? `${p.nextGate}: waiting` : p.health,
-      progress: p.progress,
-      tone: p.health === 'Late' ? ('danger' as const) : ('default' as const),
+      why: reasons.join(' · '),
+      progress: Math.round((p.phase / (p.template === 'seven_phases' ? 7 : 1)) * 100),
+      tone: istDate(now) > p.dueOn ? ('danger' as const) : ('default' as const),
     })),
-    teamLoad: store().members.map(({ name }) => ({
+    teamLoad: s.members.map(({ id, name }) => ({
+      id,
       name,
-      open: store().tasks.filter((t) => t.assignee === name && t.status !== 'done').length,
+      open: s.tasks.filter((t) => t.assignee === name && t.status !== 'done').length,
     })),
   };
 }

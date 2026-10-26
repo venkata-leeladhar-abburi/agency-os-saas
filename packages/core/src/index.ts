@@ -16,3 +16,4 @@ export * from './sales-docs';
 export * from './phases';
 export * from './colour';
 export * from './reminders';
+export * from './dashboard';

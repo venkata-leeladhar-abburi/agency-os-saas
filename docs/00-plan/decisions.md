@@ -278,3 +278,11 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **WhatsApp:** the invoice page has "Send on WhatsApp" with a plain message and the pay link, straight to the client's chat when their number has a country code.
 - **Payments:** "Net banking" is added to the payment methods. In example mode, paying records an example payment with the method chosen; real payments wait for Razorpay test keys.
 
+### D-047 Dashboard figures (example mode)
+**Status:** Accepted · **Date:** 26 Oct 2026
+- **Money (`prd-mvp.md` E1.9):** Received (payments this calendar month, IST), Pending (due or partly paid, the amount still due) and Overdue, all in rupees. An invoice in another currency is converted at the exchange rate on its invoice date; one without a rate is left out and the dashboard says how many. The sums are in `packages/core` (`moneySummary`, tested against `tax-test-cases.md` D and H).
+- **Win rate:** won ÷ (won + lost) for leads decided in the last 90 days, dated by their won or lost activity. With none decided, it says so rather than showing 0%.
+- **Projects at risk:** past the due date (shown as late), a client sign-off waiting a day or more, open tasks past their due date, or 90% of the budget used. Each row says which.
+- **Links:** every figure opens the list behind it: Received → invoices with a payment this month, Pending → due, Overdue → overdue, Pipeline → leads, a name in Team load → that person's tasks. The invoice list has status tabs (All, Due, Overdue, Paid, Drafts).
+- **First week:** with nothing quoted, billed or in the pipeline, the dashboard shows "Your numbers start here" (`defaults-and-content.md` §6) and links to the setup checklist instead of zeros.
+

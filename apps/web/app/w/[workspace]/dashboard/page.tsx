@@ -1,5 +1,6 @@
 import { ArrowRight } from '@phosphor-icons/react/dist/ssr';
 import { Card, PageHeader } from '@agency-os/ui';
+import { Empty, LinkButton } from '@/components/workspace/page-bits';
 import { SetupArea } from '@/components/workspace/setup-area';
 import Link from 'next/link';
 import {
@@ -28,7 +29,7 @@ export default async function DashboardPage({
 }) {
   const { workspace } = await params;
   const ws = (p: string) => `/w/${workspace}${p}`;
-  const [{ metrics, atRisk, teamLoad }, { board }, items] = await Promise.all([
+  const [{ metrics, atRisk, teamLoad, unconverted, empty }, { board }, items] = await Promise.all([
     dashboard(),
     leads(),
     today(workspace),
@@ -41,7 +42,31 @@ export default async function DashboardPage({
         className="mb-4"
       />
       <SetupArea slug={workspace} />
-      <DashboardMetrics metrics={metrics} base={ws('')} />
+      {empty ? (
+        <div className="mb-4">
+          <Empty
+            icon="today"
+            title="Your numbers start here"
+            text="Send your first quote or invoice and this page fills in."
+            action={
+              <LinkButton href={ws('')} primary>
+                Finish setting up
+              </LinkButton>
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <DashboardMetrics metrics={metrics} base={ws('')} />
+          {unconverted ? (
+            <p className="-mt-2 mb-4 text-body-sm text-muted-foreground">
+              {unconverted} {unconverted === 1 ? 'invoice' : 'invoices'} in another currency
+              {unconverted === 1 ? ' has' : ' have'} no exchange rate, so{' '}
+              {unconverted === 1 ? 'it isn’t' : 'they aren’t'} counted above.
+            </p>
+          ) : null}
+        </>
+      )}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <div className="grid min-w-0 content-start gap-4">
           <Card
@@ -74,7 +99,7 @@ export default async function DashboardPage({
             )}
           </Card>
           <Card title="Team load" description="Open tasks per person">
-            <TeamLoad rows={teamLoad} />
+            <TeamLoad rows={teamLoad} base={ws('/tasks')} />
           </Card>
         </div>
       </div>
