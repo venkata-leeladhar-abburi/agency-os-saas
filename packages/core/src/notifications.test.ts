@@ -9,7 +9,7 @@ import {
 
 describe('notification defaults', () => {
   it('lists every event from the defaults table', () => {
-    expect(NOTIFICATION_KEYS).toHaveLength(13);
+    expect(NOTIFICATION_KEYS).toHaveLength(14);
     expect(isNotificationKey('payment.received')).toBe(true);
     expect(isNotificationKey('toString')).toBe(false);
   });
@@ -20,6 +20,7 @@ describe('notification defaults', () => {
     expect(channelsFor('proposal.viewed')).toEqual({ inApp: true, email: 'off' });
     expect(channelsFor('invoice.reminder')).toEqual({ inApp: false, email: 'on' });
     expect(channelsFor('gate.requested')).toEqual({ inApp: false, email: 'on' });
+    expect(channelsFor('message.posted')).toEqual({ inApp: true, email: 'on' });
   });
 
   it('applies a member’s preference', () => {

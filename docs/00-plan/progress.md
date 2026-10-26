@@ -41,6 +41,8 @@ Updated by Claude at the end of every working session. The founder can read this
 
 Newest first. One short entry per session: what was done, what is next, blockers.
 
+- **26 Oct 2026 (prototype refresh):** the founder noted the prototype wasn't fully up to date. Audited all 42 screens against D-029 to D-040 and updated 12 (D-041), with the rules read from core where they live there. Added the message notification to core and the defaults (D-040). Checks: lint, typecheck, design rules, core tests, 119 database tests and 43 prototype axe checks (light and dark) pass. Next: M5 part 2 once the Supabase dev project is connected. Blockers unchanged (question 7).
+
 - **25 Oct 2026 (build, M4 hi-fi):** G1 approved and merged; G0 waived in writing. Hi-fi of all 42 screens with clickable task flows (T1 to T10, T12), 58 e2e tests and 82 Storybook checks green. **Stopped at G2.** Needs from the founder: run round R2 and the tree test (script ready), approve G2, Supabase dev project and Vercel for M5.
 
 - **25 Oct 2026 (build, M1 to M4):** M1 tokens and theme, M2 core components and M3 patterns merged (CI green). Core money and tax helpers done early (all worked cases, 100% coverage). M4 wireframes of all 42 R0/R1 screens at `/prototype`, every state checked with axe in light and dark. **Stopped at G1; G1 approved the same day.** Next: hi-fi prototype after the founder approves G1 and passes or waives G0. Needs from the founder: G1 approval, the tree test (or a written waiver), the G0 decision, Vercel (preview links), set `main` as the default branch.

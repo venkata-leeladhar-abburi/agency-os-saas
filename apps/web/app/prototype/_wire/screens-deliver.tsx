@@ -13,6 +13,7 @@ import {
   UploadSimple,
   UsersThree,
 } from '@phosphor-icons/react';
+import { SEVEN_PHASES } from '@agency-os/core';
 import {
   ActivityFeed,
   Alert,
@@ -136,6 +137,10 @@ const PHASE_LINES = [
   'Deploy, accounts in the client’s name, training video.',
   'Monthly report, updates and backups.',
 ];
+
+/** The Design phase's checklist from the Seven phases template; the first 6 are done. */
+const DESIGN_CHECKLIST = SEVEN_PHASES.phases[3]?.checklist ?? [];
+const DESIGN_DONE = 6;
 
 const PROJECT_HEADER = (actions: React.ReactNode) => (
   <RecordHeader
@@ -375,8 +380,10 @@ export const DELIVER_SCREENS: ScreenDef[] = [
                       : i < 3
                         ? 'Done'
                         : i === 3
-                          ? 'In progress · 6 of 9 checklist items'
-                          : 'Not started'
+                          ? `In progress · ${DESIGN_DONE} of ${DESIGN_CHECKLIST.length} checklist items`
+                          : i === 4
+                            ? 'Not started · starts once Design sign-off is approved'
+                            : 'Not started'
                   }
                   actions={
                     i === 1 ? (
@@ -394,16 +401,9 @@ export const DELIVER_SCREENS: ScreenDef[] = [
                 >
                   {i === 3 ? (
                     <ul className="grid gap-2 p-0">
-                      {[
-                        ['Show 2 to 3 directions', true],
-                        ['Wireframes for key pages', true],
-                        ['Hi-fi design, desktop and phone', true],
-                        ['Clickable prototype', false],
-                        ['Test with 3 to 5 users', false],
-                        ['Design handoff', false],
-                      ].map(([label, done]) => (
-                        <li key={String(label)}>
-                          <Checkbox label={String(label)} defaultChecked={Boolean(done)} />
+                      {DESIGN_CHECKLIST.map((label, k) => (
+                        <li key={label}>
+                          <Checkbox label={label} defaultChecked={k < DESIGN_DONE} />
                         </li>
                       ))}
                     </ul>
@@ -434,6 +434,12 @@ export const DELIVER_SCREENS: ScreenDef[] = [
             >
               <div className="grid gap-4">
                 <Input label="What to approve" defaultValue="Approve the homepage design" />
+                <Select
+                  label="Who approves"
+                  options={['Srinivas Beere (client)', 'Kiran Rao (internal)']}
+                  defaultValue="Srinivas Beere (client)"
+                  hint="A client sign-off is approved in the portal. The next phase can’t finish until it is."
+                />
                 <Textarea
                   label="Message"
                   defaultValue="Desktop and phone versions are ready, with the Telugu headline you asked for."

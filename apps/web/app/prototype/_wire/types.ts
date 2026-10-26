@@ -17,7 +17,8 @@ export type ScreenDef = {
   frame: 'app' | 'portal' | 'bare';
   role?: Role;
   active?: string;
-  crumbs?: string[];
+  /** A function when a state changes the page, as with a settings tab. */
+  crumbs?: string[] | ((state: StateId) => string[]);
   /** The page owns the primary action, so the top bar's New is secondary. */
   pagePrimary?: boolean;
   states: { id: StateId; label: string }[];

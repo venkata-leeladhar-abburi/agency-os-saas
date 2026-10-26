@@ -69,6 +69,14 @@ export const NOTIFICATION_KINDS = {
     email: 'off',
     subject: null,
   },
+  'message.posted': {
+    label: 'New message in a project',
+    area: 'delivery',
+    recipients: 'The other side: project team or client contacts',
+    inApp: 'on',
+    email: 'on',
+    subject: 'New message from [name] about [project]',
+  },
   'invoice.sent': {
     label: 'Invoice sent',
     area: 'money',
