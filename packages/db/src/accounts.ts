@@ -244,3 +244,13 @@ export async function removeMember(tx: Tx, membershipId: string) {
       .returning({ id: memberships.id }),
   );
 }
+
+/** Saves the signed-in user's display name (their own profile only; RLS enforces that). */
+export async function saveProfileName(tx: Tx, userId: string, fullName: string) {
+  const name = fullName.trim().slice(0, 120);
+  if (!name) return;
+  await tx
+    .insert(profiles)
+    .values({ id: userId, fullName: name })
+    .onConflictDoUpdate({ target: profiles.id, set: { fullName: name } });
+}

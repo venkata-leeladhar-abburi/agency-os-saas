@@ -219,3 +219,10 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Plans:** the limits in `defaults-and-content.md` §8 are confirmed as enforced since M6 (open question 5).
 - **Message notifications:** a new message in a project thread notifies the other side in the app and by email. The team gets the in-app list and email; the client gets the portal and email. Each person can turn it off in Settings (open question 17). It's added to the notification defaults with M14.
 - **Database access from cloud sessions:** these sessions allow only HTTPS, so migrations run on the Supabase project from a GitHub Actions workflow started by hand (`DATABASE_URL_DIRECT` as a repository secret). The app talks to Supabase Auth and Storage over HTTPS.
+
+## 26 Oct 2026: sign-in and secrets (M5 part 2)
+
+- Sign-in uses Supabase Auth through `@supabase/ssr` with server actions: the email link and Google first; the phone code stays off until the flag exists. Next.js 16 calls middleware "proxy", so route protection lives in `apps/web/proxy.ts`; each page and action checks the session again.
+- The app reduces `NEXT_PUBLIC_SUPABASE_URL` to its origin, so a pasted REST address still works.
+- The signed-in user's workspace is kept in an httpOnly `workspace` cookie; switching accepts only ids from the user's own memberships.
+- Secrets are blocked from the repo by `scripts/check-secrets.mjs`, run by a pre-commit hook (`.githooks`) and by `pnpm check` in CI.
