@@ -12,7 +12,7 @@ export async function onboarding() {
   const s = store();
   const own = <T extends { example?: boolean }>(list: T[]) => list.filter((r) => !r.example);
   const steps: OnboardingStep[] = [
-    { id: 'services', done: s.settings.services.length > 0 },
+    { id: 'services', done: s.settings.services.length > 0 && s.settings.logo !== null },
     { id: 'lead', done: own(s.leads).length > 0 },
     { id: 'quote', done: own(s.proposals).some((p) => p.status !== 'draft') },
     { id: 'portal', done: own(s.clients).some((c) => c.portal !== 'not_invited') },

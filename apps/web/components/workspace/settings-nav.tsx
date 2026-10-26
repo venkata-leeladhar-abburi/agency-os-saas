@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const SECTIONS = [
   { path: '', label: 'Workspace' },
+  { path: '/branding', label: 'Branding' },
   { path: '/members', label: 'Members and roles' },
   { path: '/plan', label: 'Plan and billing' },
   { path: '/notifications', label: 'Notifications' },

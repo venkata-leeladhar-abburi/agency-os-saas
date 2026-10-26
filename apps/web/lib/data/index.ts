@@ -19,7 +19,7 @@ import type {
   SettingsInput,
 } from '../forms';
 import { activity, EXAMPLE_USER, newId, store } from './shared';
-import type { Client, Invoice, Lead, Project, StageId } from './types';
+import type { Client, Invoice, Lead, Project, StageId, WorkspaceSettings } from './types';
 import {
   budgetUsed,
   followUp,
@@ -449,6 +449,14 @@ export async function settings() {
 
 export async function saveSettings(input: SettingsInput) {
   Object.assign(store().settings, input);
+}
+
+export async function saveBrandColour(colour: string | null) {
+  store().settings.brandColour = colour;
+}
+
+export async function saveLogo(logo: WorkspaceSettings['logo']) {
+  store().settings.logo = logo;
 }
 
 export async function dashboard() {

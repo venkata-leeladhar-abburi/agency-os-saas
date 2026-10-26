@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { checkNotificationPrefs, checkSettings } from '../forms';
-import { createClient, createLead } from './index';
+import { createClient, createLead, saveLogo } from './index';
 import { exampleStore, resetExampleStore } from './example-store';
 import { markAllRead, notifications, notify } from './notifications';
 import { loadExampleData, onboarding, removeExampleData } from './onboarding';
@@ -33,7 +33,8 @@ describe('onboarding', () => {
   it('counts only the workspace’s own records', async () => {
     const before = await onboarding();
     expect(before.steps.map((s) => [s.id, s.done])).toEqual([
-      ['services', true],
+      // Services are set; the logo isn't yet.
+      ['services', false],
       ['lead', false],
       ['quote', false],
       ['portal', false],
@@ -42,6 +43,8 @@ describe('onboarding', () => {
     expect(before.hasExample).toBe(true);
     await createLead(lead);
     expect((await onboarding()).steps[1]!.done).toBe(true);
+    await saveLogo({ url: 'data:image/png;base64,AA==', name: 'logo.png' });
+    expect((await onboarding()).steps[0]!.done).toBe(true);
   });
 
   it('removes example data but keeps what your records use', async () => {

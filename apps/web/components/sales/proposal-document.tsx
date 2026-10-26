@@ -1,6 +1,7 @@
 import { Flag } from '@phosphor-icons/react/dist/ssr';
 import { formatDate, type InvoiceTotals, type ProposalBlock } from '@agency-os/core';
-import { Badge, BrandTile, InvoiceSummary } from '@agency-os/ui';
+import { Badge, InvoiceSummary } from '@agency-os/ui';
+import { AgencyMark } from '@/components/brand/brand';
 import type { ReactNode } from 'react';
 
 function Section({
@@ -34,6 +35,7 @@ function Section({
 export function ProposalDocument({
   blocks,
   workspace,
+  logoUrl = null,
   validUntil,
   totals,
   forClient,
@@ -41,6 +43,7 @@ export function ProposalDocument({
 }: {
   blocks: ProposalBlock[];
   workspace: string;
+  logoUrl?: string | null;
   validUntil: string;
   totals: InvoiceTotals;
   forClient?: boolean;
@@ -57,10 +60,7 @@ export function ProposalDocument({
           case 'cover':
             return (
               <header key={key} className="grid gap-3 border-b border-border pb-6">
-                <span className="flex items-center gap-2.5 text-body font-semibold">
-                  <BrandTile />
-                  {workspace}
-                </span>
+                <AgencyMark name={workspace} logoUrl={logoUrl} />
                 {/* The page's own heading in the client's view; a styled line in the agency's preview. */}
                 {forClient ? (
                   <h1 className="text-title-xl">{b.title}</h1>

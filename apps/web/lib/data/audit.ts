@@ -11,6 +11,7 @@ export const AUDIT_ACTIONS: Record<string, string> = {
   'member.removed': 'Removed a member',
   'plan.changed': 'Changed the plan',
   'settings.saved': 'Changed workspace settings',
+  'branding.saved': 'Changed the branding',
   'invoice.issued': 'Issued an invoice',
   'payment.recorded': 'Recorded a payment',
   'proposal.sent': 'Sent a proposal',

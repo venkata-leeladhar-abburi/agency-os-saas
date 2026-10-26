@@ -2,7 +2,9 @@ import { Logo } from '@agency-os/ui';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { PortalFrame } from '@/components/portal/portal-frame';
-import { exampleMode } from '@/lib/data';
+import { PLAN_DETAILS } from '@agency-os/core';
+import { brandStyleSheet } from '@/lib/branding';
+import { exampleMode, settings } from '@/lib/data';
 import { currentPortal } from '@/lib/portal-session';
 
 // The portal is private to each client: keep it out of search engines.
@@ -28,8 +30,12 @@ export default async function PortalLayout({
         </p>
       </main>
     );
+  const s = await settings();
   return (
     <PortalFrame
+      logoUrl={s.logo?.url}
+      brandSheet={brandStyleSheet(s.brandColour)}
+      poweredBy={!PLAN_DETAILS[s.plan].ownBranding}
       slug={workspace}
       agency={session.agency}
       contact={session.contact}

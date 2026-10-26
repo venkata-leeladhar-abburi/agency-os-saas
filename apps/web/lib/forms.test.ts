@@ -8,6 +8,9 @@ import {
   checkPayment,
   checkProject,
   checkSettings,
+  checkBranding,
+  checkLogo,
+  DEFAULT_INVOICE_FOOTER,
 } from './forms';
 
 const lead = {
@@ -162,5 +165,68 @@ describe('checkSettings', () => {
   it('limits the prefix length and the LUT ARN', () => {
     const r = checkSettings({ ...s, invoicePrefix: 'ONESTOPSOL', lutArn: 'AD36' });
     expect(!r.ok && Object.keys(r.errors).sort()).toEqual(['invoicePrefix', 'lutArn']);
+  });
+  it('cleans up bank details and fills the default footer', () => {
+    const r = checkSettings({
+      ...s,
+      accountName: 'One Stop Solutions',
+      accountNumber: '1234 5678 9012',
+      ifsc: 'abcd0123456',
+      swift: 'abcd in bb',
+    });
+    expect(r.ok && r.value).toMatchObject({
+      bank: {
+        accountName: 'One Stop Solutions',
+        accountNumber: '123456789012',
+        ifsc: 'ABCD0123456',
+        swift: 'ABCDINBB',
+      },
+      invoiceFooter: DEFAULT_INVOICE_FOOTER,
+      address: null,
+    });
+  });
+  it('says how to fix bank details', () => {
+    const r = checkSettings({ ...s, accountNumber: '12AB', ifsc: 'HDFC123', swift: 'XY' });
+    expect(!r.ok && Object.keys(r.errors).sort()).toEqual([
+      'accountName',
+      'accountNumber',
+      'ifsc',
+      'swift',
+    ]);
+    const noIfsc = checkSettings({ ...s, accountName: 'A', accountNumber: '123456789' });
+    expect(!noIfsc.ok && noIfsc.errors.ifsc).toMatch(/Add the IFSC/);
+  });
+});
+
+describe('checkBranding', () => {
+  it('takes a hex colour or nothing', () => {
+    expect(checkBranding({ brandColour: '#0F766E' })).toEqual({
+      ok: true,
+      value: { brandColour: '#0f766e' },
+    });
+    expect(checkBranding({ brandColour: ' ' })).toEqual({ ok: true, value: { brandColour: null } });
+    const bad = checkBranding({ brandColour: 'teal' });
+    expect(!bad.ok && bad.errors.brandColour).toMatch(/6 digits/);
+  });
+  it('saves a light colour too: the portal decides whether to use it', () => {
+    expect(checkBranding({ brandColour: '#FACC15' }).ok).toBe(true);
+  });
+});
+
+describe('checkLogo', () => {
+  const file = (bytes: number[], name = 'logo.png') => new File([new Uint8Array(bytes)], name);
+  it('accepts PNG and JPEG by their first bytes', async () => {
+    const png = await checkLogo(file([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]));
+    expect(png.ok && png.value.dataUrl).toMatch(/^data:image\/png;base64,/);
+    const jpeg = await checkLogo(file([0xff, 0xd8, 0xff, 0xe0], 'logo.jpg'));
+    expect(jpeg.ok && jpeg.value.dataUrl).toMatch(/^data:image\/jpeg;base64,/);
+  });
+  it('refuses other files, whatever they are called', async () => {
+    const svg = await checkLogo(file([...Buffer.from('<svg onload=alert(1)>')], 'logo.png'));
+    expect(!svg.ok && svg.errors.logo).toBe('Use a PNG or JPEG file.');
+  });
+  it('refuses big files', async () => {
+    const big = await checkLogo(file([0x89, 0x50, 0x4e, 0x47, ...new Array(600 * 1024).fill(0)]));
+    expect(!big.ok && big.errors.logo).toMatch(/under 500 KB/);
   });
 });

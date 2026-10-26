@@ -1,5 +1,6 @@
 import { formatDate, formatMoney, minorDigits } from '@agency-os/core';
-import { Alert, Card, InvoiceSummary } from '@agency-os/ui';
+import { DownloadSimple } from '@phosphor-icons/react/dist/ssr';
+import { Alert, buttonVariants, Card, InvoiceSummary } from '@agency-os/ui';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Submit } from '@/components/workspace/form-bits';
@@ -45,7 +46,15 @@ export default async function InvoicePage({
             {formatDate(invoice.dueOn)}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={`/w/${workspace}/invoices/${invoice.id}/pdf`}
+            download
+            className={buttonVariants({})}
+          >
+            <DownloadSimple size={16} aria-hidden="true" />
+            {invoice.number ? 'Download PDF' : 'Download draft PDF'}
+          </a>
           {!invoice.number ? (
             <form action={issueInvoiceAction.bind(null, workspace, invoice.id)}>
               <Submit>Issue invoice</Submit>

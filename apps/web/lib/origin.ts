@@ -13,3 +13,8 @@ export async function callerIp(): Promise<string> {
   const h = await headers();
   return h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || 'unknown';
 }
+
+/** The caller's browser, for the signing record; cut to a sane length. */
+export async function callerUserAgent(): Promise<string | null> {
+  return (await headers()).get('user-agent')?.slice(0, 300) ?? null;
+}

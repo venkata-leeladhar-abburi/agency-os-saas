@@ -1,7 +1,8 @@
 'use client';
 
 import { DEFAULT_SERVICES } from '@agency-os/core';
-import { Alert, Card, Checkbox, Input } from '@agency-os/ui';
+import { Alert, Card, Checkbox, Input, Textarea } from '@agency-os/ui';
+import Link from 'next/link';
 import { useActionState } from 'react';
 import { FormMessage, Submit } from '@/components/workspace/form-bits';
 import type { WorkspaceSettings } from '@/lib/data/types';
@@ -13,6 +14,7 @@ export function SettingsForm({ slug, settings }: { slug: string; settings: Works
   const v = state.values;
   const e = state.errors ?? {};
   const value = (key: keyof WorkspaceSettings) => v?.[key] ?? String(settings[key] ?? '');
+  const bank = (key: keyof WorkspaceSettings['bank']) => v?.[key] ?? settings.bank[key] ?? '';
   return (
     <form action={action} className="grid gap-4" noValidate>
       <FormMessage state={state} title="Settings weren’t saved" />
@@ -47,9 +49,18 @@ export function SettingsForm({ slug, settings }: { slug: string; settings: Works
               ))}
             </div>
           </fieldset>
+          <Textarea
+            label="Address"
+            name="address"
+            optional
+            rows={2}
+            defaultValue={value('address')}
+            error={e.address}
+            hint="Printed under your name on invoices and quotes. A tax invoice needs it."
+          />
           <p className="text-body-sm text-muted-foreground">
-            Logo upload arrives with file storage. Until then, proposals and the portal show your
-            workspace name.
+            Your logo and brand colour are in{' '}
+            <Link href={`/w/${slug}/settings/branding`}>Branding</Link>.
           </p>
         </div>
       </Card>
@@ -90,6 +101,55 @@ export function SettingsForm({ slug, settings }: { slug: string; settings: Works
             defaultValue={value('paymentTermsDays')}
             error={e.paymentTermsDays}
             hint="The due date on new invoices."
+          />
+        </div>
+      </Card>
+      <Card
+        title="Bank details"
+        description="Printed at the foot of every invoice, so clients can pay by bank transfer."
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="Name on the account"
+            name="accountName"
+            optional
+            defaultValue={bank('accountName')}
+            error={e.accountName}
+          />
+          <Input
+            label="Account number"
+            name="accountNumber"
+            optional
+            inputMode="numeric"
+            className="font-mono"
+            defaultValue={bank('accountNumber')}
+            error={e.accountNumber}
+          />
+          <Input
+            label="IFSC"
+            name="ifsc"
+            optional
+            className="font-mono"
+            defaultValue={bank('ifsc')}
+            error={e.ifsc}
+          />
+          <Input
+            label="SWIFT code"
+            name="swift"
+            optional
+            className="font-mono"
+            defaultValue={bank('swift')}
+            error={e.swift}
+            hint="Shown only on invoices to clients outside India."
+          />
+          <Textarea
+            label="Invoice footer"
+            name="invoiceFooter"
+            rows={2}
+            containerClassName="sm:col-span-2"
+            defaultValue={value('invoiceFooter')}
+            error={e.invoiceFooter}
+            hint="Leave it empty for “Thank you for your business.”"
           />
         </div>
       </Card>

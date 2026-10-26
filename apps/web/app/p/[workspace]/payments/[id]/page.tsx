@@ -1,5 +1,6 @@
 import { formatDate, formatMoney } from '@agency-os/core';
-import { Alert, Card, InvoiceSummary, Progress } from '@agency-os/ui';
+import { DownloadSimple } from '@phosphor-icons/react/dist/ssr';
+import { Alert, buttonVariants, Card, InvoiceSummary, Progress } from '@agency-os/ui';
 import { notFound } from 'next/navigation';
 import { exampleMode } from '@/lib/data';
 import { portalInvoice } from '@/lib/data/portal';
@@ -24,7 +25,17 @@ export default async function PortalInvoice({
   const due = formatMoney(state.dueMinor, invoice.currency);
   return (
     <>
-      <h1 className="text-title-lg">Invoice {invoice.number}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-title-lg">Invoice {invoice.number}</h1>
+        <a
+          href={`/p/${workspace}/payments/${invoice.id}/pdf`}
+          download
+          className={buttonVariants({ size: 'lg' })}
+        >
+          <DownloadSimple size={18} aria-hidden="true" />
+          Download PDF
+        </a>
+      </div>
       {paid === '1' && state.status === 'paid' ? (
         <Alert
           tone="success"

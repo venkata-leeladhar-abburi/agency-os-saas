@@ -2,7 +2,7 @@
 import { nextFollowUp } from '@agency-os/core';
 import type { EnquiryInput } from '../forms';
 import { notify } from './notifications';
-import { activity, EXAMPLE_USER, newId, store } from './shared';
+import { activity, brandOf, EXAMPLE_USER, newId, store } from './shared';
 
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 5;
@@ -52,5 +52,5 @@ export async function submitEnquiry(input: EnquiryInput): Promise<string> {
 }
 
 export async function enquiryWorkspace() {
-  return { name: store().settings.name };
+  return brandOf();
 }

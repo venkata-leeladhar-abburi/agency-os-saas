@@ -5,7 +5,7 @@ import { exampleMode } from '@/lib/data';
 import { acceptProposal, declineProposal, startSigning } from '@/lib/data/sales';
 import { checkCode, checkSignName, fields } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
-import { callerIp } from '@/lib/origin';
+import { callerIp, callerUserAgent } from '@/lib/origin';
 
 export type SignState = FormState & {
   step?: 'name' | 'code' | 'signed';
@@ -47,6 +47,7 @@ export async function acceptAction(
     name: name.value.name,
     code: checked.value.code,
     ip: await callerIp(),
+    userAgent: await callerUserAgent(),
   });
   if (!result.ok) {
     return result.field

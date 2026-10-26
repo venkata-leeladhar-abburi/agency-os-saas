@@ -204,7 +204,7 @@ export async function portalInvoice(clientId: string, invoiceId: string) {
   const c = client(clientId);
   const inv = ownInvoice(clientId, invoiceId);
   if (!c || !inv) return null;
-  return { ...invoiceView(inv, c), settings: store().settings };
+  return { ...invoiceView(inv, c), client: c, settings: store().settings };
 }
 
 /**

@@ -1,4 +1,4 @@
-import { Eye } from '@phosphor-icons/react/dist/ssr';
+import { DownloadSimple, Eye } from '@phosphor-icons/react/dist/ssr';
 import { formatDate, formatMoney, unfilledBlocks } from '@agency-os/core';
 import { Alert, Badge, buttonVariants, Card, type BadgeProps } from '@agency-os/ui';
 import Link from 'next/link';
@@ -66,6 +66,10 @@ export default async function ProposalPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <a href={ws(`/sales/proposals/${p.id}/pdf`)} download className={buttonVariants({})}>
+            <DownloadSimple size={16} aria-hidden="true" />
+            {p.signature ? 'Download signed PDF' : 'Download PDF'}
+          </a>
           {p.status !== 'draft' ? (
             <a
               href={`/proposal/${p.token}?preview=1`}
@@ -149,6 +153,7 @@ export default async function ProposalPage({
           <ProposalDocument
             blocks={p.blocks}
             workspace={settings.name}
+            logoUrl={settings.logo?.url}
             validUntil={p.validUntil}
             totals={totals}
             signSlot={

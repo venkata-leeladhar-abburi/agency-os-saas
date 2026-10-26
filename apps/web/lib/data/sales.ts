@@ -1,5 +1,5 @@
 // Server only. Quotes and proposals: build, send, view, sign or decline.
-import { randomBytes, randomInt } from 'node:crypto';
+import { createHash, randomBytes, randomInt } from 'node:crypto';
 import {
   formatDate,
   formatMoney,
@@ -11,8 +11,8 @@ import {
 import type { QuoteInput } from '../forms';
 import { winLead } from './index';
 import { notify } from './notifications';
-import { activity, EXAMPLE_USER, newId, store } from './shared';
-import type { Proposal } from './types';
+import { activity, brandOf, EXAMPLE_USER, newId, store } from './shared';
+import type { Proposal, Quote } from './types';
 import {
   applyProposalText,
   istDate,
@@ -244,7 +244,30 @@ export async function proposalByToken(token: string, countView: boolean) {
     ...quoteView(p.quoteId)!,
     status: proposalStatus(p),
     workspace: store().settings.name,
+    brand: brandOf(),
   };
+}
+
+/**
+ * SHA-256 of what the client agrees to: the proposal's text and the quote's lines and
+ * prices. Stored with the signature, printed on the signed PDF's audit page.
+ */
+export function proposalHash(p: Proposal, quote: Quote | null): string {
+  const version = {
+    title: p.title,
+    blocks: p.blocks,
+    validUntil: p.validUntil,
+    quote: quote && {
+      number: quote.number,
+      currency: quote.currency,
+      lines: quote.lines,
+      discountMinor: quote.discountMinor,
+      country: quote.country,
+      stateCode: quote.stateCode,
+    },
+  };
+  const json = JSON.stringify(version, (_k, v) => (typeof v === 'bigint' ? v.toString() : v));
+  return createHash('sha256').update(json).digest('hex');
 }
 
 type Outcome = { ok: true } | { ok: false; field?: string; error: string };
@@ -275,7 +298,7 @@ export async function startSigning(token: string): Promise<Outcome & { code?: st
 /** Step two: the right code, in time, within 5 tries, records the signature. */
 export async function acceptProposal(
   token: string,
-  input: { name: string; code: string; ip: string },
+  input: { name: string; code: string; ip: string; userAgent?: string | null },
 ): Promise<Outcome> {
   const s = store();
   const p = s.proposals.find((x) => x.token === token);
@@ -300,7 +323,16 @@ export async function acceptProposal(
   }
   p.pendingCode = null;
   p.status = 'accepted';
-  p.signature = { name: input.name, email: p.email!, at: new Date().toISOString(), ip: input.ip };
+  const quote = s.quotes.find((q) => q.id === p.quoteId);
+  p.signature = {
+    name: input.name,
+    email: p.email!,
+    at: new Date().toISOString(),
+    ip: input.ip,
+    method: 'email_code',
+    userAgent: input.userAgent ?? null,
+    documentHash: proposalHash(p, quote ?? null),
+  };
   p.activities.unshift(activity('signed', 'signed the proposal', input.name));
   notify(
     'proposal_decided',
@@ -308,7 +340,6 @@ export async function acceptProposal(
     p.title,
     `/sales/proposals/${p.id}`,
   );
-  const quote = s.quotes.find((q) => q.id === p.quoteId);
   if (quote?.leadId) {
     const clientId = await winLead(quote.leadId);
     if (clientId) quote.clientId = clientId;

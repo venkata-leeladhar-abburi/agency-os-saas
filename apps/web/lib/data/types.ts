@@ -162,6 +162,22 @@ export type WorkspaceSettings = {
   /** The setup checklist was hidden; Help brings it back. */
   onboardingDismissed: boolean;
   plan: Plan;
+  /** Printed under the name on invoices and quotes. */
+  address: string | null;
+  bank: {
+    accountName: string | null;
+    accountNumber: string | null;
+    ifsc: string | null;
+    swift: string | null;
+  };
+  invoiceFooter: string;
+  /** Hex colour for the portal and PDFs; used only when white text on it reaches 4.5:1. */
+  brandColour: string | null;
+  /**
+   * The logo. In example mode it is kept as a data URL; with storage it moves to the
+   * `logos` bucket and this holds a signed URL.
+   */
+  logo: { url: string; name: string } | null;
 };
 
 export type Member = {
@@ -320,6 +336,11 @@ export type Signature = {
   /** ISO timestamp. */
   at: string;
   ip: string;
+  /** How the signer proved it was them. */
+  method: 'email_code';
+  userAgent: string | null;
+  /** SHA-256 of the exact proposal and quote they accepted (proposalHash). */
+  documentHash: string;
 };
 
 export type Proposal = {

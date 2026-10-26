@@ -4,6 +4,7 @@ import {
   applyPayment,
   divRoundHalfUp,
   parseDecimal,
+  parseHexColour,
   DEFAULT_SERVICES,
   formatMoney,
   LEAD_SOURCES,
@@ -407,7 +408,19 @@ export type SettingsInput = {
   invoicePrefix: string;
   paymentTermsDays: number;
   services: string[];
+  address: string | null;
+  bank: BankDetails;
+  invoiceFooter: string;
 };
+
+export type BankDetails = {
+  accountName: string | null;
+  accountNumber: string | null;
+  ifsc: string | null;
+  swift: string | null;
+};
+
+export const DEFAULT_INVOICE_FOOTER = 'Thank you for your business.';
 
 /** `services` are the ticked boxes (FormData.getAll), since a field can repeat. */
 export function checkSettings(f: Fields, services: string[] = []): Checked<SettingsInput> {
@@ -434,6 +447,26 @@ export function checkSettings(f: Fields, services: string[] = []): Checked<Setti
   const terms = Number(text(f, 'paymentTermsDays'));
   if (!Number.isInteger(terms) || terms < 0 || terms > 120)
     errors.paymentTermsDays = 'Use a whole number of days from 0 to 120.';
+  const address = optional(f, 'address');
+  if (address && address.length > 300) errors.address = 'Keep the address under 300 characters.';
+  const bank: BankDetails = {
+    accountName: optional(f, 'accountName'),
+    accountNumber: optional(f, 'accountNumber')?.replace(/\s/g, '') ?? null,
+    ifsc: optional(f, 'ifsc')?.toUpperCase() ?? null,
+    swift: optional(f, 'swift')?.replace(/\s/g, '').toUpperCase() ?? null,
+  };
+  if (bank.accountNumber && !/^\d{9,18}$/.test(bank.accountNumber))
+    errors.accountNumber = 'An account number has 9 to 18 digits.';
+  if (bank.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bank.ifsc))
+    errors.ifsc = 'An IFSC has 11 characters, like ABCD0123456. It’s on your cheque book.';
+  if (bank.swift && !/^[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?$/.test(bank.swift))
+    errors.swift = 'A SWIFT code has 8 or 11 letters and numbers.';
+  if (bank.accountNumber && !bank.ifsc && !errors.ifsc)
+    errors.ifsc = 'Add the IFSC so clients in India can pay into this account.';
+  if ((bank.accountNumber || bank.ifsc) && !bank.accountName)
+    errors.accountName = 'Add the name on the account.';
+  const invoiceFooter = text(f, 'invoiceFooter') || DEFAULT_INVOICE_FOOTER;
+  if (invoiceFooter.length > 300) errors.invoiceFooter = 'Keep the footer under 300 characters.';
   if (Object.keys(errors).length) return { ok: false, errors };
   return {
     ok: true,
@@ -445,6 +478,47 @@ export function checkSettings(f: Fields, services: string[] = []): Checked<Setti
       invoicePrefix: invoicePrefix.toUpperCase(),
       paymentTermsDays: terms,
       services: [...new Set(offered)],
+      address,
+      bank,
+      invoiceFooter,
+    },
+  };
+}
+
+// ---------- Branding ----------
+
+export type BrandingInput = { brandColour: string | null };
+
+export function checkBranding(f: Fields): Checked<BrandingInput> {
+  const typed = text(f, 'brandColour');
+  if (!typed) return { ok: true, value: { brandColour: null } };
+  const brandColour = parseHexColour(typed);
+  if (!brandColour)
+    return {
+      ok: false,
+      errors: { brandColour: 'Use a hex colour with 6 digits, like #0F766E.' },
+    };
+  return { ok: true, value: { brandColour } };
+}
+
+export const LOGO_MAX_BYTES = 500 * 1024;
+
+/** A PNG or JPEG logo, checked by its first bytes rather than its name. */
+export async function checkLogo(
+  file: File,
+): Promise<Checked<{ dataUrl: string; name: string }, 'logo'>> {
+  if (file.size > LOGO_MAX_BYTES)
+    return { ok: false, errors: { logo: 'Use a logo under 500 KB. Export it at 512 px wide.' } };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const png = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+  const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (!png && !jpeg) return { ok: false, errors: { logo: 'Use a PNG or JPEG file.' } };
+  const type = png ? 'image/png' : 'image/jpeg';
+  return {
+    ok: true,
+    value: {
+      dataUrl: `data:${type};base64,${Buffer.from(bytes).toString('base64')}`,
+      name: file.name.slice(0, 120),
     },
   };
 }

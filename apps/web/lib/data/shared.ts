@@ -19,3 +19,9 @@ export const activity = (
   text,
   at: new Date().toISOString(),
 });
+
+/** What a client-facing page needs to look like the agency: name, logo and colour. */
+export function brandOf() {
+  const s = store().settings;
+  return { name: s.name, logoUrl: s.logo?.url ?? null, colour: s.brandColour, plan: s.plan };
+}

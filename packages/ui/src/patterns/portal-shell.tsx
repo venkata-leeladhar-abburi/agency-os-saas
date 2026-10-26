@@ -11,6 +11,8 @@ export type PortalTab = { value: string; label: string; icon: Icon; href: string
 
 export type PortalShellProps = {
   agency: string;
+  /** The agency's logo; replaces the mark and name, with the name as its alt text. */
+  logoUrl?: string;
   client: string;
   tabs: PortalTab[];
   active?: string;
@@ -23,6 +25,7 @@ export type PortalShellProps = {
 /** The client portal: phone-first, agency brand at the top, bottom tabs on phones, top tabs on larger screens. */
 export function PortalShell({
   agency,
+  logoUrl,
   client,
   tabs,
   active,
@@ -70,10 +73,15 @@ export function PortalShell({
   return (
     <div className={cn('flex min-h-dvh flex-col bg-background text-foreground', className)}>
       <header className="mx-auto flex w-full max-w-content items-center justify-between gap-3 px-5 pt-4 pb-3">
-        <span className="flex items-center gap-2.5 text-body font-semibold">
-          <BrandTile size="lg" tone="ink" />
-          {agency}
-        </span>
+        {logoUrl ? (
+          // A data or signed storage URL: next/image can't optimise either.
+          <img src={logoUrl} alt={agency} className="h-9 w-auto max-w-44 object-contain" />
+        ) : (
+          <span className="flex items-center gap-2.5 text-body font-semibold">
+            <BrandTile size="lg" tone="ink" />
+            {agency}
+          </span>
+        )}
         <nav aria-label={navLabel} className="max-md:hidden">
           <ul className="flex gap-1 p-0">{tabLinks('top')}</ul>
         </nav>

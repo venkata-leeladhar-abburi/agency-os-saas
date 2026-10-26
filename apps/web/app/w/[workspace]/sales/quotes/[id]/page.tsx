@@ -1,4 +1,5 @@
 import { formatDate } from '@agency-os/core';
+import { DownloadSimple } from '@phosphor-icons/react/dist/ssr';
 import { buttonVariants, InvoiceSummary } from '@agency-os/ui';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -40,21 +41,27 @@ export default async function QuotePage({
             ) : null}
           </p>
         </div>
-        {proposal ? (
-          <Link
-            href={ws(`/sales/proposals/${proposal.id}`)}
-            className={buttonVariants({ variant: 'primary' })}
-          >
-            Open proposal
-          </Link>
-        ) : (
-          <LimitedActionButton
-            action={createProposalAction.bind(null, workspace, quote.id)}
-            slug={workspace}
-          >
-            Make a proposal
-          </LimitedActionButton>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <a href={ws(`/sales/quotes/${quote.id}/pdf`)} download className={buttonVariants({})}>
+            <DownloadSimple size={16} aria-hidden="true" />
+            Download PDF
+          </a>
+          {proposal ? (
+            <Link
+              href={ws(`/sales/proposals/${proposal.id}`)}
+              className={buttonVariants({ variant: 'primary' })}
+            >
+              Open proposal
+            </Link>
+          ) : (
+            <LimitedActionButton
+              action={createProposalAction.bind(null, workspace, quote.id)}
+              slug={workspace}
+            >
+              Make a proposal
+            </LimitedActionButton>
+          )}
+        </div>
       </div>
       <InvoiceSummary type="Quote" number={quote.number} totals={totals} className="max-w-3xl" />
     </div>

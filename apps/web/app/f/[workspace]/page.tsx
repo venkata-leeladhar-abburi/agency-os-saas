@@ -1,4 +1,5 @@
-import { BrandTile, ExampleBadge } from '@agency-os/ui';
+import { ExampleBadge } from '@agency-os/ui';
+import { AgencyMark, BrandScope } from '@/components/brand/brand';
 import { notFound } from 'next/navigation';
 import { EXAMPLE_SLUG, exampleMode } from '@/lib/data';
 import { enquiryWorkspace } from '@/lib/data/enquiry';
@@ -13,17 +14,16 @@ export default async function EnquiryPage({ params }: { params: Promise<{ worksp
   const { workspace } = await params;
   // Until the database is wired, only the example workspace has a form.
   if (workspace !== EXAMPLE_SLUG) notFound();
-  const { name } = await enquiryWorkspace();
+  const { name, logoUrl, colour } = await enquiryWorkspace();
   return (
-    <main className="mx-auto grid min-h-dvh w-full max-w-md content-center gap-4 px-4 py-10">
-      {exampleMode() ? <ExampleBadge /> : null}
-      <div className="grid gap-5 rounded-xl border border-border bg-card p-6 max-sm:p-4">
-        <span className="flex items-center gap-2.5 text-body font-semibold">
-          <BrandTile />
-          {name}
-        </span>
-        <EnquiryForm workspace={name} />
-      </div>
-    </main>
+    <BrandScope colour={colour}>
+      <main className="mx-auto grid min-h-dvh w-full max-w-md content-center gap-4 px-4 py-10">
+        {exampleMode() ? <ExampleBadge /> : null}
+        <div className="grid gap-5 rounded-xl border border-border bg-card p-6 max-sm:p-4">
+          <AgencyMark name={name} logoUrl={logoUrl} />
+          <EnquiryForm workspace={name} />
+        </div>
+      </main>
+    </BrandScope>
   );
 }
