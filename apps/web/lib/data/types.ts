@@ -55,6 +55,8 @@ export type Lead = {
   clientId: string | null;
   activities: Activity[];
   createdAt: string;
+  /** Example data: removed with "Remove example data". */
+  example?: boolean;
 };
 
 export type PortalStatus = 'active' | 'invited' | 'not_invited';
@@ -73,11 +75,24 @@ export type Client = {
   stateCode: string | null;
   notes: string;
   portal: PortalStatus;
+  /** When the contact first opened the portal (for the welcome note). */
+  portalVisitedAt: string | null;
   createdAt: string;
   activities: Activity[];
+  /** Example data: removed with "Remove example data". */
+  example?: boolean;
 };
 
 export type GateStatus = 'draft' | 'waiting' | 'approved' | 'changes';
+
+export type GateDecision = {
+  title: string;
+  phase: string;
+  decision: 'approved' | 'changes';
+  by: string;
+  comment: string | null;
+  at: string;
+};
 
 export type Project = {
   id: string;
@@ -92,8 +107,12 @@ export type Project = {
   startOn: string;
   dueOn: string;
   gate: { title: string; status: GateStatus; approver: string; sentAt: string | null } | null;
+  /** Client sign-offs so far, newest first. */
+  gateHistory: GateDecision[];
   activities: Activity[];
   createdAt: string;
+  /** Example data: removed with "Remove example data". */
+  example?: boolean;
 };
 
 export type PaymentMethod = 'bank_transfer' | 'upi' | 'card' | 'cash' | 'wise' | 'paypal' | 'other';
@@ -119,6 +138,8 @@ export type Invoice = {
   exchangeRate: string | null;
   payments: Payment[];
   createdAt: string;
+  /** Example data: removed with "Remove example data". */
+  example?: boolean;
 };
 
 export type WorkspaceSettings = {
@@ -128,6 +149,57 @@ export type WorkspaceSettings = {
   lutArn: string | null;
   invoicePrefix: string;
   paymentTermsDays: number;
+  /** What the agency offers: shown on proposals and the enquiry form. */
+  services: string[];
+  notificationPrefs: Record<NotificationCategory, { inApp: boolean; email: boolean }>;
+  /** The setup checklist was hidden; Help brings it back. */
+  onboardingDismissed: boolean;
+};
+
+/** Notification categories and their defaults (defaults-and-content.md §7, decision D-040). */
+export type NotificationCategory =
+  | 'enquiry'
+  | 'proposal_viewed'
+  | 'proposal_decided'
+  | 'gate_decided'
+  | 'task_mentioned'
+  | 'payment_received'
+  | 'message';
+
+export const NOTIFICATION_CATEGORIES: {
+  id: NotificationCategory;
+  name: string;
+  inApp: boolean;
+  email: boolean;
+}[] = [
+  { id: 'enquiry', name: 'New lead from the enquiry form', inApp: true, email: true },
+  { id: 'proposal_viewed', name: 'Proposal viewed', inApp: true, email: false },
+  { id: 'proposal_decided', name: 'Proposal signed or declined', inApp: true, email: true },
+  { id: 'gate_decided', name: 'Client approved or asked for changes', inApp: true, email: true },
+  { id: 'task_mentioned', name: 'Mentioned in a task', inApp: true, email: false },
+  { id: 'payment_received', name: 'Payment received', inApp: true, email: true },
+  { id: 'message', name: 'New message from a client', inApp: true, email: true },
+];
+
+export type Notification = {
+  id: string;
+  category: NotificationCategory;
+  title: string;
+  detail: string;
+  href: string;
+  at: string;
+  read: boolean;
+  example?: boolean;
+};
+
+export type Message = {
+  id: string;
+  projectId: string;
+  who: string;
+  fromClient: boolean;
+  text: string;
+  at: string;
+  example?: boolean;
 };
 
 export type TaskStatus = 'todo' | 'in_progress' | 'in_review' | 'done';
@@ -162,6 +234,8 @@ export type Task = {
   subtasks: { id: string; title: string; done: boolean }[];
   comments: Comment[];
   createdAt: string;
+  /** Example data: removed with "Remove example data". */
+  example?: boolean;
 };
 
 export type Quote = {
@@ -179,6 +253,8 @@ export type Quote = {
   lines: InvoiceLineInput[];
   discountMinor: bigint;
   createdAt: string;
+  /** Example data: removed with "Remove example data". */
+  example?: boolean;
 };
 
 export type ProposalStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'declined';
@@ -211,4 +287,6 @@ export type Proposal = {
   pendingCode: { code: string; expiresAt: string; tries: number } | null;
   activities: Activity[];
   createdAt: string;
+  /** Example data: removed with "Remove example data". */
+  example?: boolean;
 };

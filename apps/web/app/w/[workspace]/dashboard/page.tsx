@@ -1,5 +1,6 @@
 import { ArrowRight } from '@phosphor-icons/react/dist/ssr';
 import { Card, PageHeader } from '@agency-os/ui';
+import { SetupArea } from '@/components/workspace/setup-area';
 import Link from 'next/link';
 import {
   DashboardMetrics,
@@ -39,6 +40,7 @@ export default async function DashboardPage({
         subtitle="How the agency is doing this month"
         className="mb-4"
       />
+      <SetupArea slug={workspace} />
       <DashboardMetrics metrics={metrics} base={ws('')} />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <div className="grid min-w-0 content-start gap-4">

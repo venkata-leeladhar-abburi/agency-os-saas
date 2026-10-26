@@ -2,7 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { saveSettings } from '@/lib/data';
-import { checkSettings, fields } from '@/lib/forms';
+import { saveNotificationPrefs } from '@/lib/data/notifications';
+import { NOTIFICATION_CATEGORIES } from '@/lib/data/types';
+import { checkNotificationPrefs, checkSettings, fields } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
 
 export async function saveSettingsAction(
@@ -11,9 +13,23 @@ export async function saveSettingsAction(
   form: FormData,
 ): Promise<FormState> {
   const f = fields(form);
-  const checked = checkSettings(f);
+  const checked = checkSettings(f, form.getAll('services').map(String));
   if (!checked.ok) return { errors: checked.errors, values: f };
   await saveSettings(checked.value);
   revalidatePath(`/w/${slug}`, 'layout');
+  return { done: Date.now() };
+}
+
+export async function savePrefsAction(
+  slug: string,
+  _prev: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const prefs = checkNotificationPrefs(
+    fields(form),
+    NOTIFICATION_CATEGORIES.map((c) => c.id),
+  );
+  await saveNotificationPrefs(prefs);
+  revalidatePath(`/w/${slug}/settings`);
   return { done: Date.now() };
 }

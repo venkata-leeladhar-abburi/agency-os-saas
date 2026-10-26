@@ -47,7 +47,8 @@ export function PortalShell({
                 : 'inline-flex h-control-md items-center gap-2 rounded-md px-3 text-body-medium text-muted-foreground hover:bg-accent hover:text-foreground',
               selected &&
                 (variant === 'bottom'
-                  ? 'text-primary'
+                  ? // The link colour keeps 4.5:1 on the card in both themes; the primary violet doesn't in dark.
+                    'text-link'
                   : 'bg-card text-foreground shadow-xs ring-1 ring-border'),
             )}
           >
@@ -55,7 +56,10 @@ export function PortalShell({
               size={22}
               weight={selected ? 'fill' : 'regular'}
               aria-hidden="true"
-              className={cn(variant === 'top' && 'size-4.5', selected && 'text-primary')}
+              className={cn(
+                variant === 'top' && 'size-4.5',
+                selected && (variant === 'bottom' ? 'text-link' : 'text-primary'),
+              )}
             />
             {label}
           </Anchor>

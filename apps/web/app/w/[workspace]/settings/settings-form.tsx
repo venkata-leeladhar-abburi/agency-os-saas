@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Card, Input } from '@agency-os/ui';
+import { DEFAULT_SERVICES } from '@agency-os/core';
+import { Alert, Card, Checkbox, Input } from '@agency-os/ui';
 import { useActionState } from 'react';
 import { FormMessage, Submit } from '@/components/workspace/form-bits';
 import type { WorkspaceSettings } from '@/lib/data/types';
@@ -21,13 +22,36 @@ export function SettingsForm({ slug, settings }: { slug: string; settings: Works
         </Alert>
       ) : null}
       <Card title="Workspace" description="Shown on proposals, invoices and the client portal.">
-        <Input
-          label="Workspace name"
-          name="name"
-          required
-          defaultValue={value('name')}
-          error={e.name}
-        />
+        <div className="grid gap-4">
+          <Input
+            label="Workspace name"
+            name="name"
+            required
+            defaultValue={value('name')}
+            error={e.name}
+          />
+          <fieldset className="grid gap-2">
+            <legend className="mb-1 text-body-sm font-medium">
+              Services you offer{' '}
+              <span className="font-normal text-muted-foreground">(Optional)</span>
+            </legend>
+            <div className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
+              {DEFAULT_SERVICES.map((svc) => (
+                <Checkbox
+                  key={svc}
+                  name="services"
+                  value={svc}
+                  label={svc}
+                  defaultChecked={settings.services.includes(svc)}
+                />
+              ))}
+            </div>
+          </fieldset>
+          <p className="text-body-sm text-muted-foreground">
+            Logo upload arrives with file storage. Until then, proposals and the portal show your
+            workspace name.
+          </p>
+        </div>
       </Card>
       <Card title="Tax and invoices" description="Used to work out GST and to number invoices.">
         <div className="grid gap-4 sm:grid-cols-2">

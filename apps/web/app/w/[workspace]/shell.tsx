@@ -4,7 +4,8 @@ import { Plus, SignOut } from '@phosphor-icons/react';
 import { AppShell, Button, Dialog, DialogContent, ExampleBadge } from '@agency-os/ui';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ownerNav, SECTION_LABELS } from '@/components/workspace/nav';
+import { footerNav, ownerNav, SECTION_LABELS } from '@/components/workspace/nav';
+import { NotificationBell } from '@/components/workspace/notification-bell';
 import { useWorkspacePalette } from '@/components/workspace/palette';
 import type { WorkspaceSummary } from '@/lib/data';
 import { useState, type ReactNode } from 'react';
@@ -24,6 +25,7 @@ export function WorkspaceShell({
   all,
   user,
   example,
+  unread,
   children,
 }: {
   current: WorkspaceSummary;
@@ -31,6 +33,8 @@ export function WorkspaceShell({
   user: string;
   /** Example mode: the screens show labelled example data and sign-out is hidden. */
   example?: boolean;
+  /** Unread notifications, for the bell. */
+  unread: number;
   children: ReactNode;
 }) {
   const [switching, setSwitching] = useState(false);
@@ -43,6 +47,7 @@ export function WorkspaceShell({
         sidebar={{
           workspace: { name: current.name, plan: current.plan },
           groups,
+          footerItems: footerNav(current.slug),
           active: section,
           user: { name: user, role: ROLE_LABELS[current.role] ?? current.role },
           onSwitchWorkspace: () => setSwitching(true),
@@ -52,14 +57,19 @@ export function WorkspaceShell({
         topbar={{
           crumbs: [{ label: SECTION_LABELS[section] ?? 'Today' }],
           linkAs: Link,
-          actions: example ? (
-            <ExampleBadge />
-          ) : (
-            <form action={signOut}>
-              <Button type="submit" variant="ghost" size="sm" icon={SignOut}>
-                Sign out
-              </Button>
-            </form>
+          actions: (
+            <>
+              <NotificationBell slug={current.slug} unread={unread} />
+              {example ? (
+                <ExampleBadge />
+              ) : (
+                <form action={signOut}>
+                  <Button type="submit" variant="ghost" size="sm" icon={SignOut}>
+                    Sign out
+                  </Button>
+                </form>
+              )}
+            </>
           ),
         }}
       >

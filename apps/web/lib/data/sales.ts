@@ -10,6 +10,7 @@ import {
 } from '@agency-os/core';
 import type { QuoteInput } from '../forms';
 import { winLead } from './index';
+import { notify } from './notifications';
 import { activity, EXAMPLE_USER, newId, store } from './shared';
 import type { Proposal } from './types';
 import {
@@ -229,6 +230,12 @@ export async function proposalByToken(token: string, countView: boolean) {
       p.activities.unshift(
         activity('viewed', 'viewed the proposal', quote?.recipient ?? 'The client'),
       );
+      notify(
+        'proposal_viewed',
+        `${quote?.recipient ?? 'The client'} viewed your proposal`,
+        p.title,
+        `/sales/proposals/${p.id}`,
+      );
     }
     p.status = 'viewed';
   }
@@ -295,6 +302,12 @@ export async function acceptProposal(
   p.status = 'accepted';
   p.signature = { name: input.name, email: p.email!, at: new Date().toISOString(), ip: input.ip };
   p.activities.unshift(activity('signed', 'signed the proposal', input.name));
+  notify(
+    'proposal_decided',
+    `${input.name} signed the proposal`,
+    p.title,
+    `/sales/proposals/${p.id}`,
+  );
   const quote = s.quotes.find((q) => q.id === p.quoteId);
   if (quote?.leadId) {
     const clientId = await winLead(quote.leadId);
@@ -315,6 +328,12 @@ export async function declineProposal(token: string, reason: string): Promise<Ou
       reason ? `declined: ${reason}` : 'declined the proposal',
       quote?.recipient ?? 'The client',
     ),
+  );
+  notify(
+    'proposal_decided',
+    `${quote?.recipient ?? 'The client'} declined the proposal`,
+    reason ? `Their reason: ${reason}` : p.title,
+    `/sales/proposals/${p.id}`,
   );
   return { ok: true };
 }

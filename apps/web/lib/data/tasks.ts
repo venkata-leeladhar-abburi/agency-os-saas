@@ -1,5 +1,6 @@
 // Server only. Tasks: the board, my tasks, task detail, subtasks and comments.
 import type { TaskInput } from '../forms';
+import { notify } from './notifications';
 import { EXAMPLE_USER, newId, store } from './shared';
 import { TASK_PRIORITIES, TASK_STATUSES, type Task, type TaskStatus } from './types';
 import { mentions, taskDue } from './views';
@@ -109,8 +110,13 @@ export async function addComment(id: string, text: string): Promise<string[]> {
     text,
     at: new Date().toISOString(),
   });
-  return mentions(
+  const named = mentions(
     text,
     MEMBERS.map((m) => m.name),
-  ).filter((n) => n !== EXAMPLE_USER.name);
+  );
+  // Each person sees their own list; in example mode that's Kiran's, so only a mention of
+  // Kiran by someone else would land there. The others get theirs once members sign in.
+  if (named.includes(EXAMPLE_USER.name) && task.comments.at(-1)?.who !== EXAMPLE_USER.name)
+    notify('task_mentioned', `You were mentioned in ${task.title}`, text, `/tasks/${task.id}`);
+  return named.filter((n) => n !== EXAMPLE_USER.name);
 }

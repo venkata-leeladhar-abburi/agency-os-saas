@@ -5,12 +5,13 @@ import {
   GearSix,
   House,
   Notepad,
+  Question,
   Receipt,
   SquaresFour,
   UserCircle,
   UsersThree,
 } from '@phosphor-icons/react';
-import type { SidebarGroup } from '@agency-os/ui';
+import type { SidebarGroup, SidebarItem } from '@agency-os/ui';
 
 /** Owner navigation from docs/02-product/information-architecture.md (R0 and R1 items). */
 export function ownerNav(slug: string): SidebarGroup[] {
@@ -51,6 +52,10 @@ export function ownerNav(slug: string): SidebarGroup[] {
   ];
 }
 
+export function footerNav(slug: string): SidebarItem[] {
+  return [{ value: 'help', label: 'Help', icon: Question, href: `/w/${slug}/help` }];
+}
+
 export const SECTION_LABELS: Record<string, string> = {
   today: 'Today',
   dashboard: 'Dashboard',
@@ -62,4 +67,5 @@ export const SECTION_LABELS: Record<string, string> = {
   invoices: 'Invoices',
   team: 'Team',
   settings: 'Settings',
+  help: 'Help',
 };

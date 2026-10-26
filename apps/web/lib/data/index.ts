@@ -248,6 +248,7 @@ export async function createClient(input: ClientInput): Promise<string> {
     id,
     ...input,
     portal: 'not_invited',
+    portalVisitedAt: null,
     createdAt: new Date().toISOString(),
     activities: [activity('created', 'added the client')],
   });
@@ -324,6 +325,7 @@ export async function createProject(input: ProjectInput): Promise<string> {
     startOn: input.startOn,
     dueOn: input.dueOn,
     gate: null,
+    gateHistory: [],
     activities: [activity('created', 'started the project')],
     createdAt: new Date().toISOString(),
   });
@@ -575,4 +577,10 @@ export async function today(slug: string): Promise<TodayItem[]> {
     });
   }
   return items;
+}
+
+export async function projectMessages(projectId: string) {
+  return store()
+    .messages.filter((m) => m.projectId === projectId)
+    .sort((a, b) => a.at.localeCompare(b.at));
 }

@@ -1,6 +1,7 @@
 import { Card, Input, PageHeader } from '@agency-os/ui';
 import { settings } from '@/lib/data';
 import { siteOrigin } from '@/lib/origin';
+import { NotificationPrefs } from './notification-prefs';
 import { SettingsForm } from './settings-form';
 
 export const metadata = { title: 'Settings · Agency OS' };
@@ -8,11 +9,17 @@ export const metadata = { title: 'Settings · Agency OS' };
 export default async function SettingsPage({ params }: { params: Promise<{ workspace: string }> }) {
   const { workspace } = await params;
   const formLink = `${await siteOrigin()}/f/${workspace}`;
+  const s = await settings();
   return (
     <>
-      <PageHeader title="Settings" subtitle="Workspace, tax and invoices" className="mb-4" />
+      <PageHeader
+        title="Settings"
+        subtitle="Workspace, tax and invoices, notifications"
+        className="mb-4"
+      />
       <div className="grid max-w-3xl gap-4">
-        <SettingsForm slug={workspace} settings={await settings()} />
+        <SettingsForm slug={workspace} settings={s} />
+        <NotificationPrefs slug={workspace} prefs={s.notificationPrefs} />
         <Card
           title="Enquiry form"
           description="Put this link on your website or Instagram. Each enquiry becomes a lead with source Website."

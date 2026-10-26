@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Submit } from '@/components/workspace/form-bits';
 import { formatPhone } from '@/lib/auth/helpers';
-import { getClient } from '@/lib/data';
+import { exampleMode, getClient } from '@/lib/data';
 import { inviteToPortalAction } from '../actions';
 
 const PORTAL: Record<string, { text: string; tone: BadgeProps['tone'] }> = {
@@ -40,6 +40,7 @@ export default async function ClientPage({
   const { client, money, projects, invoices } = found;
   const ws = (p: string) => `/w/${workspace}${p}`;
   const portal = PORTAL[client.portal]!;
+  const example = exampleMode();
 
   return (
     <div className="grid gap-6">
@@ -60,6 +61,16 @@ export default async function ClientPage({
         ]}
         actions={
           <>
+            {example && client.portal !== 'not_invited' ? (
+              <a
+                href={`/p/${workspace}/as/${client.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className={buttonVariants({})}
+              >
+                See their portal
+              </a>
+            ) : null}
             <Link
               href={`${ws('/invoices/new')}?client=${client.id}`}
               className={buttonVariants({})}

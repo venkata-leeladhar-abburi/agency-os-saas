@@ -12,11 +12,13 @@ import {
 } from '@agency-os/ui';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Thread } from '@/components/portal/portal-bits';
 import { Activities } from '@/components/workspace/activity';
-import { getProject } from '@/lib/data';
+import { getProject, projectMessages } from '@/lib/data';
 import { tasks } from '@/lib/data/tasks';
 import { budgetUsed, relativeTime } from '@/lib/data/views';
 import { RequestGateForm } from './request-gate';
+import { TeamMessageForm } from './team-message';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const found = await getProject((await params).id);
@@ -38,6 +40,8 @@ export default async function ProjectPage({
   const current = template.phases[project.phase];
   const used = budgetUsed(project.usedMinor, project.budgetMinor);
   const projectTasks = await tasks({ projectId: project.id });
+  const messages = await projectMessages(project.id);
+  const lastDecision = project.gateHistory[0];
 
   return (
     <div className="grid gap-6">
@@ -79,7 +83,26 @@ export default async function ProjectPage({
           </p>
         </Card>
       </div>
-      {project.gate ? (
+      {project.gate?.status === 'changes' ? (
+        <Card
+          title="Client sign-off"
+          description={`${lastDecision?.by ?? client.contactName} asked for changes to “${project.gate.title}”.`}
+        >
+          <div className="grid gap-4">
+            {lastDecision?.comment ? (
+              <Alert tone="warning" title="What they asked for">
+                “{lastDecision.comment}”
+              </Alert>
+            ) : null}
+            <RequestGateForm
+              slug={workspace}
+              id={project.id}
+              approver={client.contactName}
+              suggestion={project.gate.title}
+            />
+          </div>
+        </Card>
+      ) : project.gate ? (
         <GateCard
           phase={`${current?.name ?? ''} gate`}
           title={project.gate.title}
@@ -105,6 +128,42 @@ export default async function ProjectPage({
           The next client approval comes in a later phase.
         </Alert>
       )}
+      {project.gateHistory.length ? (
+        <Card title="Client decisions">
+          <ul className="grid gap-2 p-0">
+            {project.gateHistory.map((g) => (
+              <li key={g.at} className="grid gap-0.5 text-body">
+                <span className="font-medium">
+                  {g.by} {g.decision === 'approved' ? 'approved' : 'asked for changes'}: {g.title}
+                </span>
+                <span className="text-caption font-normal text-muted-foreground">
+                  {g.phase} · {formatDate(g.at)}
+                  {g.comment ? ` · “${g.comment}”` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
+      <Card
+        title="Messages"
+        description={`With ${client.contactName}. They read and reply in their portal.`}
+        id="messages"
+      >
+        <div className="grid gap-4">
+          <Thread
+            you="You"
+            messages={messages.map((m) => ({
+              id: m.id,
+              who: m.who,
+              mine: !m.fromClient,
+              text: m.text,
+              when: relativeTime(m.at),
+            }))}
+          />
+          <TeamMessageForm slug={workspace} id={project.id} />
+        </div>
+      </Card>
       <Card
         title="Tasks"
         description={

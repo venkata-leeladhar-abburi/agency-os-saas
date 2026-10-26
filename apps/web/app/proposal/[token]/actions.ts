@@ -53,7 +53,7 @@ export async function acceptAction(
       ? { step: 'code', errors: { code: result.error } }
       : { step: 'code', message: result.error };
   }
-  revalidatePath(`/p/${token}`);
+  revalidatePath(`/proposal/${token}`);
   return { step: 'signed' };
 }
 
@@ -67,6 +67,6 @@ export async function declineAction(
     .slice(0, 500);
   const result = await declineProposal(token, reason);
   if (!result.ok) return { message: result.error };
-  revalidatePath(`/p/${token}`);
+  revalidatePath(`/proposal/${token}`);
   return { done: Date.now() };
 }

@@ -1,6 +1,7 @@
 // Server only. The public enquiry form: each enquiry becomes a lead with source Website.
 import { nextFollowUp } from '@agency-os/core';
 import type { EnquiryInput } from '../forms';
+import { notify } from './notifications';
 import { activity, EXAMPLE_USER, newId, store } from './shared';
 
 const WINDOW_MS = 60_000;
@@ -41,6 +42,12 @@ export async function submitEnquiry(input: EnquiryInput): Promise<string> {
     createdAt: now.toISOString(),
     activities: [activity('enquiry', 'sent an enquiry from the website form', input.name)],
   });
+  notify(
+    'enquiry',
+    `New enquiry from ${input.company ?? input.name}`,
+    `Website form · ${input.service}`,
+    `/leads/${id}`,
+  );
   return id;
 }
 

@@ -2,6 +2,7 @@ import { myWorkspaces, withUser } from '@agency-os/db';
 import { notFound, redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { EXAMPLE_SLUG, EXAMPLE_USER, exampleMode, exampleWorkspace } from '@/lib/data';
+import { notifications } from '@/lib/data/notifications';
 import { database } from '@/lib/server/db';
 import { currentUser } from '@/lib/supabase/server';
 import { WorkspaceShell } from './shell';
@@ -18,7 +19,13 @@ export default async function WorkspaceLayout({
     if (workspace !== EXAMPLE_SLUG) redirect(`/w/${EXAMPLE_SLUG}`);
     const current = exampleWorkspace();
     return (
-      <WorkspaceShell current={current} all={[current]} user={EXAMPLE_USER.name} example>
+      <WorkspaceShell
+        current={current}
+        all={[current]}
+        user={EXAMPLE_USER.name}
+        example
+        unread={(await notifications(EXAMPLE_SLUG)).unread}
+      >
         {children}
       </WorkspaceShell>
     );
@@ -32,7 +39,7 @@ export default async function WorkspaceLayout({
   // Not a member (or it doesn't exist): same answer, so slugs can't be probed.
   if (!current) notFound();
   return (
-    <WorkspaceShell current={current} all={all} user={user.email ?? 'You'}>
+    <WorkspaceShell current={current} all={all} user={user.email ?? 'You'} unread={0}>
       {children}
     </WorkspaceShell>
   );

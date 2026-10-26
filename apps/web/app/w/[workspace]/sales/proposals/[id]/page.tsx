@@ -34,7 +34,7 @@ export default async function ProposalPage({
   if (!found) notFound();
   const { proposal: p, quote, totals, status, settings } = found;
   const ws = (path: string) => `/w/${workspace}${path}`;
-  const link = `${await siteOrigin()}/p/${p.token}`;
+  const link = `${await siteOrigin()}/proposal/${p.token}`;
   const editable = status !== 'accepted' && status !== 'declined';
   const block = <T extends string>(type: T) => p.blocks.find((b) => b.type === type);
   const text = (heading: string) => {
@@ -68,7 +68,7 @@ export default async function ProposalPage({
         <div className="flex flex-wrap gap-2">
           {p.status !== 'draft' ? (
             <a
-              href={`/p/${p.token}?preview=1`}
+              href={`/proposal/${p.token}?preview=1`}
               target="_blank"
               rel="noreferrer"
               className={buttonVariants({})}

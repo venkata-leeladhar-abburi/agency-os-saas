@@ -2,10 +2,13 @@
 // end to end before the database is reachable. Every name and amount is example data from the
 // design reference; the screens show the "Example data" badge. Restarting the server resets it.
 import { SEVEN_PHASES, standardProposal } from '@agency-os/core';
+import { NOTIFICATION_CATEGORIES } from './types';
 import type {
   Client,
   Invoice,
   Lead,
+  Message,
+  Notification,
   Project,
   Proposal,
   Quote,
@@ -28,6 +31,8 @@ export type ExampleStore = {
   quoteSequence: number;
   /** Enquiries per network in the last minute, to slow down spam. */
   enquiryHits: Map<string, number[]>;
+  notifications: Notification[];
+  messages: Message[];
 };
 
 const OWNER = 'Kiran Rao';
@@ -94,6 +99,7 @@ function seed(): ExampleStore {
       stateCode: '29',
       notes: 'Wants the site live before the Diwali sale.',
       portal: 'active',
+      portalVisitedAt: iso(-50),
       createdAt: iso(-60),
       activities: [],
     },
@@ -110,6 +116,7 @@ function seed(): ExampleStore {
       stateCode: null,
       notes: '',
       portal: 'invited',
+      portalVisitedAt: null,
       createdAt: iso(-40),
       activities: [],
     },
@@ -126,6 +133,7 @@ function seed(): ExampleStore {
       stateCode: '37',
       notes: '',
       portal: 'not_invited',
+      portalVisitedAt: null,
       createdAt: iso(-30),
       activities: [],
     },
@@ -142,6 +150,7 @@ function seed(): ExampleStore {
       stateCode: '32',
       notes: '',
       portal: 'active',
+      portalVisitedAt: iso(-20),
       createdAt: iso(-25),
       activities: [],
     },
@@ -237,11 +246,21 @@ function seed(): ExampleStore {
       startOn: date(-30),
       dueOn: date(55),
       gate: {
-        title: 'Approve the homepage design',
+        title: 'Homepage design',
         status: 'waiting',
         approver: 'Srinivas Beere',
         sentAt: iso(-2),
       },
+      gateHistory: [
+        {
+          title: 'Sitemap and scope',
+          phase: 'Define',
+          decision: 'approved',
+          by: 'Srinivas Beere',
+          comment: null,
+          at: iso(-12, 16),
+        },
+      ],
       activities: [],
       createdAt: iso(-30),
     },
@@ -257,6 +276,7 @@ function seed(): ExampleStore {
       startOn: date(-45),
       dueOn: date(80),
       gate: null,
+      gateHistory: [],
       activities: [],
       createdAt: iso(-45),
     },
@@ -272,6 +292,7 @@ function seed(): ExampleStore {
       startOn: date(-10),
       dueOn: date(120),
       gate: null,
+      gateHistory: [],
       activities: [],
       createdAt: iso(-10),
     },
@@ -287,6 +308,7 @@ function seed(): ExampleStore {
       startOn: date(-5),
       dueOn: date(95),
       gate: null,
+      gateHistory: [],
       activities: [],
       createdAt: iso(-5),
     },
@@ -498,7 +520,65 @@ function seed(): ExampleStore {
     },
   ];
 
-  return {
+  const notifications: Notification[] = [
+    {
+      id: 'n1',
+      category: 'proposal_viewed',
+      title: 'Northwind viewed your proposal',
+      detail: 'Opened 3 times',
+      href: '/sales/proposals/p-northwind',
+      at: iso(0, 8),
+      read: false,
+    },
+    {
+      id: 'n2',
+      category: 'message',
+      title: 'Srinivas Beere sent a message',
+      detail: 'Acme Labs · Website redesign',
+      href: '/projects/acme-web',
+      at: iso(-1, 18),
+      read: false,
+    },
+    {
+      id: 'n3',
+      category: 'payment_received',
+      title: 'Payment received: ₹44,999.30 for OSS/26-27/013',
+      detail: 'Saffron Stays · UPI',
+      href: '/invoices/inv-13',
+      at: iso(-20, 15),
+      read: true,
+    },
+    {
+      id: 'n4',
+      category: 'gate_decided',
+      title: 'Srinivas Beere approved: Sitemap and scope',
+      detail: 'Acme Labs · Website redesign',
+      href: '/projects/acme-web',
+      at: iso(-12, 16),
+      read: true,
+    },
+  ];
+
+  const messages: Message[] = [
+    {
+      id: 'm1',
+      projectId: 'acme-web',
+      who: DESIGNER,
+      fromClient: false,
+      text: 'Hi Srinivas, the homepage designs are ready for you to look at. Desktop and phone versions are attached to the approval.',
+      at: iso(-2, 10),
+    },
+    {
+      id: 'm2',
+      projectId: 'acme-web',
+      who: 'Srinivas Beere',
+      fromClient: true,
+      text: 'Looks good. Can the headline be in Telugu as well?',
+      at: iso(-1, 18),
+    },
+  ];
+
+  const store: ExampleStore = {
     settings: {
       name: 'One Stop Solutions',
       gstin: '37ABCDE1234F1ZZ',
@@ -506,6 +586,11 @@ function seed(): ExampleStore {
       lutArn: 'AD3609260012345',
       invoicePrefix: 'OSS',
       paymentTermsDays: 7,
+      services: ['Website', 'Brand identity', 'UI/UX design', 'Mobile app'],
+      notificationPrefs: Object.fromEntries(
+        NOTIFICATION_CATEGORIES.map((c) => [c.id, { inApp: c.inApp, email: c.email }]),
+      ) as WorkspaceSettings['notificationPrefs'],
+      onboardingDismissed: false,
     },
     leads,
     clients,
@@ -517,7 +602,33 @@ function seed(): ExampleStore {
     proposals,
     quoteSequence: 4,
     enquiryHits: new Map(),
+    notifications,
+    messages,
   };
+  for (const list of EXAMPLE_LISTS) for (const record of store[list]) record.example = true;
+  return store;
+}
+
+/** The record lists that hold example data. */
+export const EXAMPLE_LISTS = [
+  'leads',
+  'clients',
+  'projects',
+  'invoices',
+  'tasks',
+  'quotes',
+  'proposals',
+  'notifications',
+  'messages',
+] as const;
+
+/** A fresh copy of the example records, for "Load example data". */
+export function exampleRecords(): Pick<ExampleStore, (typeof EXAMPLE_LISTS)[number]> {
+  const fresh = seed();
+  return Object.fromEntries(EXAMPLE_LISTS.map((l) => [l, fresh[l]])) as Pick<
+    ExampleStore,
+    (typeof EXAMPLE_LISTS)[number]
+  >;
 }
 
 const globalStore = globalThis as unknown as { __agencyOsExample?: ExampleStore };

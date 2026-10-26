@@ -404,10 +404,13 @@ export type SettingsInput = {
   lutArn: string | null;
   invoicePrefix: string;
   paymentTermsDays: number;
+  services: string[];
 };
 
-export function checkSettings(f: Fields): Checked<SettingsInput> {
+/** `services` are the ticked boxes (FormData.getAll), since a field can repeat. */
+export function checkSettings(f: Fields, services: string[] = []): Checked<SettingsInput> {
   const errors: Errors = {};
+  const offered = services.filter((x) => (DEFAULT_SERVICES as readonly string[]).includes(x));
   const name = text(f, 'name');
   if (name.length < 2) errors.name = 'Give your workspace a name of at least 2 letters.';
   let gstin: string | null = null;
@@ -439,6 +442,7 @@ export function checkSettings(f: Fields): Checked<SettingsInput> {
       lutArn: lutArn?.toUpperCase() ?? null,
       invoicePrefix: invoicePrefix.toUpperCase(),
       paymentTermsDays: terms,
+      services: [...new Set(offered)],
     },
   };
 }
@@ -668,4 +672,19 @@ export function checkEnquiry(f: Fields): Checked<EnquiryInput> {
     ok: true,
     value: { name, email, phone, company: optional(f, 'company'), service, budget, message },
   };
+}
+
+// ---------- Notification settings ----------
+
+/** Reads "inApp.<category>" and "email.<category>" ticks; anything unknown is ignored. */
+export function checkNotificationPrefs<C extends string>(
+  f: Fields,
+  categories: readonly C[],
+): Record<C, { inApp: boolean; email: boolean }> {
+  return Object.fromEntries(
+    categories.map((c) => [
+      c,
+      { inApp: f[`inApp.${c}`] === 'on', email: f[`email.${c}`] === 'on' },
+    ]),
+  ) as Record<C, { inApp: boolean; email: boolean }>;
 }

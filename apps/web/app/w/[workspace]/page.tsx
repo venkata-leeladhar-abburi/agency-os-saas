@@ -1,4 +1,5 @@
 import { PageHeader } from '@agency-os/ui';
+import { SetupArea } from '@/components/workspace/setup-area';
 import { Empty } from '@/components/workspace/page-bits';
 import { TodayList } from '@/components/workspace/tables';
 import { EXAMPLE_USER, today, type TodayItem } from '@/lib/data';
@@ -36,6 +37,7 @@ export default async function TodayPage({ params }: { params: Promise<{ workspac
         subtitle={`${date} · ${items.length === 0 ? 'nothing due' : `${items.length} ${items.length === 1 ? 'thing' : 'things'} today`}`}
         className="mb-4"
       />
+      <SetupArea slug={workspace} />
       {items.length === 0 ? (
         <Empty
           icon="today"
