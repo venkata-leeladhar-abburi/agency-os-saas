@@ -241,6 +241,7 @@ export async function issuedThisMonth(tx: Tx, workspaceId: string, now = new Dat
         eq(invoices.workspaceId, workspaceId),
         gte(invoices.issuedAt, from),
         eq(invoices.proforma, false),
+        eq(invoices.isExample, false),
       ),
     );
   return row?.n ?? 0;

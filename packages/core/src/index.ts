@@ -16,3 +16,4 @@ export * from './sales-docs';
 export * from './phases';
 export * from './invoices';
 export * from './files';
+export * from './onboarding';

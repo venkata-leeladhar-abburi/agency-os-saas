@@ -211,13 +211,14 @@ const countOpenLeads: Counter = async (tx, workspaceId) => {
       and(
         eq(leads.workspaceId, workspaceId),
         isNull(leads.deletedAt),
+        eq(leads.isExample, false),
         eq(pipelineStages.kind, 'open'),
       ),
     );
   return row?.n ?? 0;
 };
 
-/** Clients with at least one contact who can use the portal. */
+/** Clients with at least one contact who can use the portal. Example data never counts. */
 const countPortalClients: Counter = async (tx, workspaceId) => {
   const [row] = await tx
     .select({ n: sql<number>`count(distinct ${clientContacts.clientId})::int` })
@@ -226,6 +227,7 @@ const countPortalClients: Counter = async (tx, workspaceId) => {
     .where(
       and(
         eq(clientContacts.workspaceId, workspaceId),
+        eq(clientContacts.isExample, false),
         isNotNull(clientContacts.portalInvitedAt),
         isNull(clientContacts.portalRevokedAt),
       ),

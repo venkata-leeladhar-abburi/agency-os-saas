@@ -332,7 +332,9 @@ export async function sentThisMonth(
   const [row] = await tx
     .select({ n: sql<number>`count(*)::int` })
     .from(table)
-    .where(and(eq(table.workspaceId, workspaceId), gte(table.sentAt, from)));
+    .where(
+      and(eq(table.workspaceId, workspaceId), gte(table.sentAt, from), eq(table.isExample, false)),
+    );
   return row?.n ?? 0;
 }
 
