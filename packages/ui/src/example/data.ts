@@ -15,7 +15,7 @@ import {
   SquaresFour,
   UsersThree,
   UserCircle,
-} from '@phosphor-icons/react';
+} from '@phosphor-icons/react/dist/ssr';
 import type { LeadCardData, PipelineColumn } from '../patterns/pipeline-board';
 import type { SidebarGroup, SidebarItem } from '../patterns/sidebar';
 

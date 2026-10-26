@@ -1,18 +1,13 @@
 'use client';
 
-import { House, Plus, SignOut } from '@phosphor-icons/react';
-import { AppShell, Button, Dialog, DialogContent, type SidebarGroup } from '@agency-os/ui';
+import { Plus, SignOut } from '@phosphor-icons/react';
+import { AppShell, Button, Dialog, DialogContent, ExampleBadge } from '@agency-os/ui';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ownerNav, SECTION_LABELS } from '@/components/workspace/nav';
+import type { WorkspaceSummary } from '@/lib/data';
 import { useState, type ReactNode } from 'react';
 import { signOut } from './actions';
-
-export type WorkspaceSummary = {
-  id: string;
-  name: string;
-  slug: string;
-  role: string;
-  plan: string;
-};
 
 const ROLE_LABELS: Record<string, string> = {
   owner: 'Owner',
@@ -27,34 +22,36 @@ export function WorkspaceShell({
   current,
   all,
   user,
+  example,
   children,
 }: {
   current: WorkspaceSummary;
   all: WorkspaceSummary[];
   user: string;
+  /** Example mode: the screens show labelled example data and sign-out is hidden. */
+  example?: boolean;
   children: ReactNode;
 }) {
   const [switching, setSwitching] = useState(false);
-  const groups: SidebarGroup[] = [
-    {
-      items: [{ value: 'today', label: 'Today', icon: House, href: `/w/${current.slug}` }],
-    },
-  ];
+  const section = usePathname().split('/')[3] ?? 'today';
+  const groups = ownerNav(current.slug);
   return (
     <>
       <AppShell
         sidebar={{
           workspace: { name: current.name, plan: current.plan },
           groups,
-          active: 'today',
+          active: section,
           user: { name: user, role: ROLE_LABELS[current.role] ?? current.role },
           onSwitchWorkspace: () => setSwitching(true),
           linkAs: Link,
         }}
         topbar={{
-          crumbs: [{ label: 'Today' }],
+          crumbs: [{ label: SECTION_LABELS[section] ?? 'Today' }],
           linkAs: Link,
-          actions: (
+          actions: example ? (
+            <ExampleBadge />
+          ) : (
             <form action={signOut}>
               <Button type="submit" variant="ghost" size="sm" icon={SignOut}>
                 Sign out

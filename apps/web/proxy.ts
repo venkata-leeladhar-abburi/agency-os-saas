@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 /** Keeps the Supabase session fresh and sends signed-out visitors to sign-in. */
 export async function proxy(request: NextRequest) {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return NextResponse.next();
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.EXAMPLE_MODE === 'true')
+    return NextResponse.next();
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,

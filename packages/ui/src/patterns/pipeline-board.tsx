@@ -53,6 +53,8 @@ export type PipelineColumn = {
 };
 
 export type PipelineLabels = {
+  /** Names the scrollable board for screen readers. */
+  board?: string;
   addLead?: string;
   move?: (name: string) => string;
   instructions?: string;
@@ -397,8 +399,12 @@ export function PipelineBoard({
         .find((c) => c.id === activeId)
     : undefined;
 
+  // A stable id keeps the server and browser markup the same (dnd-kit counts ids otherwise).
+  const dndId = useId();
+
   return (
     <DndContext
+      id={dndId}
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={onDragStart}
@@ -418,6 +424,10 @@ export function PipelineBoard({
       }}
     >
       <div
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region must be reachable by keyboard (WCAG 2.1.1)
+        tabIndex={0}
+        role="region"
+        aria-label={labels?.board ?? 'Pipeline'}
         className={cn(
           'grid auto-cols-[minmax(216px,1fr)] grid-flow-col gap-3 overflow-x-auto pb-2',
           size === 'sm' && 'auto-cols-[minmax(176px,1fr)]',
