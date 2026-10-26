@@ -10,7 +10,15 @@ import { AccountError, call } from './accounts';
 import type { Tx } from './client';
 import { logActivity } from './leads';
 import { checkPlanLimit } from './platform';
-import { activities, clientContacts, clients, leads, pipelineStages, workspaces } from './schema';
+import {
+  activities,
+  clientContacts,
+  clients,
+  leads,
+  pipelineStages,
+  proposals,
+  workspaces,
+} from './schema';
 
 export type Client = typeof clients.$inferSelect;
 export type Contact = typeof clientContacts.$inferSelect;
@@ -380,7 +388,14 @@ export async function convertLeadToClient(
   if (!row) throw new AccountError('lead_not_found');
   const { lead } = row;
   if (lead.convertedClientId) return { clientId: lead.convertedClientId, created: false };
-  if (row.kind !== 'won') throw new AccountError('lead_not_won');
+  if (row.kind !== 'won') {
+    const [signed] = await tx
+      .select({ id: proposals.id })
+      .from(proposals)
+      .where(and(eq(proposals.leadId, lead.id), eq(proposals.status, 'signed')))
+      .limit(1);
+    if (!signed) throw new AccountError('lead_not_won');
+  }
   const clientId = await createClient(
     tx,
     lead.workspaceId,
