@@ -244,3 +244,20 @@ export async function removeMember(tx: Tx, membershipId: string) {
       .returning({ id: memberships.id }),
   );
 }
+
+export type WorkspaceSetup = {
+  services: string[];
+  gstin: string | null;
+  stateCode: string | null;
+  lutArn: string | null;
+};
+
+/** Saves the optional answers from workspace setup and returns the workspace's slug. */
+export async function saveWorkspaceSetup(tx: Tx, workspaceId: string, setup: WorkspaceSetup) {
+  const [row] = await tx
+    .update(workspaces)
+    .set(setup)
+    .where(eq(workspaces.id, workspaceId))
+    .returning({ slug: workspaces.slug });
+  return row!.slug;
+}
