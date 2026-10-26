@@ -9,12 +9,14 @@ import {
   type LimitedResource,
   type NotificationKey,
 } from '@agency-os/core';
-import { and, count, desc, eq, gt, inArray, isNull, lt, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gt, inArray, isNotNull, isNull, lt, sql } from 'drizzle-orm';
 import { AccountError } from './accounts';
 import type { Tx } from './client';
 import {
   activities,
   auditLog,
+  clientContacts,
+  clients,
   invitations,
   leads,
   memberships,
@@ -215,9 +217,26 @@ const countOpenLeads: Counter = async (tx, workspaceId) => {
   return row?.n ?? 0;
 };
 
+/** Clients with at least one contact who can use the portal. */
+const countPortalClients: Counter = async (tx, workspaceId) => {
+  const [row] = await tx
+    .select({ n: sql<number>`count(distinct ${clientContacts.clientId})::int` })
+    .from(clientContacts)
+    .innerJoin(clients, and(eq(clients.id, clientContacts.clientId), isNull(clients.deletedAt)))
+    .where(
+      and(
+        eq(clientContacts.workspaceId, workspaceId),
+        isNotNull(clientContacts.portalInvitedAt),
+        isNull(clientContacts.portalRevokedAt),
+      ),
+    );
+  return row?.n ?? 0;
+};
+
 export const USAGE_COUNTERS: Partial<Record<LimitedResource, Counter>> = {
   members: countMembers,
   open_leads: countOpenLeads,
+  portal_clients: countPortalClients,
 };
 
 export async function checkPlanLimit(
@@ -326,6 +345,11 @@ export async function exportWorkspace(
     .from(pipelineStages)
     .where(eq(pipelineStages.workspaceId, workspaceId));
   const leadRows = await tx.select().from(leads).where(eq(leads.workspaceId, workspaceId));
+  const clientRows = await tx.select().from(clients).where(eq(clients.workspaceId, workspaceId));
+  const contactRows = await tx
+    .select()
+    .from(clientContacts)
+    .where(eq(clientContacts.workspaceId, workspaceId));
   const activityRows = await tx
     .select()
     .from(activities)
@@ -344,6 +368,8 @@ export async function exportWorkspace(
       audit_log: audit,
       pipeline_stages: stages,
       leads: leadRows,
+      clients: clientRows,
+      client_contacts: contactRows,
       activities: activityRows,
     },
   };
