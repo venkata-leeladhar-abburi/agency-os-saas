@@ -1,8 +1,8 @@
 'use server';
 
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { isEmail, normaliseIndianPhone, phoneOtpEnabled, safeNext } from '@/lib/auth/helpers';
+import { siteOrigin } from '@/lib/origin';
 import { supabaseServer } from '@/lib/supabase/server';
 
 export type SignInState = {
@@ -11,13 +11,6 @@ export type SignInState = {
   email?: string;
   phone?: string;
 };
-
-async function origin() {
-  const h = await headers();
-  const host = h.get('x-forwarded-host') ?? h.get('host');
-  const proto = h.get('x-forwarded-proto') ?? (host?.startsWith('localhost') ? 'http' : 'https');
-  return `${proto}://${host}`;
-}
 
 const RATE_LIMITED = 'Too many tries. Wait a minute, then try again.';
 
@@ -36,7 +29,7 @@ export async function sendEmailLink(_prev: SignInState, form: FormData): Promise
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}`,
+      emailRedirectTo: `${await siteOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
   if (error)
@@ -53,7 +46,7 @@ export async function signInWithGoogle(form: FormData) {
   const supabase = await supabaseServer();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: { redirectTo: `${await siteOrigin()}/auth/callback?next=${encodeURIComponent(next)}` },
   });
   if (error || !data.url) redirect(`/sign-in?error=oauth&next=${encodeURIComponent(next)}`);
   redirect(data.url);

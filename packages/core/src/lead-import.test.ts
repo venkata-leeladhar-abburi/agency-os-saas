@@ -24,6 +24,12 @@ describe('lead import', () => {
   const [headers, good, bad] = parseCsv(file) as [string[], string[], string[]];
   const mapping = guessLeadMapping(headers);
 
+  it('reads the short headers people use', () => {
+    expect(
+      guessLeadMapping(['Client name', 'Org', 'Mobile', 'Mail', 'Budget', 'Where from']),
+    ).toEqual({ name: 0, company: 1, phone: 2, email: 3, value: 4, source: 5 });
+  });
+
   it('guesses the column mapping', () => {
     expect(mapping).toEqual({
       name: 0,

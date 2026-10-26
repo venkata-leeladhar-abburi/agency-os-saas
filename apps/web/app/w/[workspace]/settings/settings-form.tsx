@@ -13,7 +13,7 @@ export function SettingsForm({ slug, settings }: { slug: string; settings: Works
   const e = state.errors ?? {};
   const value = (key: keyof WorkspaceSettings) => v?.[key] ?? String(settings[key] ?? '');
   return (
-    <form action={action} className="grid max-w-3xl gap-4" noValidate>
+    <form action={action} className="grid gap-4" noValidate>
       <FormMessage state={state} title="Settings weren’t saved" />
       {state.done ? (
         <Alert tone="success" title="Settings saved">

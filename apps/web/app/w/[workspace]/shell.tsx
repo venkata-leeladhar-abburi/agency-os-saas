@@ -5,6 +5,7 @@ import { AppShell, Button, Dialog, DialogContent, ExampleBadge } from '@agency-o
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ownerNav, SECTION_LABELS } from '@/components/workspace/nav';
+import { useWorkspacePalette } from '@/components/workspace/palette';
 import type { WorkspaceSummary } from '@/lib/data';
 import { useState, type ReactNode } from 'react';
 import { signOut } from './actions';
@@ -35,6 +36,7 @@ export function WorkspaceShell({
   const [switching, setSwitching] = useState(false);
   const section = usePathname().split('/')[3] ?? 'today';
   const groups = ownerNav(current.slug);
+  const { palette, openPalette } = useWorkspacePalette(current.slug);
   return (
     <>
       <AppShell
@@ -44,6 +46,7 @@ export function WorkspaceShell({
           active: section,
           user: { name: user, role: ROLE_LABELS[current.role] ?? current.role },
           onSwitchWorkspace: () => setSwitching(true),
+          onSearch: openPalette,
           linkAs: Link,
         }}
         topbar={{
@@ -62,6 +65,7 @@ export function WorkspaceShell({
       >
         {children}
       </AppShell>
+      {palette}
       <Dialog open={switching} onOpenChange={setSwitching}>
         <DialogContent title="Switch workspace" description="Pick a workspace to open.">
           <ul className="grid gap-1">

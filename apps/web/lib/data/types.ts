@@ -1,4 +1,4 @@
-import type { InvoiceLineInput, LeadSource, LostReason } from '@agency-os/core';
+import type { InvoiceLineInput, LeadSource, LostReason, ProposalBlock } from '@agency-os/core';
 
 /** The records the workspace screens work with. The database rows map onto these. */
 
@@ -12,7 +12,20 @@ export const STAGES: { id: StageId; name: string }[] = [
   { id: 'lost', name: 'Lost' },
 ];
 
-export type ActivityKind = 'created' | 'note' | 'stage' | 'won' | 'lost' | 'invoice' | 'payment';
+export type ActivityKind =
+  | 'created'
+  | 'note'
+  | 'stage'
+  | 'won'
+  | 'lost'
+  | 'invoice'
+  | 'payment'
+  | 'sent'
+  | 'viewed'
+  | 'signed'
+  | 'declined'
+  | 'enquiry'
+  | 'imported';
 
 export type Activity = {
   id: string;
@@ -115,4 +128,87 @@ export type WorkspaceSettings = {
   lutArn: string | null;
   invoicePrefix: string;
   paymentTermsDays: number;
+};
+
+export type TaskStatus = 'todo' | 'in_progress' | 'in_review' | 'done';
+export type TaskPriority = 'low' | 'normal' | 'high';
+
+export const TASK_STATUSES: { id: TaskStatus; name: string }[] = [
+  { id: 'todo', name: 'To do' },
+  { id: 'in_progress', name: 'In progress' },
+  { id: 'in_review', name: 'In review' },
+  { id: 'done', name: 'Done' },
+];
+
+export const TASK_PRIORITIES: { id: TaskPriority; name: string }[] = [
+  { id: 'low', name: 'Low' },
+  { id: 'normal', name: 'Normal' },
+  { id: 'high', name: 'High' },
+];
+
+export type Comment = { id: string; who: string; text: string; at: string };
+
+export type Task = {
+  id: string;
+  title: string;
+  projectId: string;
+  /** The phase name it belongs to, if any. */
+  phase: string | null;
+  assignee: string;
+  dueOn: string | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  description: string;
+  subtasks: { id: string; title: string; done: boolean }[];
+  comments: Comment[];
+  createdAt: string;
+};
+
+export type Quote = {
+  id: string;
+  number: string;
+  /** Who it's for: a lead, a client, or both once the lead is won. */
+  leadId: string | null;
+  clientId: string | null;
+  recipient: string;
+  /** Where the client is, for GST: ISO country and, in India, the state code. */
+  country: string;
+  stateCode: string | null;
+  currency: string;
+  validUntil: string;
+  lines: InvoiceLineInput[];
+  discountMinor: bigint;
+  createdAt: string;
+};
+
+export type ProposalStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'declined';
+
+export type Signature = {
+  name: string;
+  email: string;
+  /** ISO timestamp. */
+  at: string;
+  ip: string;
+};
+
+export type Proposal = {
+  id: string;
+  quoteId: string;
+  title: string;
+  /** The client's email: where the link and the signing code go. */
+  email: string | null;
+  status: ProposalStatus;
+  blocks: ProposalBlock[];
+  /** The unguessable part of the public link. */
+  token: string;
+  views: number;
+  lastViewedAt: string | null;
+  sentAt: string | null;
+  validUntil: string;
+  signature: Signature | null;
+  declineReason: string | null;
+  /** The signing code waiting to be entered, with when it stops working. */
+  pendingCode: { code: string; expiresAt: string; tries: number } | null;
+  activities: Activity[];
+  createdAt: string;
 };

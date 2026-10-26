@@ -4,6 +4,7 @@ import {
   CheckSquareOffset,
   FolderSimple,
   FunnelSimple,
+  Notepad,
   Receipt,
   Sun,
   UsersThree,
@@ -57,6 +58,7 @@ const EMPTY_ICONS = {
   projects: FolderSimple,
   tasks: CheckSquareOffset,
   invoices: Receipt,
+  sales: Notepad,
 };
 
 /** An empty list: what will be here and the one action that fills it. */

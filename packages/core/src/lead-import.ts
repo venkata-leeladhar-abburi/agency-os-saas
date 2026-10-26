@@ -18,11 +18,11 @@ export type LeadImportField = (typeof LEAD_IMPORT_FIELDS)[number];
 export type LeadImportMapping = Partial<Record<LeadImportField, number>>;
 
 const HEADER_HINTS: Record<LeadImportField, RegExp> = {
-  name: /^(full\s*)?name$|^contact(\s*name)?$|^lead(\s*name)?$/,
-  company: /company|business|organi[sz]ation|firm|brand/,
-  email: /e-?mail/,
+  name: /^(full\s*)?name$|^(contact|lead|client|customer)(\s*name)?$/,
+  company: /company|business|organi[sz]ation|^org$|firm|brand/,
+  email: /e-?mail|^mail$/,
   phone: /phone|mobile|whats\s*app|contact\s*no|cell/,
-  source: /source|channel|came\s*from/,
+  source: /source|channel|(came|where)\s*from/,
   value: /value|budget|amount|deal|price/,
   service: /service|requirement|interest/,
   stage: /stage|status/,

@@ -1,4 +1,4 @@
-import { Plus } from '@phosphor-icons/react/dist/ssr';
+import { DownloadSimple, Plus, UploadSimple } from '@phosphor-icons/react/dist/ssr';
 import { formatMoney } from '@agency-os/core';
 import { buttonVariants, PageHeader } from '@agency-os/ui';
 import Link from 'next/link';
@@ -26,9 +26,17 @@ export default async function LeadsPage({
         title="Leads"
         subtitle={`${open.length} open · ${formatMoney(total, 'INR', { compact: true })} in the pipeline`}
         actions={
-          <Link href={`${base}/new`} className={buttonVariants({ variant: 'primary' })}>
-            <Plus size={16} aria-hidden="true" /> Add lead
-          </Link>
+          <>
+            <a href={`${base}/export`} className={buttonVariants({})}>
+              <DownloadSimple size={16} aria-hidden="true" /> Export CSV
+            </a>
+            <Link href={`${base}/import`} className={buttonVariants({})}>
+              <UploadSimple size={16} aria-hidden="true" /> Import CSV
+            </Link>
+            <Link href={`${base}/new`} className={buttonVariants({ variant: 'primary' })}>
+              <Plus size={16} aria-hidden="true" /> Add lead
+            </Link>
+          </>
         }
         className="mb-4"
       />

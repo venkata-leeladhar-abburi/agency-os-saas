@@ -5,7 +5,7 @@ import { EXAMPLE_USER, today, type TodayItem } from '@/lib/data';
 
 export const metadata = { title: 'Today · Agency OS' };
 
-const GROUPS: TodayItem['group'][] = ['Follow-ups', 'Approvals waiting', 'Invoices'];
+const GROUPS: TodayItem['group'][] = ['Follow-ups', 'Tasks', 'Approvals waiting', 'Invoices'];
 
 function greeting(now: Date) {
   const hour = Number(
@@ -40,7 +40,7 @@ export default async function TodayPage({ params }: { params: Promise<{ workspac
         <Empty
           icon="today"
           title="You’re all caught up"
-          text="Follow-ups, approvals and invoices due today appear here."
+          text="Follow-ups, tasks, approvals and invoices due today appear here."
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">

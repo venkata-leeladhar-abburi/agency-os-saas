@@ -4,7 +4,7 @@
 // query in packages/db (withUser + the matching function) as the screens are wired up; the
 // shapes the screens receive stay the same.
 import { formatDate, formatInvoiceNumber, formatMoney, LEAD_SOURCE_LABELS } from '@agency-os/core';
-import { MEMBERS, TASKS, TEAM_LOAD } from '@agency-os/ui/example';
+import { MEMBERS } from '@agency-os/ui/example';
 import type {
   ClientInput,
   InvoiceInput,
@@ -13,8 +13,8 @@ import type {
   ProjectInput,
   SettingsInput,
 } from '../forms';
-import { exampleStore } from './example-store';
-import type { Activity, Client, Invoice, Lead, Project, StageId } from './types';
+import { activity, EXAMPLE_USER, newId, store } from './shared';
+import type { Client, Invoice, Lead, Project, StageId } from './types';
 import {
   budgetUsed,
   followUp,
@@ -39,12 +39,12 @@ export type WorkspaceSummary = {
 };
 
 export const EXAMPLE_SLUG = 'one-stop';
-export const EXAMPLE_USER = { name: 'Kiran Rao', email: 'kiran@example.in' };
+export { EXAMPLE_USER } from './shared';
 
 export function exampleWorkspace(): WorkspaceSummary {
   return {
     id: 'example',
-    name: exampleStore().settings.name,
+    name: store().settings.name,
     slug: EXAMPLE_SLUG,
     role: 'owner',
     plan: 'Agency · Growth',
@@ -53,16 +53,6 @@ export function exampleWorkspace(): WorkspaceSummary {
 
 /** The people a lead or project can be given to. */
 export const PEOPLE = MEMBERS.map((m) => m.name);
-
-const store = () => exampleStore();
-const newId = (prefix: string) => `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
-const activity = (kind: Activity['kind'], text: string, who = EXAMPLE_USER.name): Activity => ({
-  id: newId('a'),
-  kind,
-  who,
-  text,
-  at: new Date().toISOString(),
-});
 
 // ---------- Leads ----------
 
@@ -456,10 +446,6 @@ export async function saveSettings(input: SettingsInput) {
   Object.assign(store().settings, input);
 }
 
-export async function tasks() {
-  return TASKS;
-}
-
 export async function members() {
   return MEMBERS;
 }
@@ -518,20 +504,23 @@ export async function dashboard() {
       progress: p.progress,
       tone: p.health === 'Late' ? ('danger' as const) : ('default' as const),
     })),
-    teamLoad: TEAM_LOAD,
+    teamLoad: PEOPLE.map((name) => ({
+      name,
+      open: store().tasks.filter((t) => t.assignee === name && t.status !== 'done').length,
+    })),
   };
 }
 
 export type TodayItem = {
   id: string;
-  group: 'Follow-ups' | 'Approvals waiting' | 'Invoices';
+  group: 'Follow-ups' | 'Tasks' | 'Approvals waiting' | 'Invoices';
   title: string;
   meta: string;
   href: string;
   overdue: boolean;
 };
 
-/** What needs doing today: follow-ups due, approvals waiting on clients, invoices due or late. */
+/** What needs doing today: follow-ups, my tasks, approvals waiting on clients, invoices due or late. */
 export async function today(slug: string): Promise<TodayItem[]> {
   const now = new Date();
   const todayOn = istDate(now);
@@ -546,6 +535,19 @@ export async function today(slug: string): Promise<TodayItem[]> {
       meta: `${stageName(l.stage)} · ${f.text}`,
       href: `/w/${slug}/leads/${l.id}`,
       overdue: f.overdue,
+    });
+  }
+  for (const t of store().tasks) {
+    if (t.assignee !== EXAMPLE_USER.name || t.status === 'done' || !t.dueOn || t.dueOn > todayOn)
+      continue;
+    const project = store().projects.find((p) => p.id === t.projectId);
+    items.push({
+      id: `task-${t.id}`,
+      group: 'Tasks',
+      title: t.title,
+      meta: `${project?.name ?? ''} · ${t.dueOn < todayOn ? `was due ${formatDate(t.dueOn, { year: false })}` : 'due today'}`,
+      href: `/w/${slug}/tasks/${t.id}`,
+      overdue: t.dueOn < todayOn,
     });
   }
   for (const p of store().projects) {

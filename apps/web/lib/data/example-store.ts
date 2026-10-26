@@ -1,7 +1,17 @@
 // Server only. The example workspace, kept in memory so the screens and forms can be used
 // end to end before the database is reachable. Every name and amount is example data from the
 // design reference; the screens show the "Example data" badge. Restarting the server resets it.
-import type { Client, Invoice, Lead, Project, WorkspaceSettings } from './types';
+import { SEVEN_PHASES, standardProposal } from '@agency-os/core';
+import type {
+  Client,
+  Invoice,
+  Lead,
+  Project,
+  Proposal,
+  Quote,
+  Task,
+  WorkspaceSettings,
+} from './types';
 
 export type ExampleStore = {
   settings: WorkspaceSettings;
@@ -11,6 +21,13 @@ export type ExampleStore = {
   invoices: Invoice[];
   /** Last invoice sequence used this financial year. */
   invoiceSequence: number;
+  tasks: Task[];
+  quotes: Quote[];
+  proposals: Proposal[];
+  /** Last quote sequence used this financial year. */
+  quoteSequence: number;
+  /** Enquiries per network in the last minute, to slow down spam. */
+  enquiryHits: Map<string, number[]>;
 };
 
 const OWNER = 'Kiran Rao';
@@ -21,7 +38,7 @@ const PM = 'Meera Pillai';
 const day = 24 * 60 * 60 * 1000;
 const iso = (offsetDays: number, hour = 11) => {
   const d = new Date(Date.now() + offsetDays * day);
-  d.setUTCHours(hour - 5, 30, 0, 0); // hh:00 IST
+  d.setUTCHours(hour - 6, 30, 0, 0); // hh:00 IST is (hh − 5:30) UTC
   return d.toISOString();
 };
 const date = (offsetDays: number) => iso(offsetDays).slice(0, 10);
@@ -364,6 +381,123 @@ function seed(): ExampleStore {
     },
   ];
 
+  const task = (
+    id: string,
+    title: string,
+    projectId: string,
+    phase: string,
+    assignee: string,
+    dueDays: number | null,
+    priority: Task['priority'],
+    status: Task['status'],
+    extra: Partial<Task> = {},
+  ): Task => ({
+    id,
+    title,
+    projectId,
+    phase,
+    assignee,
+    dueOn: dueDays === null ? null : date(dueDays),
+    priority,
+    status,
+    description: '',
+    subtasks: [],
+    comments: [],
+    createdAt: iso(-7),
+    ...extra,
+  });
+
+  const tasks: Task[] = [
+    task('t1', 'Homepage hero copy', 'acme-web', 'Design', DESIGNER, 4, 'high', 'in_progress', {
+      description: 'Two options for the headline, one in Telugu.',
+      subtasks: [
+        { id: 's1', title: 'Draft English headline', done: true },
+        { id: 's2', title: 'Telugu translation', done: false },
+      ],
+      comments: [
+        {
+          id: 'c1',
+          who: OWNER,
+          text: '@Ananya Iyer can we keep it under 8 words?',
+          at: iso(-1, 16),
+        },
+        { id: 'c2', who: DESIGNER, text: 'Yes, both options are 7 words.', at: iso(0, 9) },
+      ],
+    }),
+    task('t2', 'Fix checkout bug', 'northwind-app', 'Build', DEVELOPER, 0, 'high', 'todo'),
+    task('t3', 'QA on Android', 'northwind-app', 'Build', DEVELOPER, 0, 'normal', 'todo'),
+    task('t4', 'Prepare staging', 'acme-web', 'Build', DEVELOPER, 3, 'normal', 'in_review'),
+    task('t5', 'Competitor analysis', 'mitra-booking', 'Discover', PM, -2, 'normal', 'todo'),
+    task('t6', 'Brand colours', 'saffron-web', 'Design', DESIGNER, -1, 'low', 'done'),
+    task('t7', 'Sitemap and scope', 'mitra-booking', 'Define', PM, 8, 'normal', 'in_progress'),
+    task('t8', 'Wireframes for key pages', 'acme-web', 'Design', DESIGNER, -6, 'normal', 'done'),
+  ];
+
+  const quotes: Quote[] = [
+    {
+      id: 'q-northwind',
+      number: 'OSS/Q26-27/004',
+      leadId: 'northwind-lead',
+      clientId: 'northwind',
+      recipient: 'Northwind',
+      country: 'GB',
+      stateCode: null,
+      currency: 'USD',
+      validUntil: date(10),
+      lines: [
+        {
+          description: 'Mobile app, phase one',
+          sac: '998314',
+          quantity: '1',
+          rateMinor: 240_000n,
+          taxRateBp: 1800,
+        },
+        {
+          description: 'Design system',
+          sac: '998314',
+          quantity: '1',
+          rateMinor: 60_000n,
+          taxRateBp: 1800,
+        },
+      ],
+      discountMinor: 0n,
+      createdAt: iso(-5),
+    },
+  ];
+
+  const blocks = standardProposal({
+    clientName: 'Northwind',
+    date: date(-4),
+    preparedBy: OWNER,
+    quoteId: 'q-northwind',
+    scope: ['Mobile app, phase one', 'Design system'],
+    phases: SEVEN_PHASES.phases.map((p) => ({ name: p.name, clientSignOff: Boolean(p.gate) })),
+  });
+
+  const proposals: Proposal[] = [
+    {
+      id: 'p-northwind',
+      quoteId: 'q-northwind',
+      title: 'Proposal for Northwind',
+      email: 'sarah@northwind.example',
+      status: 'viewed',
+      blocks,
+      token: 'example-northwind-7Hq2xP9',
+      views: 3,
+      lastViewedAt: iso(0, 8),
+      sentAt: iso(-4),
+      validUntil: date(10),
+      signature: null,
+      declineReason: null,
+      pendingCode: null,
+      activities: [
+        { id: 'pa2', kind: 'viewed', who: 'Northwind', text: 'viewed the proposal', at: iso(0, 8) },
+        { id: 'pa1', kind: 'sent', who: OWNER, text: 'sent the proposal', at: iso(-4) },
+      ],
+      createdAt: iso(-5),
+    },
+  ];
+
   return {
     settings: {
       name: 'One Stop Solutions',
@@ -378,6 +512,11 @@ function seed(): ExampleStore {
     projects,
     invoices,
     invoiceSequence: 16,
+    tasks,
+    quotes,
+    proposals,
+    quoteSequence: 4,
+    enquiryHits: new Map(),
   };
 }
 

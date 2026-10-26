@@ -4,6 +4,7 @@ import {
   FunnelSimple,
   GearSix,
   House,
+  Notepad,
   Receipt,
   SquaresFour,
   UserCircle,
@@ -26,6 +27,7 @@ export function ownerNav(slug: string): SidebarGroup[] {
       items: [
         { value: 'leads', label: 'Leads', icon: FunnelSimple, href: ws('/leads') },
         { value: 'clients', label: 'Clients', icon: UsersThree, href: ws('/clients') },
+        { value: 'sales', label: 'Sales docs', icon: Notepad, href: ws('/sales') },
       ],
     },
     {
@@ -54,6 +56,7 @@ export const SECTION_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
   leads: 'Leads',
   clients: 'Clients',
+  sales: 'Sales docs',
   projects: 'Projects',
   tasks: 'Tasks',
   invoices: 'Invoices',

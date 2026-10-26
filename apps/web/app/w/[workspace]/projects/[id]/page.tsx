@@ -1,10 +1,20 @@
-import { CalendarBlank, UsersThree } from '@phosphor-icons/react/dist/ssr';
+import { CalendarBlank, Plus, UsersThree } from '@phosphor-icons/react/dist/ssr';
 import { BLANK_TEMPLATE, formatDate, formatMoney, SEVEN_PHASES } from '@agency-os/core';
-import { Alert, Card, GateCard, PhaseStepper, Progress, RecordHeader } from '@agency-os/ui';
+import {
+  Alert,
+  Badge,
+  buttonVariants,
+  Card,
+  GateCard,
+  PhaseStepper,
+  Progress,
+  RecordHeader,
+} from '@agency-os/ui';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Activities } from '@/components/workspace/activity';
 import { getProject } from '@/lib/data';
+import { tasks } from '@/lib/data/tasks';
 import { budgetUsed, relativeTime } from '@/lib/data/views';
 import { RequestGateForm } from './request-gate';
 
@@ -27,6 +37,7 @@ export default async function ProjectPage({
   const gates = template.phases.flatMap((p, i) => (p.gate ? [i] : []));
   const current = template.phases[project.phase];
   const used = budgetUsed(project.usedMinor, project.budgetMinor);
+  const projectTasks = await tasks({ projectId: project.id });
 
   return (
     <div className="grid gap-6">
@@ -94,6 +105,45 @@ export default async function ProjectPage({
           The next client approval comes in a later phase.
         </Alert>
       )}
+      <Card
+        title="Tasks"
+        description={
+          projectTasks.length
+            ? `${projectTasks.filter((t) => t.status !== 'Done').length} open`
+            : 'No tasks yet.'
+        }
+        actions={
+          <Link
+            href={`/w/${workspace}/tasks/new?project=${project.id}`}
+            className={buttonVariants({ size: 'sm' })}
+          >
+            <Plus size={16} aria-hidden="true" /> Add task
+          </Link>
+        }
+      >
+        <ul className="grid gap-1 p-0">
+          {projectTasks.map((t) => (
+            <li key={t.id}>
+              <Link
+                href={`/w/${workspace}/tasks/${t.id}`}
+                className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-md px-2 py-2 text-foreground no-underline hover:bg-accent"
+              >
+                <span className="min-w-0 truncate font-medium">{t.title}</span>
+                <span
+                  className={
+                    t.overdue ? 'text-body-sm text-danger' : 'text-body-sm text-muted-foreground'
+                  }
+                >
+                  {t.due}
+                </span>
+                <Badge size="sm" tone={t.status === 'Done' ? 'success' : 'neutral'}>
+                  {t.status}
+                </Badge>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Card>
       <Card title="Activity">
         <Activities items={project.activities} />
       </Card>

@@ -71,7 +71,7 @@ export default async function DashboardPage({
               <p className="text-body-sm text-muted-foreground">Nothing due today.</p>
             )}
           </Card>
-          <Card title="Team load" description="Open tasks this week · Example">
+          <Card title="Team load" description="Open tasks per person">
             <TeamLoad rows={teamLoad} />
           </Card>
         </div>

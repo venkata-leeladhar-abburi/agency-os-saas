@@ -16,6 +16,7 @@ import { Activities } from '@/components/workspace/activity';
 import { formatPhone } from '@/lib/auth/helpers';
 import { Submit } from '@/components/workspace/form-bits';
 import { getLead } from '@/lib/data';
+import { docsFor } from '@/lib/data/sales';
 import { STAGES } from '@/lib/data/types';
 import { followUp, istDate, leadTitle, stageName } from '@/lib/data/views';
 import { changeStageAction, winLeadAction } from '../actions';
@@ -43,6 +44,7 @@ export default async function LeadPage({
   const lead = await getLead(id);
   if (!lead) notFound();
   const title = leadTitle(lead);
+  const docs = await docsFor({ leadId: lead.id }, workspace);
   const f = followUp(lead.followUpAt);
   const open = lead.stage !== 'won' && lead.stage !== 'lost';
 
@@ -66,6 +68,12 @@ export default async function LeadPage({
               <Suspense>
                 <LostDialog slug={workspace} id={lead.id} name={title} />
               </Suspense>
+              <Link
+                href={`/w/${workspace}/sales/quotes/new?for=lead:${lead.id}`}
+                className={buttonVariants({})}
+              >
+                Create quote
+              </Link>
               <form action={winLeadAction.bind(null, workspace, lead.id)}>
                 <Submit variant="highlight" icon="won">
                   Mark as won
@@ -104,6 +112,27 @@ export default async function LeadPage({
           </Card>
         </div>
         <div className="grid content-start gap-4">
+          {docs.length ? (
+            <Card title="Quotes and proposals">
+              <ul className="grid gap-1 p-0">
+                {docs.map((d) => (
+                  <li key={d.id}>
+                    <Link
+                      href={d.href}
+                      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-md px-2 py-2 text-foreground no-underline hover:bg-accent"
+                    >
+                      <span className="grid min-w-0">
+                        <span className="truncate font-medium">{d.title}</span>
+                        <span className="text-caption font-normal text-muted-foreground">
+                          {d.amount} · {d.status}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
           <Card title="Details">
             <dl className="grid grid-cols-[96px_1fr] gap-x-4 gap-y-2 text-body">
               {[

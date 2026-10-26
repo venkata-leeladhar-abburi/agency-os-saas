@@ -1,12 +1,12 @@
 'use client';
 
-import { EnvelopeSimple, SealCheck } from '@phosphor-icons/react';
+import { EnvelopeSimple, PaperPlaneTilt, SealCheck } from '@phosphor-icons/react';
 import { Alert, Button, type ButtonProps } from '@agency-os/ui';
 import { useFormStatus } from 'react-dom';
 import type { FormState } from '@/lib/form-state';
 
 // By name, so server pages can choose one (components can't cross to the client).
-const ICONS = { won: SealCheck, invite: EnvelopeSimple };
+const ICONS = { won: SealCheck, invite: EnvelopeSimple, send: PaperPlaneTilt };
 
 /** A submit button that shows a spinner while its form is saving. */
 export function Submit({

@@ -14,11 +14,12 @@ import {
   type ColumnDef,
   type PipelineColumn,
 } from '@agency-os/ui';
-import type { ExampleTask, MEMBERS, TEAM_LOAD } from '@agency-os/ui/example';
+import type { MEMBERS } from '@agency-os/ui/example';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import type { ClientRow, InvoiceRow, LeadRow, ProjectRow, TodayItem } from '@/lib/data';
+import type { TaskRow } from '@/lib/data/tasks';
 import { moveLeadAction } from '@/app/w/[workspace]/leads/actions';
 
 const byMinor = (a: bigint, b: bigint) => (a > b ? 1 : a < b ? -1 : 0);
@@ -256,13 +257,13 @@ export function ProjectsTable({ rows, base }: { rows: ProjectRow[]; base: string
   );
 }
 
-const PRIORITY_TONE: Record<ExampleTask['priority'], BadgeProps['tone']> = {
+const PRIORITY_TONE: Record<TaskRow['priority'], BadgeProps['tone']> = {
   Low: 'neutral',
   Normal: 'info',
   High: 'warning',
 };
 
-const taskColumns: ColumnDef<ExampleTask, unknown>[] = [
+const taskColumns: ColumnDef<TaskRow, unknown>[] = [
   {
     accessorKey: 'title',
     header: 'Task',
@@ -298,9 +299,11 @@ const taskColumns: ColumnDef<ExampleTask, unknown>[] = [
   { accessorKey: 'status', header: 'Status', meta: { label: 'Status' } },
 ];
 
-export function TasksTable({ rows }: { rows: ExampleTask[] }) {
+export function TasksTable({ rows, base }: { rows: TaskRow[]; base: string }) {
+  const router = useRouter();
   return (
     <DataTable
+      onRowClick={(r) => router.push(`${base}/${r.id}`)}
       caption="Tasks"
       columns={taskColumns}
       data={rows}
@@ -312,7 +315,7 @@ export function TasksTable({ rows }: { rows: ExampleTask[] }) {
 
 const STATUS_COLUMNS = ['To do', 'In progress', 'In review', 'Done'] as const;
 
-export function TaskBoard({ rows }: { rows: ExampleTask[] }) {
+export function TaskBoard({ rows, base }: { rows: TaskRow[]; base: string }) {
   return (
     <div
       // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region must be reachable by keyboard (WCAG 2.1.1)
@@ -337,26 +340,40 @@ export function TaskBoard({ rows }: { rows: ExampleTask[] }) {
             </header>
             <ul className="grid gap-2 p-0">
               {list.map((t) => (
-                <li
-                  key={t.id}
-                  className="grid gap-2 rounded-md border border-border bg-card p-3 shadow-xs"
-                >
-                  <span className="text-body font-medium">{t.title}</span>
-                  <span className="text-caption font-normal text-muted-foreground">
-                    {t.project}
-                  </span>
-                  <span className="flex items-center justify-between gap-2">
-                    <Avatar name={t.assignee} size="xs" />
-                    <span
-                      className={
-                        t.overdue
-                          ? 'text-caption font-medium text-danger'
-                          : 'text-caption font-normal text-muted-foreground'
-                      }
-                    >
-                      {t.due}
+                <li key={t.id}>
+                  <Link
+                    href={`${base}/${t.id}`}
+                    className="grid gap-2 rounded-md border border-border bg-card p-3 text-foreground no-underline shadow-xs hover:border-border-strong"
+                  >
+                    <span className="text-body font-medium">{t.title}</span>
+                    <span className="text-caption font-normal text-muted-foreground">
+                      {t.project}
                     </span>
-                  </span>
+                    <span className="flex items-center justify-between gap-2">
+                      <Avatar name={t.assignee} size="xs" />
+                      <span
+                        className={
+                          t.overdue
+                            ? 'text-caption font-medium text-danger'
+                            : 'text-caption font-normal text-muted-foreground'
+                        }
+                      >
+                        {t.due}
+                      </span>
+                    </span>
+                    {t.subtasks || t.comments ? (
+                      <span className="text-caption font-normal text-muted-foreground">
+                        {[
+                          t.subtasks ? `${t.subtasks} subtasks` : null,
+                          t.comments
+                            ? `${t.comments} ${t.comments === 1 ? 'comment' : 'comments'}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    ) : null}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -525,21 +542,22 @@ export function TodayList({ items, limit }: { items: TodayItem[]; limit?: number
   );
 }
 
-export function TeamLoad({ rows }: { rows: typeof TEAM_LOAD }) {
+/** Open tasks per person, as bars against the busiest person. */
+export function TeamLoad({ rows }: { rows: { name: string; open: number }[] }) {
+  const most = Math.max(1, ...rows.map((r) => r.open));
   return (
     <div className="grid gap-3">
       {rows.map((row) => (
         <div
-          key={row.team}
-          className="grid grid-cols-[96px_1fr_44px] items-center gap-3 text-body-sm"
+          key={row.name}
+          className="grid grid-cols-[112px_1fr_32px] items-center gap-3 text-body-sm"
         >
-          <span>{row.team}</span>
+          <span className="truncate">{row.name}</span>
           <Progress
-            value={row.load}
-            tone={row.load > 100 ? 'danger' : 'default'}
-            label={<span className="sr-only">{row.team}</span>}
+            value={Math.round((row.open / most) * 100)}
+            label={<span className="sr-only">{row.name}</span>}
           />
-          <span className="text-right text-muted-foreground tabular-nums">{row.load}%</span>
+          <span className="text-right text-muted-foreground tabular-nums">{row.open}</span>
         </div>
       ))}
     </div>

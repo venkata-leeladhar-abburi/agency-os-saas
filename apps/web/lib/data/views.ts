@@ -1,12 +1,14 @@
 // What the screens show, worked out from the records. Pure functions, unit-tested.
 import {
   calculateInvoice,
+  calculateQuote,
   formatDate,
   formatMoney,
   LEAD_SOURCE_LABELS,
   type InvoiceTotals,
+  type ProposalBlock,
 } from '@agency-os/core';
-import type { Client, Invoice, Lead, StageId, WorkspaceSettings } from './types';
+import type { Client, Invoice, Lead, Proposal, Quote, StageId, WorkspaceSettings } from './types';
 import { STAGES } from './types';
 
 const TZ = 'Asia/Kolkata';
@@ -195,4 +197,85 @@ export function budgetUsed(usedMinor: bigint, budgetMinor: bigint): number {
 /** The IST calendar date a number of days from now: default due and start dates. */
 export function istDateIn(days: number, from = new Date()): string {
   return istDate(new Date(from.getTime() + days * DAY));
+}
+
+/** Quote totals: the whole-quote discount spread over the lines, then the invoice GST rules. */
+export function quoteTotals(
+  quote: Pick<Quote, 'currency' | 'lines' | 'discountMinor' | 'country' | 'stateCode'>,
+  settings: Pick<WorkspaceSettings, 'stateCode' | 'lutArn'>,
+): InvoiceTotals {
+  return calculateQuote({
+    currency: quote.currency,
+    supplierStateCode: settings.stateCode ?? undefined,
+    placeOfSupply:
+      quote.country === 'IN'
+        ? { kind: 'india', stateCode: quote.stateCode ?? settings.stateCode ?? '37' }
+        : { kind: 'export', country: quote.country },
+    hasValidLut: Boolean(settings.lutArn),
+    lines: quote.lines,
+    discountMinor: quote.discountMinor,
+  });
+}
+
+export type ProposalView = 'draft' | 'sent' | 'viewed' | 'accepted' | 'declined' | 'expired';
+
+/** What a proposal's status is today: sent or viewed proposals expire after their valid-until date. */
+export function proposalStatus(
+  p: Pick<Proposal, 'status' | 'validUntil'>,
+  now = new Date(),
+): ProposalView {
+  if ((p.status === 'sent' || p.status === 'viewed') && p.validUntil < istDate(now))
+    return 'expired';
+  return p.status;
+}
+
+export const PROPOSAL_STATUS_LABELS: Record<ProposalView, string> = {
+  draft: 'Draft',
+  sent: 'Sent',
+  viewed: 'Viewed',
+  accepted: 'Signed',
+  declined: 'Declined',
+  expired: 'Expired',
+};
+
+/** Due text for a task: "Today", "Tomorrow", "Thu 29 Oct", or overdue. */
+export function taskDue(
+  dueOn: string | null,
+  done: boolean,
+  now = new Date(),
+): { text: string; overdue: boolean } {
+  if (!dueOn) return { text: 'No due date', overdue: false };
+  const days = daysBetween(istDate(now), dueOn);
+  const label = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : formatDate(dueOn, { year: false });
+  if (days < 0 && !done) return { text: `${label} (overdue)`, overdue: true };
+  return { text: label, overdue: false };
+}
+
+/** Names mentioned in a comment: "@Ananya Iyer can you…" → ["Ananya Iyer"]. */
+export function mentions(text: string, people: readonly string[]): string[] {
+  return people.filter((name) => text.includes(`@${name}`));
+}
+
+export type ProposalText = {
+  about: string;
+  goals: string[];
+  included: string[];
+  excluded: string[];
+  paymentTerms: string;
+  terms: string;
+};
+
+/** Puts the editor's text into the blocks; a block the user filled in stops being a placeholder. */
+export function applyProposalText(blocks: ProposalBlock[], t: ProposalText): ProposalBlock[] {
+  return blocks.map((b) => {
+    if (b.type === 'text' && b.heading === 'About us')
+      return t.about ? { ...b, body: t.about, placeholder: false } : b;
+    if (b.type === 'list' && b.heading === 'Your goals')
+      return t.goals.length ? { ...b, items: t.goals, placeholder: false } : b;
+    if (b.type === 'scope') return { ...b, included: t.included, excluded: t.excluded };
+    if (b.type === 'text' && b.heading === 'Payment terms') return { ...b, body: t.paymentTerms };
+    if (b.type === 'text' && b.heading === 'Terms')
+      return t.terms ? { ...b, body: t.terms, placeholder: false } : b;
+    return b;
+  });
 }

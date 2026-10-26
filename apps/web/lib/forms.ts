@@ -2,6 +2,8 @@
 // clean values or one message per field that says how to fix it (content-style.md).
 import {
   applyPayment,
+  divRoundHalfUp,
+  parseDecimal,
   DEFAULT_SERVICES,
   formatMoney,
   LEAD_SOURCES,
@@ -30,6 +32,11 @@ export function fields(form: FormData): Fields {
 
 const text = (f: Fields, key: string) => (f[key] ?? '').trim();
 const optional = (f: Fields, key: string) => text(f, key) || null;
+
+/** A typed amount in minor units: null when it isn't a number, 0 when empty. */
+export function parseAmount(input: string, currency: string): bigint | null {
+  return money(input, currency);
+}
 
 function money(input: string, currency: string): bigint | null {
   if (!input) return 0n;
@@ -433,5 +440,232 @@ export function checkSettings(f: Fields): Checked<SettingsInput> {
       invoicePrefix: invoicePrefix.toUpperCase(),
       paymentTermsDays: terms,
     },
+  };
+}
+
+// ---------- Tasks ----------
+
+export type TaskInput = {
+  title: string;
+  projectId: string;
+  phase: string | null;
+  assignee: string;
+  dueOn: string | null;
+  priority: 'low' | 'normal' | 'high';
+  status: 'todo' | 'in_progress' | 'in_review' | 'done';
+  description: string;
+};
+
+const TASK_STATUS_IDS = ['todo', 'in_progress', 'in_review', 'done'] as const;
+const TASK_PRIORITY_IDS = ['low', 'normal', 'high'] as const;
+
+export function checkTask(f: Fields, projectIds: string[], people: string[]): Checked<TaskInput> {
+  const errors: Errors = {};
+  const title = text(f, 'title');
+  if (!title) errors.title = 'Say what needs doing, like “Homepage hero copy”.';
+  else if (title.length > 200) errors.title = 'Keep the title under 200 characters.';
+  const projectId = text(f, 'projectId');
+  if (!projectIds.includes(projectId)) errors.projectId = 'Pick a project.';
+  const assignee = text(f, 'assignee');
+  if (!people.includes(assignee)) errors.assignee = 'Pick who does it.';
+  const dueOn = optional(f, 'dueOn');
+  if (dueOn && !ISO_DATE.test(dueOn)) errors.dueOn = 'Pick a date.';
+  const priority = (text(f, 'priority') || 'normal') as TaskInput['priority'];
+  if (!TASK_PRIORITY_IDS.includes(priority)) errors.priority = 'Pick a priority.';
+  const status = (text(f, 'status') || 'todo') as TaskInput['status'];
+  if (!TASK_STATUS_IDS.includes(status)) errors.status = 'Pick a status.';
+  if (Object.keys(errors).length) return { ok: false, errors };
+  return {
+    ok: true,
+    value: {
+      title,
+      projectId,
+      phase: optional(f, 'phase'),
+      assignee,
+      dueOn,
+      priority,
+      status,
+      description: text(f, 'description'),
+    },
+  };
+}
+
+export function checkComment(f: Fields): Checked<{ text: string }> {
+  const body = text(f, 'text');
+  if (!body) return { ok: false, errors: { text: 'Write a comment first.' } };
+  if (body.length > 2000)
+    return { ok: false, errors: { text: 'Keep comments under 2,000 characters.' } };
+  return { ok: true, value: { text: body } };
+}
+
+// ---------- Quotes and proposals ----------
+
+export type QuoteInput = {
+  /** "lead:<id>" or "client:<id>". */
+  leadId: string | null;
+  clientId: string | null;
+  country: string;
+  currency: string;
+  stateCode: string | null;
+  validUntil: string;
+  lines: InvoiceLineInput[];
+  discountMinor: bigint;
+};
+
+export function checkQuote(
+  f: Fields,
+  options: { leadIds: string[]; clientIds: string[]; today: string },
+): Checked<QuoteInput> & { lineErrors?: Record<number, Errors> } {
+  const errors: Errors = {};
+  const [kind, id] = text(f, 'for').split(':');
+  let leadId: string | null = null;
+  let clientId: string | null = null;
+  if (kind === 'lead' && id && options.leadIds.includes(id)) leadId = id;
+  else if (kind === 'client' && id && options.clientIds.includes(id)) clientId = id;
+  else errors.for = 'Pick a lead or a client.';
+
+  const country = CLIENT_COUNTRIES.find((c) => c.value === text(f, 'country'));
+  if (!country) errors.country = 'Pick the client’s country.';
+  const currency = country?.currency ?? 'INR';
+  const stateCode = country?.value === 'IN' ? optional(f, 'stateCode') : null;
+  if (stateCode && !/^\d{2}$/.test(stateCode))
+    errors.stateCode = 'Use the two-digit state code, like 29.';
+
+  const validUntil = text(f, 'validUntil');
+  if (!ISO_DATE.test(validUntil)) errors.validUntil = 'Pick a date.';
+  else if (validUntil < options.today) errors.validUntil = 'Pick today or a later date.';
+
+  let raw: LineFields[] = [];
+  try {
+    raw = JSON.parse(f.lines ?? '[]') as LineFields[];
+  } catch {
+    raw = [];
+  }
+  if (raw.length === 0) errors.lines = 'Add at least one line.';
+  const { lines, errors: lineErrors } = checkLines(raw, currency);
+  if (Object.keys(lineErrors).length) errors.lines = 'Fix the lines marked below.';
+
+  const discountMinor = money(text(f, 'discount'), currency);
+  const subtotal = lines.reduce(
+    (t, l) => t + divRoundHalfUp(parseDecimal(String(l.quantity), 3) * l.rateMinor, 1000n),
+    0n,
+  );
+  if (discountMinor === null || discountMinor < 0n)
+    errors.discount = 'Enter the discount as an amount, like 5,000.';
+  else if (discountMinor > subtotal && !errors.lines)
+    errors.discount = 'The discount is more than the subtotal. Lower it.';
+
+  if (Object.keys(errors).length) return { ok: false, errors, lineErrors };
+  return {
+    ok: true,
+    value: {
+      leadId,
+      clientId,
+      country: country!.value,
+      currency,
+      stateCode,
+      validUntil,
+      lines,
+      discountMinor: discountMinor!,
+    },
+  };
+}
+
+/** The editable blocks of a proposal, as the editor sends them (one field per block). */
+export function checkProposalText(f: Fields): Checked<{
+  about: string;
+  goals: string[];
+  included: string[];
+  excluded: string[];
+  paymentTerms: string;
+  terms: string;
+}> {
+  const lines = (key: string) =>
+    text(f, key)
+      .split('\n')
+      .map((l) => l.replace(/^[-•*]\s*/, '').trim())
+      .filter(Boolean);
+  const value = {
+    about: text(f, 'about'),
+    goals: lines('goals'),
+    included: lines('included'),
+    excluded: lines('excluded'),
+    paymentTerms: text(f, 'paymentTerms'),
+    terms: text(f, 'terms'),
+  };
+  const errors: Errors = {};
+  if (value.included.length === 0) errors.included = 'List at least one thing that’s included.';
+  if (!value.paymentTerms) errors.paymentTerms = 'Say how and when you get paid.';
+  if (Object.keys(errors).length) return { ok: false, errors };
+  return { ok: true, value };
+}
+
+export function checkSend(f: Fields): Checked<{ email: string; message: string }> {
+  const email = text(f, 'email').toLowerCase();
+  if (!isEmail(email))
+    return { ok: false, errors: { email: 'Enter the client’s email, like name@company.in.' } };
+  return { ok: true, value: { email, message: text(f, 'message') } };
+}
+
+export function checkSignName(f: Fields): Checked<{ name: string }> {
+  const name = text(f, 'name');
+  if (name.length < 2) return { ok: false, errors: { name: 'Type your full name to sign.' } };
+  return { ok: true, value: { name } };
+}
+
+export function checkCode(f: Fields): Checked<{ code: string }> {
+  const code = text(f, 'code').replace(/\s/g, '');
+  if (!/^\d{6}$/.test(code)) return { ok: false, errors: { code: 'The code has 6 digits.' } };
+  return { ok: true, value: { code } };
+}
+
+// ---------- Enquiry form ----------
+
+export const BUDGET_RANGES = [
+  'Under ₹50,000',
+  '₹50,000 to ₹2 L',
+  '₹2 L to ₹5 L',
+  'Over ₹5 L',
+] as const;
+
+export type EnquiryInput = {
+  name: string;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
+  service: string;
+  budget: string | null;
+  message: string;
+};
+
+export function checkEnquiry(f: Fields): Checked<EnquiryInput> {
+  const errors: Errors = {};
+  const name = text(f, 'name');
+  if (!name) errors.name = 'Tell us your name.';
+  const contact = text(f, 'contact');
+  let email: string | null = null;
+  let phone: string | null = null;
+  if (!contact) errors.contact = 'Add an email or a phone number so we can reply.';
+  else if (contact.includes('@')) {
+    if (isEmail(contact)) email = contact.toLowerCase();
+    else errors.contact = 'That email looks incomplete. It should look like name@company.in.';
+  } else {
+    phone = normaliseIndianPhone(contact) ?? (/^\+\d[\d\s-]{6,}$/.test(contact) ? contact : null);
+    if (!phone) errors.contact = 'Enter a 10-digit mobile number, or a number starting with +.';
+  }
+  const service = text(f, 'service');
+  if (!(DEFAULT_SERVICES as readonly string[]).includes(service) && service !== 'Something else')
+    errors.service = 'Pick what you need.';
+  const budget = optional(f, 'budget');
+  if (budget && !(BUDGET_RANGES as readonly string[]).includes(budget))
+    errors.budget = 'Pick a budget range.';
+  const message = text(f, 'message');
+  if (!message) errors.message = 'Tell us a little about the project.';
+  else if (message.length > 3000) errors.message = 'Keep the message under 3,000 characters.';
+  if (f.consent !== 'on') errors.consent = 'Tick this so we can reply to you.';
+  if (Object.keys(errors).length) return { ok: false, errors };
+  return {
+    ok: true,
+    value: { name, email, phone, company: optional(f, 'company'), service, budget, message },
   };
 }
