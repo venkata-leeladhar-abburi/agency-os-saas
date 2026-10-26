@@ -13,9 +13,12 @@
   },
   "devDependencies": {
     "@agency-os/config": "workspace:*",
+    "@vitest/coverage-v8": "5.0.5",
     "eslint": "9.39.5",
     "typescript": "5.9.3",
-    "vitest": "5.0.5",
-    "@vitest/coverage-v8": "5.0.5"
+    "vitest": "5.0.5"
+  },
+  "dependencies": {
+    "fractional-indexing": "3.2.0"
   }
 }

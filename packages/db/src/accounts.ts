@@ -26,6 +26,16 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   slug_taken: 'That workspace address is taken. Try another name.',
   no_access: 'You don’t have access to this. Ask an owner of the workspace.',
   plan_limit: 'Your plan’s limit is reached. Upgrade in Settings, Billing to add more.',
+  stage_fixed: 'Won and Lost are fixed stages. You can rename them but not remove them.',
+  stage_not_found: 'That stage isn’t in this workspace. Refresh the page and try again.',
+  stage_has_leads: 'Move the leads in this stage to another stage first.',
+  lost_reason_required: 'Choose why the lead was lost.',
+  lost_note_required: 'Add a short note when the reason is Other.',
+  lead_not_found: 'That lead doesn’t exist or was deleted.',
+  lead_contact_required: 'Add an email or a phone number.',
+  lead_name_required: 'Add the lead’s name or company.',
+  enquiry_closed: 'This form isn’t taking enquiries right now. Contact the agency directly.',
+  consent_required: 'Tick the box to agree to be contacted.',
 };
 
 export class AccountError extends Error {
@@ -52,7 +62,8 @@ export function toAccountError(error: unknown): unknown {
   return known ? new AccountError(known) : error;
 }
 
-async function call<T>(fn: () => Promise<T>): Promise<T> {
+/** Runs a query and turns the errors our SQL raises into AppErrors with their messages. */
+export async function call<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (error) {

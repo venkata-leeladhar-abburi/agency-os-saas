@@ -25,9 +25,9 @@ Updated by Claude at the end of every working session. The founder can read this
 | M3 | Patterns | Done | [#3](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/3) | 13 patterns, the three reference screens rebuilt, core money and tax helpers (43 tests, 100% coverage), 56 component tests, 82 story checks. |
 | M4 | Wireframes and prototype | Done (G1, G2 approved) | [#4](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/4), [#5](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/5) | 42 screens, wireframes then hi-fi, with clickable task flows. R2 and the tree test run before G3. |
 | M5 | Accounts and workspaces | In progress | [#6](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/6) (part 1) | Part 1 (data layer): schema, RLS, roles, invitations, audit log, 21 database tests incl. cross-tenant. Part 2 (sign-in, setup, invites UI, switcher) needs the Supabase dev project. |
-| M6 | App shell and platform | In progress | | Part 1 (no keys needed): plans and limits, notifications and settings, audit log reader, data export, Razorpay subscription webhook, health check with the database. Part 2 (settings screens, palette search, subscribing) needs sign-in (M5 part 2) and Razorpay test keys. |
+| M6 | App shell and platform | In progress | [#7](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/7) (part 1) | Part 1 (no keys needed): plans and limits, notifications and settings, audit log reader, data export, Razorpay subscription webhook, health check with the database. Part 2 (settings screens, palette search, subscribing) needs sign-in (M5 part 2) and Razorpay test keys. |
 | M7 | Onboarding | Not started | | |
-| M8 | Leads | Not started | | |
+| M8 | Leads | In progress | | Part 1 (data layer): stages, leads, timeline, follow-ups, board totals, filters, CSV import and export, enquiry form, 23 database tests. Part 2 (screens) needs sign-in. |
 | M9 | Clients and conversion | Not started | | |
 | M10 | Quotes and proposals | Not started | | |
 | M11 | Projects, phases and gates | Not started | | |
