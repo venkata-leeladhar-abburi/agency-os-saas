@@ -34,7 +34,7 @@ Updated by Claude at the end of every working session. The founder can read this
 | M12 | Tasks and team | In progress | | Part 1 (data layer): tasks with board order, subtasks, my tasks, calendar range, comments with mentions, daily updates, team counts; 9 database tests. Part 2 (screens) needs sign-in. |
 | M13 | Invoices and payments | In progress | | Part 1 (data layer): drafts, GST types, numbering with proformas apart, issue locks, cancellation, payments by hand and by Razorpay event (applied once), reminders, overdue, portal list, plan limit; 16 database tests. Part 2 (keys in Vault, payment links, PDFs, emails, screens) needs Supabase and Resend. |
 | M14 | Client portal | In progress | | Part 1 (data layer): files with safe Storage paths and checks, the project thread for members and clients, client uploads, what the portal may see (projects, gates, invoices, files, messages are all in place). Part 2 (portal screens, Storage, emails) needs Supabase and Resend. |
-| M15 | Dashboard and Today | Not started | | |
+| M15 | Dashboard and Today | In progress | | Part 1 (data layer): revenue, pending, overdue in base currency at each invoice's rate; pipeline and 90-day win rate; projects at risk with reasons; team load; Today per person; 7 database tests with hand-checked figures. Part 2 (screens) needs sign-in. |
 | M16 | Hardening | Not started | | |
 
 ## Session log

@@ -306,7 +306,7 @@ export async function moveLead(tx: Tx, move: LeadMove) {
       kind: 'stage_change',
       actorId: move.actorId,
       body: move.lostNote,
-      meta: { from: from.name, to: to.name, lostReason: move.lostReason ?? null },
+      meta: { from: from.name, to: to.name, toKind: to.kind, lostReason: move.lostReason ?? null },
       isExample: lead.isExample,
     });
   }
