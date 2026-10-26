@@ -19,6 +19,25 @@ for (const story of stories) {
       await expect(page.locator('#storybook-root > *').first()).toBeAttached();
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
       await page.evaluate(() => document.fonts.ready);
+      // Storybook may render again after applying globals; wait until the story stops changing
+      // so axe never measures a half-rendered or half-themed page.
+      await page.waitForLoadState('networkidle');
+      await page.waitForFunction(
+        () =>
+          new Promise<boolean>((resolve) => {
+            const root = document.querySelector('#storybook-root')!;
+            let last = root.innerHTML;
+            let still = 0;
+            const tick = () => {
+              const now = root.innerHTML;
+              still = now === last ? still + 1 : 0;
+              last = now;
+              if (still >= 10) resolve(true);
+              else requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
+          }),
+      );
       // The whole page, so portalled dialogs, menus and toasts are checked too.
       const results = await new AxeBuilder({ page }).exclude('#storybook-docs').analyze();
       const serious = results.violations.filter(

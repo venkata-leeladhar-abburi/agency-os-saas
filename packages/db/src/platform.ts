@@ -244,15 +244,17 @@ export async function checkPlanLimit(
   workspaceId: string,
   resource: LimitedResource,
   adding = 1,
+  /** A count the caller already has (monthly counts depend on the date). */
+  { used }: { used?: number } = {},
 ): Promise<LimitCheck> {
   const counter = USAGE_COUNTERS[resource];
-  if (!counter) throw new Error(`No usage counter for ${resource} yet`);
+  if (!counter && used === undefined) throw new Error(`No usage counter for ${resource} yet`);
   const [ws] = await tx
     .select({ plan: workspaces.plan })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId));
   if (!ws) throw new AccountError('no_access');
-  return checkLimit(ws.plan, resource, await counter(tx, workspaceId), adding);
+  return checkLimit(ws.plan, resource, used ?? (await counter!(tx, workspaceId)), adding);
 }
 
 // ---- Audit log ----
