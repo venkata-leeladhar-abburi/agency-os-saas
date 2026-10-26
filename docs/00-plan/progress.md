@@ -33,13 +33,15 @@ Updated by Claude at the end of every working session. The founder can read this
 | M11 | Projects, phases and gates | In progress | | Part 1 (data layer): templates, projects, team access, checklist progress, phase order, gate requests and decisions (client and internal) that can't be bypassed, portal view, saved templates; 17 database tests. Part 2 (screens) needs sign-in. |
 | M12 | Tasks and team | In progress | | Part 1 (data layer): tasks with board order, subtasks, my tasks, calendar range, comments with mentions, daily updates, team counts; 9 database tests. Part 2 (screens) needs sign-in. |
 | M13 | Invoices and payments | In progress | | Part 1 (data layer): drafts, GST types, numbering with proformas apart, issue locks, cancellation, payments by hand and by Razorpay event (applied once), reminders, overdue, portal list, plan limit; 16 database tests. Part 2 (keys in Vault, payment links, PDFs, emails, screens) needs Supabase and Resend. |
-| M14 | Client portal | Not started | | |
+| M14 | Client portal | In progress | | Part 1 (data layer): files with safe Storage paths and checks, the project thread for members and clients, client uploads, what the portal may see (projects, gates, invoices, files, messages are all in place). Part 2 (portal screens, Storage, emails) needs Supabase and Resend. |
 | M15 | Dashboard and Today | Not started | | |
 | M16 | Hardening | Not started | | |
 
 ## Session log
 
 Newest first. One short entry per session: what was done, what is next, blockers.
+
+- **26 Oct 2026 (build, data layers M5 to M14):** G2 approved; #5 merged. Merged the data-layer PRs for M5 (#6), M6 (#7), M8 (#8) and M9 (#9), all CI green. M10 (#10) is open. Its first red run was a flaky Storybook check, fixed by waiting for the story to finish rendering. The second was a race when test databases create shared roles in parallel; the fix (advisory lock in `test/supabase-shim.sql`) is ready on `feat/m14-portal` and goes to #10 next. Committed on branches, PRs to follow in order: M11 (`feat/m11-projects`), M12 (`feat/m12-tasks`), M13 (`feat/m13-invoices`); M14 (`feat/m14-portal`) part 1 committed (143 database tests pass). **Next:** push the shim fix to #10, merge #10 to #14 in order, then the M15 dashboard queries and M7 sample data. **Needs from the founder:** the Supabase dev project keys (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `DATABASE_URL_DIRECT`) as environment secrets; Resend and Razorpay test keys later; answers to open questions 5, 17 and 18.
 
 - **25 Oct 2026 (build, M4 hi-fi):** G1 approved and merged; G0 waived in writing. Hi-fi of all 42 screens with clickable task flows (T1 to T10, T12), 58 e2e tests and 82 Storybook checks green. **Stopped at G2.** Needs from the founder: run round R2 and the tree test (script ready), approve G2, Supabase dev project and Vercel for M5.
 

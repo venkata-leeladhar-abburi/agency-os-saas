@@ -225,3 +225,9 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Messages and notifications** show whole amounts without zero paise (`formatAmount`: ₹1,18,000).
 - **Free plan:** 3 issued invoices a month; proformas don't count.
 - **Not yet (part 2):** the agency's own Razorpay keys go in Supabase Vault (`api-and-integrations.md`). Creating payment links, the per-workspace webhook secret, PDFs and reminder emails need the Supabase project and Resend.
+
+### D-037 Portal thread and files (M14 part 1)
+**Status:** Accepted · **Date:** 26 Oct 2026
+- **Files:** a `files` row is registered before the upload, and the app then asks Storage for a signed upload URL for its path. Paths are `workspace_id/file_id/safe-name`, so storage policies can read the workspace from the first segment. Core checks size (25 MB) and type (an allow-list), with messages that say what to do. A file is internal until shared. Access follows its project (`files.read`/`files.write`, `own` = on the project). Delete moves the file to the trash.
+- **Thread:** one thread per project between the agency and the client. Members write with `messages.write` on the project, and attaching a file shares it with the client. Portal contacts read and write only through `portal_thread`, `post_portal_message`, `add_portal_file` and `portal_files`. These show names (member or contact), never internal files, and refuse anyone who isn't a contact of the project's client. Messages can't be edited or deleted.
+- **Notifications for messages** aren't in the defaults table (`defaults-and-content.md` §7), so none are invented. The functions return who to tell (client contacts' emails, or the project team), and the founder is asked for the default (open question 17).

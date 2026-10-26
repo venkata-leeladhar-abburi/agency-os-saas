@@ -21,6 +21,8 @@ Claude adds questions here and asks them in one batch. The founder answers inlin
 | 14 | **Support and sender email:** which address do clients and users reply to, and which domain sends emails? | M6 | Replies go to the agency member who sent the message; sender set when the domain is ready |
 | 15 | **Beta agencies:** which 5 to 10 agencies (India and abroad) will join the beta after One Stop? | G3 | Claude prepares an invite page and onboarding email; you pick the agencies |
 | 16 | **Analytics region:** PostHog US or EU cloud? | M6 | EU cloud |
+| 17 | **Message notifications:** the defaults table has no row for portal messages. When the client writes, should the project team get it in-app and by email? When the team writes, should the client get an email? | M14 | Team: in-app on, email on. Client: email on (subject "New message from [workspace] about [project]"). Each person can turn it off in Settings. |
+| 18 | **Free plan limits:** question 5 is still open; Claude is enforcing its default (1 member, 1 portal client, 25 open leads, 3 quotes, proposals and invoices a month). | M6 | Keep the default |
 
 ## Answered
 

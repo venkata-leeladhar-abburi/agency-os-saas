@@ -92,6 +92,10 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   payment_invalid: 'Check the amount and currency.',
   exchange_rate_required: 'Add the exchange rate to INR for this currency.',
   cancel_reason_required: 'Say why the invoice is cancelled.',
+  file_invalid: 'Check the file.',
+  file_not_found: 'That file doesn’t exist or you can’t open it.',
+  file_mismatch: 'That file isn’t part of this workspace or project.',
+  message_invalid: 'Write a message or attach a file from this project.',
   portal_email_required: 'Add an email for this contact. The portal sign-in link goes to it.',
   portal_user_locked:
     'A portal login is linked when the contact signs in. It can’t be set by hand.',
