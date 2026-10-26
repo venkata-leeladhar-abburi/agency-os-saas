@@ -213,3 +213,9 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Comments:** authors edit and delete their own. Mentions keep only members of the workspace and notify them (the "task assigned or mentioned" notification). As with gates, the function returns the event and a job delivers it.
 - **Daily updates:** one per member, day and project, saved again to update it. The member sees their own, the project's lead sees the project's, and people with `members.write` see all.
 - **Team page:** `team_overview()` gives each member's role, active projects and open tasks as counts only, to anyone with `members.read`.
+
+### D-040 Founder answers: plan limits and message notifications
+**Status:** Approved by the founder · **Date:** 26 Oct 2026
+- **Plans:** the limits in `defaults-and-content.md` §8 are confirmed as enforced since M6 (open question 5).
+- **Message notifications:** a new message in a project thread notifies the other side in the app and by email. The team gets the in-app list and email; the client gets the portal and email. Each person can turn it off in Settings (open question 17). It's added to the notification defaults with M14.
+- **Database access from cloud sessions:** these sessions allow only HTTPS, so migrations run on the Supabase project from a GitHub Actions workflow started by hand (`DATABASE_URL_DIRECT` as a repository secret). The app talks to Supabase Auth and Storage over HTTPS.
