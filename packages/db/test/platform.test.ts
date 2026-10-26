@@ -100,7 +100,7 @@ describe('plan limits', () => {
   });
 
   it('refuses resources without a counter yet', async () => {
-    await expect(as(owner, (tx) => checkPlanLimit(tx, ws, 'open_leads'))).rejects.toThrow(
+    await expect(as(owner, (tx) => checkPlanLimit(tx, ws, 'portal_clients'))).rejects.toThrow(
       'No usage counter',
     );
   });

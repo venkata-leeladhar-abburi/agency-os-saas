@@ -13,11 +13,14 @@ import { and, count, desc, eq, gt, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { AccountError } from './accounts';
 import type { Tx } from './client';
 import {
+  activities,
   auditLog,
   invitations,
+  leads,
   memberships,
   notificationPreferences,
   notifications,
+  pipelineStages,
   profiles,
   workspaces,
 } from './schema';
@@ -196,7 +199,26 @@ const countMembers: Counter = async (tx, workspaceId) => {
 };
 
 /** Each later milestone adds the counter for its resource (leads in M8, clients in M9, …). */
-export const USAGE_COUNTERS: Partial<Record<LimitedResource, Counter>> = { members: countMembers };
+/** Open leads: not deleted, in an open stage. */
+const countOpenLeads: Counter = async (tx, workspaceId) => {
+  const [row] = await tx
+    .select({ n: count() })
+    .from(leads)
+    .innerJoin(pipelineStages, eq(pipelineStages.id, leads.stageId))
+    .where(
+      and(
+        eq(leads.workspaceId, workspaceId),
+        isNull(leads.deletedAt),
+        eq(pipelineStages.kind, 'open'),
+      ),
+    );
+  return row?.n ?? 0;
+};
+
+export const USAGE_COUNTERS: Partial<Record<LimitedResource, Counter>> = {
+  members: countMembers,
+  open_leads: countOpenLeads,
+};
 
 export async function checkPlanLimit(
   tx: Tx,
@@ -299,6 +321,15 @@ export async function exportWorkspace(
     .from(invitations)
     .where(eq(invitations.workspaceId, workspaceId));
   const audit = await tx.select().from(auditLog).where(eq(auditLog.workspaceId, workspaceId));
+  const stages = await tx
+    .select()
+    .from(pipelineStages)
+    .where(eq(pipelineStages.workspaceId, workspaceId));
+  const leadRows = await tx.select().from(leads).where(eq(leads.workspaceId, workspaceId));
+  const activityRows = await tx
+    .select()
+    .from(activities)
+    .where(eq(activities.workspaceId, workspaceId));
 
   await tx.insert(auditLog).values({ workspaceId, actorId, action: 'data.exported' });
   return {
@@ -306,6 +337,14 @@ export async function exportWorkspace(
     version: 1,
     exportedAt: new Date().toISOString(),
     workspaceId,
-    tables: { workspace, members, invitations: invites, audit_log: audit },
+    tables: {
+      workspace,
+      members,
+      invitations: invites,
+      audit_log: audit,
+      pipeline_stages: stages,
+      leads: leadRows,
+      activities: activityRows,
+    },
   };
 }
