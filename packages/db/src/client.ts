@@ -58,3 +58,13 @@ export async function withService<T>(
     return fn(tx, workspaceId);
   });
 }
+
+/** For /api/health: can we reach the database? */
+export async function pingDatabase(db: Db): Promise<boolean> {
+  try {
+    await db.execute(sql`select 1`);
+    return true;
+  } catch {
+    return false;
+  }
+}

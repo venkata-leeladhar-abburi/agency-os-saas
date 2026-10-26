@@ -9,6 +9,7 @@ import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import type { Tx } from './client';
 import { auditLog, invitations, memberships, profiles, workspaces } from './schema';
+import { checkPlanLimit } from './platform';
 import { hashToken, newToken } from './tokens';
 
 /** Errors the account functions raise, with the words the app shows. */
@@ -23,11 +24,16 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   already_member: 'You’re already in this workspace.',
   last_owner: 'A workspace needs at least one owner. Make someone else an owner first.',
   slug_taken: 'That workspace address is taken. Try another name.',
+  no_access: 'You don’t have access to this. Ask an owner of the workspace.',
+  plan_limit: 'Your plan’s limit is reached. Upgrade in Settings, Billing to add more.',
 };
 
 export class AccountError extends Error {
-  constructor(public code: string) {
-    super(ACCOUNT_ERRORS[code] ?? code);
+  constructor(
+    public code: string,
+    message?: string,
+  ) {
+    super(message ?? ACCOUNT_ERRORS[code] ?? code);
   }
 }
 
@@ -105,6 +111,8 @@ export async function inviteMember(tx: Tx, input: NewInvitation) {
     throw new Error('An invitation needs an email or a phone number');
   if (input.role === 'owner')
     throw new Error('Owners are made from the members list, not by invitation');
+  const limit = await checkPlanLimit(tx, input.workspaceId, 'members');
+  if (!limit.allowed) throw new AccountError('plan_limit', limit.message);
   const { token, hash } = newToken();
   const id = uuidv7();
   await tx.insert(invitations).values({
