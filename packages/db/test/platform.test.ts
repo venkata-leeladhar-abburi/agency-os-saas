@@ -180,7 +180,7 @@ describe('notifications', () => {
 
   it('lists settings with the member’s changes over the defaults', async () => {
     const settings = await as(member, (tx) => notificationSettings(tx, ws, member.userId));
-    expect(settings).toHaveLength(13);
+    expect(settings).toHaveLength(14);
     expect(settings.find((s) => s.kind === 'payment.received')).toMatchObject({
       inApp: false,
       email: 'digest',

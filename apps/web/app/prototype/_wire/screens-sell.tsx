@@ -1,9 +1,16 @@
 'use client';
 
-import { calculateInvoice } from '@agency-os/core';
+import {
+  calculateInvoice,
+  formatQuoteNumber,
+  LEAD_SOURCE_LABELS,
+  LOST_REASON_LABELS,
+  PROPOSAL_VALIDITY_DAYS,
+} from '@agency-os/core';
 import {
   ArrowRight,
   CurrencyInr,
+  Envelope,
   Receipt,
   CalendarBlank,
   ChatCircleDots,
@@ -94,6 +101,9 @@ const LEADS_EMPTY = {
   action: 'Add lead',
   icon: FunnelSimple,
 };
+
+const QUOTE_NUMBER = formatQuoteNumber('OSS', '2026-10-25', 18);
+const LOST_REASONS = Object.values(LOST_REASON_LABELS);
 
 const quote = calculateInvoice({
   currency: 'INR',
@@ -365,6 +375,7 @@ export const SELL_SCREENS: ScreenDef[] = [
       { id: 'default', label: 'Drawer' },
       { id: 'page', label: 'Full page' },
       { id: 'lost', label: 'Lost reason' },
+      { id: 'lost-other', label: 'Lost: Other, no note' },
     ],
     render: ({ state }) => {
       const body = (
@@ -480,7 +491,7 @@ export const SELL_SCREENS: ScreenDef[] = [
               {body}
             </SheetContent>
           </Sheet>
-          {state === 'lost' ? (
+          {state === 'lost' || state === 'lost-other' ? (
             <Dialog defaultOpen>
               <DialogContent
                 title="Why was Northwind lost?"
@@ -499,18 +510,20 @@ export const SELL_SCREENS: ScreenDef[] = [
                     label="Reason"
                     required
                     placeholder="Choose a reason"
-                    defaultValue=""
-                    options={[
-                      'Price',
-                      'Timing',
-                      'Chose another provider',
-                      'No reply',
-                      'Not a fit',
-                      'Budget cut',
-                      'Other',
-                    ]}
+                    defaultValue={state === 'lost-other' ? 'Other' : ''}
+                    options={LOST_REASONS}
                   />
-                  <Textarea label="Note" optional />
+                  <Textarea
+                    label="Note"
+                    optional={state !== 'lost-other'}
+                    required={state === 'lost-other'}
+                    hint={state === 'lost-other' ? undefined : 'Needed when the reason is Other.'}
+                    error={
+                      state === 'lost-other'
+                        ? 'Add a note that says why. It’s needed when the reason is Other.'
+                        : undefined
+                    }
+                  />
                 </div>
               </DialogContent>
             </Dialog>
@@ -565,17 +578,7 @@ export const SELL_SCREENS: ScreenDef[] = [
               />
               <Select
                 label="Source"
-                options={[
-                  'Referral',
-                  'Instagram',
-                  'LinkedIn',
-                  'Website',
-                  'Marketplace',
-                  'Ads',
-                  'IndiaMART',
-                  'WhatsApp',
-                  'Other',
-                ]}
+                options={Object.values(LEAD_SOURCE_LABELS)}
                 defaultValue="Instagram"
               />
               <Input label="Value" prefix="₹" inputMode="numeric" optional />
@@ -833,7 +836,7 @@ export const SELL_SCREENS: ScreenDef[] = [
       <>
         <PageHeader
           title="Quote for Kite & Co"
-          subtitle="Draft · saved just now"
+          subtitle={`Draft · saved just now · number ${QUOTE_NUMBER} is given when you send it`}
           actions={
             <>
               <Button>Preview</Button>
@@ -942,7 +945,7 @@ export const SELL_SCREENS: ScreenDef[] = [
           <Dialog defaultOpen>
             <DialogContent
               title="Send the proposal to Kite & Co"
-              description="They get a link to read and sign it on any device."
+              description={`They get a link to read and sign it on any device. It works for ${PROPOSAL_VALIDITY_DAYS} days.`}
               footer={
                 <>
                   <Button icon={WhatsappLogo}>Copy WhatsApp link</Button>
@@ -986,7 +989,8 @@ export const SELL_SCREENS: ScreenDef[] = [
       <div className="mx-auto grid w-full max-w-prose gap-4">
         {state === 'signed' ? (
           <Alert tone="success" title="You accepted this proposal on 25 Oct 2026">
-            A signed copy was emailed to you. One Stop Solutions will be in touch to start.
+            A signed copy was emailed to you, with the time and the exact proposal you accepted. One
+            Stop Solutions will be in touch to start.
           </Alert>
         ) : null}
         {state === 'declined' ? (
@@ -1015,12 +1019,17 @@ export const SELL_SCREENS: ScreenDef[] = [
               size="xl"
               className="font-mono"
             />
-            <Input
-              label="Code from your email"
-              inputMode="numeric"
-              size="xl"
-              hint="We sent it to kiran@kiteandco.in."
-            />
+            <div className="grid gap-2">
+              <Button size="xl" icon={Envelope}>
+                Email me a code
+              </Button>
+              <Input
+                label="Code from your email"
+                inputMode="numeric"
+                size="xl"
+                hint="We send a 6-digit code to kiran@kiteandco.in. It works for 10 minutes."
+              />
+            </div>
             <Go to="s20-proposal-view" state="signed" variant="primary" size="xl" block>
               Accept proposal
             </Go>
@@ -1179,7 +1188,8 @@ export const SELL_SCREENS: ScreenDef[] = [
               title="Portal invite not accepted yet"
               action={<Button size="sm">Resend invite</Button>}
             >
-              Sent to kiran@kiteandco.in 3 days ago.
+              Sent to kiran@kiteandco.in 3 days ago. Kiran gets in by signing in with that email;
+              changing the email or revoking access stops it.
             </Alert>
           ) : null}
           <TabLinks
@@ -1198,7 +1208,12 @@ export const SELL_SCREENS: ScreenDef[] = [
                 <li className="flex items-center gap-3">
                   <Avatar name="Kiran Kumar" />
                   <span className="grid">
-                    <span className="text-body-medium">Kiran Kumar · Founder</span>
+                    <span className="flex items-center gap-2 text-body-medium">
+                      Kiran Kumar · Founder
+                      <Badge size="sm" tone="brand">
+                        Primary
+                      </Badge>
+                    </span>
                     <span className="text-caption font-normal text-muted-foreground">
                       kiran@kiteandco.in · +91 98450 12345 · prefers WhatsApp
                     </span>

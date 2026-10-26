@@ -1,5 +1,5 @@
 /**
- * Agency OS plans and their limits (defaults-and-content.md §8, open question 5 default).
+ * Agency OS plans and their limits (defaults-and-content.md §8, confirmed by the founder in D-040).
  * Upgrade prompts appear at the limit, never before; limits never block viewing or exporting.
  */
 export const PLANS = ['free', 'solo', 'starter', 'growth', 'enterprise'] as const;

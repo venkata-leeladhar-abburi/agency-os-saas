@@ -156,7 +156,11 @@ export function PrototypeScreen({
         topbar={{
           crumbs: [
             { label: WORKSPACE.name, href: '/prototype' },
-            ...(screen.crumbs ?? [screen.name]).map((label) => ({ label })),
+            ...(
+              (typeof screen.crumbs === 'function' ? screen.crumbs(state) : screen.crumbs) ?? [
+                screen.name,
+              ]
+            ).map((label) => ({ label })),
           ],
           linkAs: Link,
           actions: (
