@@ -1,6 +1,6 @@
 # Gate G2: design approval
 
-**Status:** the prototype is ready; usability round R2 not run yet · **Prepared:** 25 Oct 2026 · Reply "Approve G2" after R2, or list changes.
+**Status:** approved by the founder on 26 Oct 2026 (recorded in `decisions.md`); R2 and the tree test move to before G3 · **Prepared:** 25 Oct 2026
 
 ## Links
 - **Prototype:** `pnpm dev`, then http://localhost:3000/prototype (the Vercel preview link once Vercel is connected). All 42 R0/R1 screens, fully designed with example data, light and dark, phone and desktop, every state.

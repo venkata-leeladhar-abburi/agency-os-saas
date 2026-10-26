@@ -2,8 +2,8 @@
 
 Updated by Claude at the end of every working session. The founder can read this page to see where things stand.
 
-**Current phase:** Waiting at gate G2. Hi-fi prototype done; usability round R2 and the tree test need participants.
-**Next gate:** G2 Design approval (hi-fi prototype and usability round R2).
+**Current phase:** Build (M5 onward). G2 approved 26 Oct 2026.
+**Next gate:** G3 Beta ready.
 
 ## Gates
 
@@ -11,7 +11,7 @@ Updated by Claude at the end of every working session. The founder can read this
 | --- | --- | --- | --- |
 | G0 Research | Waived | 25 Oct 2026 | Founder waived in writing; round R2 before G2 is the check. |
 | G1 System and wireframes | Approved | 25 Oct 2026 | Summary in `gate-g1.md`. Tree test moves to before G2 (runs with round R2). |
-| G2 Design approval | Prototype ready; R2 not run | 25 Oct 2026 | Summary in `gate-g2.md`. |
+| G2 Design approval | Approved | 26 Oct 2026 | R2 and the tree test move to before G3. |
 | G3 Beta ready | Not started | | |
 | G4 Launch | Not started | | |
 
@@ -23,7 +23,7 @@ Updated by Claude at the end of every working session. The founder can read this
 | M1 | Tokens and theme | Done | [#1](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/1) | Generator, contrast check (82 of 82 pairs), Geist, Phosphor, light/dark/system switch, token pages in Storybook, story axe checks in CI. |
 | M2 | Core components | Done | [#2](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/2) | 22 components with every state in Storybook; 39 component tests; 54 story axe checks (27 stories, light and dark). |
 | M3 | Patterns | Done | [#3](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/3) | 13 patterns, the three reference screens rebuilt, core money and tax helpers (43 tests, 100% coverage), 56 component tests, 82 story checks. |
-| M4 | Wireframes and prototype | Hi-fi done, waiting at G2 (round R2 not run) | [#4](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/4) | 42 screens with states; tree-test and wireframe-test scripts. Hi-fi waits for G1 and G0. |
+| M4 | Wireframes and prototype | Done (G1, G2 approved) | [#4](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/4) | 42 screens with states; tree-test and wireframe-test scripts. Hi-fi waits for G1 and G0. |
 | M5 | Accounts and workspaces | Not started | | |
 | M6 | App shell and platform | Not started | | |
 | M7 | Onboarding | Not started | | |
