@@ -17,3 +17,4 @@ export * from './billing';
 export * from './leads';
 export * from './clients';
 export * from './sales-docs';
+export * from './projects';

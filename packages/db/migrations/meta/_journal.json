@@ -71,6 +71,20 @@
       "when": 1792985845825,
       "tag": "0009_sales_docs_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792986302005,
+      "tag": "0010_projects",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792986303021,
+      "tag": "0011_projects_rls",
+      "breakpoints": true
     }
   ]
 }
