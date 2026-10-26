@@ -292,6 +292,29 @@ export async function listAuditLog(
 
 // ---- Data export ----
 
+/** Tables added after M9, read in one go; secrets (token hashes, signing codes) stay out. */
+async function moreTables(tx: Tx, workspaceId: string) {
+  const all = async <T extends Record<string, unknown>>(table: string, omit: string[] = []) => {
+    const rows = await tx.execute<T>(
+      sql`select * from ${sql.identifier(table)} where workspace_id = ${workspaceId}`,
+    );
+    return rows.map((r) =>
+      Object.fromEntries(Object.entries(r).filter(([k]) => !omit.includes(k))),
+    );
+  };
+  return {
+    quotes: await all('quotes'),
+    quote_items: await all('quote_items'),
+    proposals: await all('proposals', ['public_token_hash']),
+    signatures: await all('signatures'),
+    projects: await all('projects'),
+    project_members: await all('project_members'),
+    phases: await all('phases'),
+    checklist_items: await all('checklist_items'),
+    gates: await all('gates'),
+  };
+}
+
 export type WorkspaceExport = {
   format: 'agency-os-export';
   version: 1;
@@ -372,6 +395,7 @@ export async function exportWorkspace(
       leads: leadRows,
       clients: clientRows,
       client_contacts: contactRows,
+      ...(await moreTables(tx, workspaceId)),
       activities: activityRows,
     },
   };
