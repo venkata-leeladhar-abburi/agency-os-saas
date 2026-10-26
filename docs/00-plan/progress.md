@@ -23,8 +23,8 @@ Updated by Claude at the end of every working session. The founder can read this
 | M1 | Tokens and theme | Done | [#1](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/1) | Generator, contrast check (82 of 82 pairs), Geist, Phosphor, light/dark/system switch, token pages in Storybook, story axe checks in CI. |
 | M2 | Core components | Done | [#2](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/2) | 22 components with every state in Storybook; 39 component tests; 54 story axe checks (27 stories, light and dark). |
 | M3 | Patterns | Done | [#3](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/3) | 13 patterns, the three reference screens rebuilt, core money and tax helpers (43 tests, 100% coverage), 56 component tests, 82 story checks. |
-| M4 | Wireframes and prototype | Done (G1, G2 approved) | [#4](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/4) | 42 screens with states; tree-test and wireframe-test scripts. Hi-fi waits for G1 and G0. |
-| M5 | Accounts and workspaces | Not started | | |
+| M4 | Wireframes and prototype | Done (G1, G2 approved) | [#4](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/4), [#5](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/5) | 42 screens, wireframes then hi-fi, with clickable task flows. R2 and the tree test run before G3. |
+| M5 | Accounts and workspaces | In progress | | Part 1 (data layer): schema, RLS, roles, invitations, audit log, 21 database tests incl. cross-tenant. Part 2 (sign-in, setup, invites UI, switcher) needs the Supabase dev project. |
 | M6 | App shell and platform | Not started | | |
 | M7 | Onboarding | Not started | | |
 | M8 | Leads | Not started | | |

@@ -163,3 +163,8 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Decision:** the founder approved gate G2 (hi-fi prototype of all 42 R0/R1 screens) with "I approved, do next things".
 - **Note:** usability round R2 and the tree test had not been run at approval. Recorded as the founder accepting that; both move to run with One Stop's own team and the first beta agencies before G3, and any blocker they find is fixed before G3.
 - **Consequences:** the build (M5 to M16) starts.
+
+### D-029 Data layer and RLS (M5 part 1)
+**Status:** Accepted · **Date:** 26 Oct 2026
+- **Decision:** `packages/db` uses Drizzle 0.45 with postgres.js. Tables are generated into `migrations/0000_*.sql`; RLS, policy functions and seeds are hand-written SQL in later migration files (in `migrations/`, not a separate `policies/` folder, so one migrator applies both in order). Roles and permissions are defined once in `packages/core/src/permissions.ts`; `role_permissions` is seeded from it and a test fails if they differ. Scopes are `all` or `own` (own records only, for project leads and members). Workspace creation and invitation acceptance are `security definer` functions so a user can create the first owner membership or join with a valid token without broad insert rights. Invitation tokens are 24 random bytes; only the SHA-256 hash is stored. A trigger keeps at least one owner per workspace. `audit_log` has no update or delete grant at all. Ids are UUID v7 made in the app.
+- **Consequences:** database tests run against real Postgres 16 (a service in CI) with a small shim for Supabase's `auth` schema and roles; on Supabase the real ones are used. Auth screens, the session cookie and the switcher (M5 part 2) need the Supabase dev project.

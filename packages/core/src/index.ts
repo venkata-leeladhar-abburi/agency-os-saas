@@ -5,3 +5,5 @@ export * from './money';
 export * from './numbering';
 export * from './tax';
 export * from './words';
+export * from './permissions';
+export * from './workspace';
