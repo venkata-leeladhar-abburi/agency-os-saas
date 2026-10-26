@@ -4,6 +4,7 @@ import {
   CalendarBlank,
   ChatCircleDots,
   CheckSquareOffset,
+  Flag,
   FolderSimple,
   Kanban,
   ListBullets,
@@ -13,6 +14,7 @@ import {
   UsersThree,
 } from '@phosphor-icons/react';
 import {
+  ActivityFeed,
   Alert,
   Badge,
   Button,
@@ -34,7 +36,17 @@ import {
   Textarea,
   DEFAULT_PHASES,
 } from '@agency-os/ui';
-import { Bars, List, Ph, Row, StateView } from './kit';
+import { Go, List, Row, StateView } from './kit';
+import {
+  DailyUpdate,
+  FileList,
+  MessageThread,
+  ProjectsTable,
+  TaskBoard,
+  TaskCalendar,
+  TaskTable,
+  TeamTable,
+} from './parts2';
 import { NO_EMPTY, STANDARD, type ScreenDef } from './types';
 
 const projectTabs = (active: string) => (
@@ -61,6 +73,70 @@ const projectTabs = (active: string) => (
   />
 );
 
+const PROJECT_ACTIVITY = [
+  {
+    id: 'a1',
+    icon: UploadSimple,
+    tone: 'brand' as const,
+    who: 'Ananya',
+    text: 'shared Homepage v3.fig with the client',
+    when: '23 Oct',
+  },
+  {
+    id: 'a2',
+    icon: Flag,
+    tone: 'warning' as const,
+    who: 'Ananya',
+    text: 'asked Srinivas to approve the homepage design',
+    when: '23 Oct',
+  },
+  {
+    id: 'a3',
+    icon: CheckSquareOffset,
+    tone: 'success' as const,
+    who: 'Arjun',
+    text: 'finished Prepare staging',
+    when: '22 Oct',
+  },
+];
+
+const GATE_HISTORY = [
+  {
+    id: 'g1',
+    icon: Flag,
+    tone: 'warning' as const,
+    who: 'Ananya',
+    text: 'sent Design sign-off to Srinivas Beere',
+    when: '23 Oct',
+  },
+  {
+    id: 'g2',
+    icon: CheckSquareOffset,
+    tone: 'success' as const,
+    who: 'Srinivas Beere',
+    text: 'approved Strategy and scope',
+    when: '14 Oct',
+  },
+  {
+    id: 'g3',
+    icon: CheckSquareOffset,
+    tone: 'success' as const,
+    who: 'Srinivas Beere',
+    text: 'accepted the proposal (signed)',
+    when: '1 Oct',
+  },
+];
+
+const PHASE_LINES = [
+  'We learn your business and agree the plan. Signed proposal.',
+  'Skipped for this project: the client shared their own research.',
+  'Personas, user flows, sitemap and scope. Approved 14 Oct.',
+  '',
+  'Weekly demos on staging, QA on browsers and phones.',
+  'Deploy, accounts in the client’s name, training video.',
+  'Monthly report, updates and backups.',
+];
+
 const PROJECT_HEADER = (actions: React.ReactNode) => (
   <RecordHeader
     title="Acme Labs website"
@@ -74,36 +150,6 @@ const PROJECT_HEADER = (actions: React.ReactNode) => (
     actions={actions}
   />
 );
-
-function TaskColumns() {
-  return (
-    <div
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region must be reachable by keyboard (WCAG 2.1.1)
-      tabIndex={0}
-      role="region"
-      aria-label="Task board"
-      className="grid auto-cols-[minmax(220px,1fr)] grid-flow-col gap-3 overflow-x-auto pb-2"
-    >
-      {['To do', 'In progress', 'In review', 'Done'].map((col, i) => (
-        <section
-          key={col}
-          aria-label={col}
-          className="grid content-start gap-2 rounded-lg bg-muted p-2"
-        >
-          <header className="px-1.5 text-body-sm font-semibold">{col}</header>
-          {Array.from({ length: [3, 2, 1, 2][i] ?? 0 }, (_, j) => (
-            <Ph
-              key={j}
-              label="Task: title · assignee · due · priority · phase"
-              h={72}
-              className="bg-card"
-            />
-          ))}
-        </section>
-      ))}
-    </div>
-  );
-}
 
 export const DELIVER_SCREENS: ScreenDef[] = [
   {
@@ -126,9 +172,9 @@ export const DELIVER_SCREENS: ScreenDef[] = [
           title="Projects"
           subtitle="9 active · 2 at risk"
           actions={
-            <Button variant="primary" icon={Plus}>
+            <Go to="s25-new-project" variant="primary" icon={Plus}>
               New project
-            </Button>
+            </Go>
           }
         />
         <StateView
@@ -148,34 +194,7 @@ export const DELIVER_SCREENS: ScreenDef[] = [
             <Button size="sm">Lead: Anyone</Button>
             <Button size="sm">Health: All</Button>
           </div>
-          <List label="Project and client · Phase · Health · Next gate · Due · Progress">
-            {[
-              'Acme Labs website',
-              'Northwind mobile app',
-              'Mitra Clinic booking app',
-              'Saffron Stays website',
-            ].map((p, i) => (
-              <Row
-                key={p}
-                label={p}
-                meta={DEFAULT_PHASES[3 + (i % 3)]}
-                right={
-                  <span className="flex items-center gap-3">
-                    {i < 2 ? (
-                      <Badge size="sm" tone="danger" dot>
-                        At risk
-                      </Badge>
-                    ) : (
-                      <Badge size="sm" tone="success" dot>
-                        On track
-                      </Badge>
-                    )}
-                    <Progress value={30 + i * 15} aria-label={`${p} progress`} className="w-28" />
-                  </span>
-                }
-              />
-            ))}
-          </List>
+          <ProjectsTable />
         </StateView>
       </>
     ),
@@ -244,7 +263,9 @@ export const DELIVER_SCREENS: ScreenDef[] = [
         </div>
         <div className="flex justify-end gap-2">
           <Button>Cancel</Button>
-          <Button variant="primary">Create project</Button>
+          <Go to="s26-project-overview" variant="primary">
+            Create project
+          </Go>
         </div>
       </div>
     ),
@@ -270,7 +291,9 @@ export const DELIVER_SCREENS: ScreenDef[] = [
           {PROJECT_HEADER(
             <>
               <Button icon={ChatCircleDots}>Message client</Button>
-              <Button variant="primary">Request approval</Button>
+              <Go to="s27-phases" state="request" variant="primary">
+                Request approval
+              </Go>
             </>,
           )}
           {projectTabs('overview')}
@@ -287,7 +310,20 @@ export const DELIVER_SCREENS: ScreenDef[] = [
               <Progress value={62} label="₹49,600 of ₹80,000 used" showValue />
             </Card>
             <Card title="Tasks">
-              <Bars n={3} />
+              <dl className="grid gap-2 text-body">
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Open</dt>
+                  <dd className="tabular-nums">14</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Due this week</dt>
+                  <dd className="tabular-nums">5</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Overdue</dt>
+                  <dd className="text-danger tabular-nums">1</dd>
+                </div>
+              </dl>
             </Card>
           </div>
           <GateCard
@@ -298,7 +334,9 @@ export const DELIVER_SCREENS: ScreenDef[] = [
             when="sent 2 days ago"
             files={['Homepage v3.fig', 'Mobile.pdf']}
           />
-          <Ph label="Activity: latest updates, files and decisions" h={140} />
+          <Card title="Activity">
+            <ActivityFeed items={PROJECT_ACTIVITY} />
+          </Card>
         </div>
       </StateView>
     ),
@@ -320,7 +358,11 @@ export const DELIVER_SCREENS: ScreenDef[] = [
     render: ({ state }) => (
       <StateView state={state} copy={{ area: 'this project' }}>
         <div className="grid gap-6">
-          {PROJECT_HEADER(<Button variant="primary">Request approval</Button>)}
+          {PROJECT_HEADER(
+            <Go to="s27-phases" state="request" variant="primary">
+              Request approval
+            </Go>,
+          )}
           {projectTabs('phases')}
           <ol className="grid gap-3 p-0">
             {DEFAULT_PHASES.map((phase, i) => (
@@ -328,11 +370,13 @@ export const DELIVER_SCREENS: ScreenDef[] = [
                 <Card
                   title={`${i + 1}. ${phase}`}
                   description={
-                    i < 3
-                      ? 'Done'
-                      : i === 3
-                        ? 'In progress · 6 of 9 checklist items'
-                        : 'Not started'
+                    i === 1
+                      ? 'Skipped'
+                      : i < 3
+                        ? 'Done'
+                        : i === 3
+                          ? 'In progress · 6 of 9 checklist items'
+                          : 'Not started'
                   }
                   actions={
                     i === 1 ? (
@@ -349,18 +393,30 @@ export const DELIVER_SCREENS: ScreenDef[] = [
                   }
                 >
                   {i === 3 ? (
-                    <Ph
-                      label="Checklist: show 2 to 3 directions · wireframes · hi-fi desktop and phone · prototype · test with 3 to 5 users · handoff"
-                      h={96}
-                    />
+                    <ul className="grid gap-2 p-0">
+                      {[
+                        ['Show 2 to 3 directions', true],
+                        ['Wireframes for key pages', true],
+                        ['Hi-fi design, desktop and phone', true],
+                        ['Clickable prototype', false],
+                        ['Test with 3 to 5 users', false],
+                        ['Design handoff', false],
+                      ].map(([label, done]) => (
+                        <li key={String(label)}>
+                          <Checkbox label={String(label)} defaultChecked={Boolean(done)} />
+                        </li>
+                      ))}
+                    </ul>
                   ) : (
-                    <Bars n={1} />
+                    <p className="text-body-sm text-muted-foreground">{PHASE_LINES[i]}</p>
                   )}
                 </Card>
               </li>
             ))}
           </ol>
-          <Ph label="Gate history: every request and decision with time and comment" h={96} />
+          <Card title="Gate history">
+            <ActivityFeed items={GATE_HISTORY} />
+          </Card>
         </div>
         {state === 'request' ? (
           <Dialog defaultOpen>
@@ -370,7 +426,9 @@ export const DELIVER_SCREENS: ScreenDef[] = [
               footer={
                 <>
                   <Button>Cancel</Button>
-                  <Button variant="primary">Send for approval</Button>
+                  <Go to="s27-phases" variant="primary">
+                    Send for approval
+                  </Go>
                 </>
               }
             >
@@ -380,11 +438,19 @@ export const DELIVER_SCREENS: ScreenDef[] = [
                   label="Message"
                   defaultValue="Desktop and phone versions are ready, with the Telugu headline you asked for."
                 />
-                <Ph label="Files: attach from the project or upload" h={64}>
-                  <span className="flex gap-2 text-caption">
-                    <Paperclip size={12} aria-hidden="true" /> Homepage v3.fig · Mobile.pdf
+                <div className="grid gap-1.5">
+                  <span className="text-body-sm font-medium">Files</span>
+                  <span className="flex flex-wrap gap-1.5">
+                    {['Homepage v3.fig', 'Mobile.pdf'].map((f) => (
+                      <Badge key={f} tone="outline" icon={Paperclip}>
+                        {f}
+                      </Badge>
+                    ))}
+                    <Button size="sm" variant="ghost" icon={Plus}>
+                      Attach
+                    </Button>
                   </span>
-                </Ph>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
@@ -456,22 +522,11 @@ export const DELIVER_SCREENS: ScreenDef[] = [
           }}
         >
           {state === 'list' ? (
-            <List label="☐ · Task · Project · Assignee · Due · Priority">
-              {['Homepage hero copy', 'Fix checkout bug', 'Prepare staging', 'QA on Android'].map(
-                (t) => (
-                  <Row
-                    key={t}
-                    label={t}
-                    meta="project · phase"
-                    right={<Bars n={1} className="w-40" />}
-                  />
-                ),
-              )}
-            </List>
+            <TaskTable />
           ) : state === 'calendar' ? (
-            <Ph label="Month calendar: tasks on their due dates; drag to reschedule" h={420} />
+            <TaskCalendar />
           ) : (
-            <TaskColumns />
+            <TaskBoard />
           )}
         </StateView>
       </>
@@ -492,7 +547,7 @@ export const DELIVER_SCREENS: ScreenDef[] = [
     states: [{ id: 'default', label: 'Default' }],
     render: () => (
       <>
-        <TaskColumns />
+        <TaskBoard />
         <Sheet defaultOpen modal={false}>
           <SheetContent
             title="Homepage hero copy"
@@ -500,7 +555,9 @@ export const DELIVER_SCREENS: ScreenDef[] = [
             footer={
               <>
                 <Button>Add comment</Button>
-                <Button variant="primary">Mark done</Button>
+                <Go to="s28-tasks" variant="primary">
+                  Mark done
+                </Go>
               </>
             }
           >
@@ -524,8 +581,39 @@ export const DELIVER_SCREENS: ScreenDef[] = [
                 <Checkbox label="Draft English headline" defaultChecked />
                 <Checkbox label="Telugu translation" />
               </fieldset>
-              <Ph label="Files" h={56} />
-              <Ph label="Comments with @mentions" h={96} />
+              <div className="grid gap-1.5">
+                <span className="text-body-sm font-medium">Files</span>
+                <Badge tone="outline" icon={Paperclip} className="justify-self-start">
+                  Headline options.pdf
+                </Badge>
+              </div>
+              <div className="grid gap-3">
+                <span className="text-body-sm font-medium">Comments</span>
+                <ActivityFeed
+                  items={[
+                    {
+                      id: 'c1',
+                      icon: ChatCircleDots,
+                      who: 'Kiran',
+                      text: '@Ananya can we keep it under 8 words?',
+                      when: 'Yesterday',
+                    },
+                    {
+                      id: 'c2',
+                      icon: ChatCircleDots,
+                      tone: 'brand',
+                      who: 'Ananya',
+                      text: 'Yes, both options are 7 words.',
+                      when: 'Today',
+                    },
+                  ]}
+                />
+                <Textarea
+                  aria-label="Write a comment"
+                  placeholder="Write a comment, @ to mention"
+                  rows={2}
+                />
+              </div>
             </div>
           </SheetContent>
         </Sheet>
@@ -569,12 +657,12 @@ export const DELIVER_SCREENS: ScreenDef[] = [
           {state === 'uploading' ? (
             <Progress value={64} label="Uploading Homepage v4.fig (16 of 25 MB)" showValue />
           ) : null}
-          <Ph label="Drop files here · up to 25 MB each" h={72} />
-          <List label="Name · Shared with client · Uploaded by · Date · Size">
-            {['Homepage v3.fig', 'Mobile.pdf', 'Brand guidelines.pdf', 'Logo.svg'].map((f) => (
-              <Row key={f} label={f} meta="preview" right={<Bars n={1} className="w-40" />} />
-            ))}
-          </List>
+          <div className="flex flex-wrap items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border-strong bg-card px-4 py-6 text-body text-muted-foreground">
+            <UploadSimple size={20} aria-hidden="true" />
+            Drop files here, up to 25 MB each
+            <Button size="sm">Choose files</Button>
+          </div>
+          <FileList />
         </StateView>
       </div>
     ),
@@ -623,7 +711,7 @@ export const DELIVER_SCREENS: ScreenDef[] = [
             className="flex min-h-0 flex-col rounded-lg border border-border bg-card"
           >
             <div className="flex-1 overflow-y-auto p-4">
-              <Ph label="Messages, newest at the bottom; files inline; who and when" h={260} />
+              <MessageThread />
             </div>
             <form className="flex items-end gap-2 border-t border-border p-3">
               <Button aria-label="Attach a file" icon={Paperclip} />
@@ -678,16 +766,24 @@ export const DELIVER_SCREENS: ScreenDef[] = [
           }}
         >
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-            <List label="Member · Role · Projects · Open tasks">
-              {['Kiran Rao', 'Ananya Iyer', 'Arjun Mehta', 'Meera Pillai'].map((m) => (
-                <Row key={m} label={m} meta="role" right={<Bars n={1} className="w-32" />} />
-              ))}
-            </List>
+            <TeamTable />
             <Card title="Daily updates · today">
               <div className="grid gap-3">
-                <Ph label="Ananya: Done · Next · Blockers" h={72} />
-                <Ph label="Arjun: Done · Next · Blockers" h={72} />
-                <Ph label="Meera hasn’t posted yet · Remind" h={40} />
+                <DailyUpdate
+                  who="Ananya Iyer"
+                  done="Homepage hero, both options"
+                  next="Mobile layouts for Acme Labs"
+                />
+                <DailyUpdate
+                  who="Arjun Mehta"
+                  done="Checkout API fix"
+                  next="QA on Android"
+                  blockers="Waiting for Northwind’s payment keys"
+                />
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border-strong px-3 py-2 text-body-sm text-muted-foreground">
+                  Meera Pillai hasn’t posted yet
+                  <Button size="sm">Remind</Button>
+                </div>
               </div>
             </Card>
           </div>
@@ -747,9 +843,9 @@ export const DELIVER_SCREENS: ScreenDef[] = [
               <Textarea label="Done" rows={2} />
               <Textarea label="Next" rows={2} />
               <Textarea label="Blockers" optional rows={2} />
-              <Button variant="primary" size="xl" block>
+              <Go to="s37-my-day" state="posted" variant="primary" size="xl" block>
                 Post update
-              </Button>
+              </Go>
             </form>
           </Card>
         )}

@@ -11,13 +11,13 @@ export default function PrototypeIndex() {
   return (
     <main className="mx-auto grid max-w-content gap-8 px-6 py-10 text-foreground max-md:px-4">
       <header className="grid gap-2">
-        <p className="text-overline-caps text-muted-foreground">Agency OS · Gate G1</p>
-        <h1 className="text-title-xl">Wireframes</h1>
+        <p className="text-overline-caps text-muted-foreground">Agency OS · Gate G2</p>
+        <h1 className="text-title-xl">Prototype</h1>
         <p className="max-w-prose text-body-lg text-muted-foreground">
-          Every R0 and R1 screen from the screen inventory, with example data. Grey boxes show what
-          goes where; labels, navigation and primary actions are real. Use the controls at the
-          bottom right of each screen to switch state, theme and screen. Open any screen on a phone
-          to see the phone layout.
+          Every R0 and R1 screen from the screen inventory, fully designed with example data.
+          Buttons move between screens, so the usability tasks can be clicked through. Use the
+          controls at the bottom right of each screen to switch state, theme and screen. Open any
+          screen on a phone to see the phone layout.
         </p>
       </header>
       {groups.map((group) => (

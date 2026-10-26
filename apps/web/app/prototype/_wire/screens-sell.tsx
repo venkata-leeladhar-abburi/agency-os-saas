@@ -2,13 +2,14 @@
 
 import { calculateInvoice } from '@agency-os/core';
 import {
+  ArrowRight,
+  CurrencyInr,
+  Receipt,
   CalendarBlank,
   ChatCircleDots,
   CheckCircle,
   Funnel,
   FunnelSimple,
-  Kanban,
-  ListBullets,
   Phone,
   Plus,
   SealCheck,
@@ -21,6 +22,8 @@ import {
 import {
   ActivityFeed,
   Alert,
+  Avatar,
+  BrandTile,
   Badge,
   Button,
   Card,
@@ -39,44 +42,19 @@ import {
   TabLinks,
   Textarea,
 } from '@agency-os/ui';
-import { Bars, List, Ph, Row, StateView } from './kit';
+import { METRICS, PIPELINE_SUMMARY } from '@agency-os/ui/example';
+import { Go, List, Row, StateView } from './kit';
+import {
+  ClientsTable,
+  LeadsBoard,
+  LeadsTable,
+  ProposalDoc,
+  RiskTable,
+  TeamLoad,
+  TodayList,
+  ViewSwitch,
+} from './parts';
 import { NO_EMPTY, PUBLIC, STANDARD, type ScreenDef } from './types';
-
-const STAGES = ['New', 'Contacted', 'Proposal', 'Won', 'Lost'];
-
-function BoardWire({ withDrawer = false }: { withDrawer?: boolean }) {
-  return (
-    <div
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region must be reachable by keyboard (WCAG 2.1.1)
-      tabIndex={0}
-      role="region"
-      aria-label="Pipeline"
-      className="grid auto-cols-[minmax(200px,1fr)] grid-flow-col gap-3 overflow-x-auto pb-2"
-    >
-      {STAGES.map((stage, i) => (
-        <section
-          key={stage}
-          aria-label={stage}
-          className="grid content-start gap-2 rounded-lg bg-muted p-2"
-        >
-          <header className="flex items-center justify-between px-1.5 text-body-sm font-semibold">
-            {stage}
-            <span className="text-caption font-normal text-muted-foreground">count · total</span>
-          </header>
-          {Array.from({ length: [3, 2, 1, 1, 0][i] ?? 0 }, (_, j) => (
-            <Ph
-              key={j}
-              label="Lead card: name · service · value · source · owner · follow-up"
-              h={withDrawer ? 72 : 88}
-              className="bg-card"
-            />
-          ))}
-          <Ph label="+ Add lead" h={32} className="py-1.5" />
-        </section>
-      ))}
-    </div>
-  );
-}
 
 const LEADS_HEADER = (
   <PageHeader
@@ -84,18 +62,13 @@ const LEADS_HEADER = (
     subtitle="7 open · ₹7.75 L in the pipeline · win rate 38%"
     actions={
       <>
-        <Segmented
-          label="View"
-          defaultValue="board"
-          items={[
-            { value: 'board', label: 'Board', icon: Kanban },
-            { value: 'table', label: 'Table', icon: ListBullets },
-          ]}
-        />
-        <Button icon={UploadSimple}>Import CSV</Button>
-        <Button variant="primary" icon={Plus}>
+        <ViewSwitch />
+        <Go to="s16-csv-import" icon={UploadSimple}>
+          Import CSV
+        </Go>
+        <Go to="s15-new-lead" variant="primary" icon={Plus}>
           Add lead
-        </Button>
+        </Go>
       </>
     }
     className="mb-4"
@@ -216,7 +189,6 @@ export const SELL_SCREENS: ScreenDef[] = [
               <List label="Invoices due · 1">
                 <Row label="OSS/26-27/014 · ₹29,500" meta="Northwind · due today" />
               </List>
-              <Ph label="Meetings (Google Calendar, later)" h={72} />
             </div>
           </div>
         </StateView>
@@ -267,27 +239,53 @@ export const SELL_SCREENS: ScreenDef[] = [
           }}
         >
           <div className="mb-4 grid grid-cols-4 gap-3 max-xl:grid-cols-2 max-sm:grid-cols-1">
+            <MetricCard {...METRICS.revenue} icon={CurrencyInr} href="/prototype/s32-invoices" />
+            <MetricCard {...METRICS.pending} icon={Receipt} href="/prototype/s32-invoices" />
             <MetricCard
-              label="Revenue this month (paid)"
-              value="₹ —"
-              note="vs last month"
-              href="#"
+              {...METRICS.overdue}
+              icon={Receipt}
+              tone="danger"
+              inverse
+              href="/prototype/s32-invoices"
             />
-            <MetricCard label="Pending" value="₹ —" note="invoices sent, not due" href="#" />
-            <MetricCard label="Overdue" value="₹ —" note="invoices past due" href="#" />
-            <MetricCard label="Pipeline value" value="₹ —" note="win rate, last 90 days" href="#" />
+            <MetricCard
+              {...METRICS.pipeline}
+              icon={FunnelSimple}
+              href="/prototype/s12-leads-board"
+            />
           </div>
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
-            <div className="grid content-start gap-4">
-              <Ph label="Leads pipeline by stage (compact board) → Open pipeline" h={260} />
-              <Ph
-                label="Projects at risk: project · why (gate late, budget used, tasks overdue) · progress"
-                h={180}
-              />
+            <div className="grid min-w-0 content-start gap-4">
+              <Card
+                title="Leads pipeline"
+                description="By stage, this quarter"
+                actions={
+                  <Go to="s12-leads-board" variant="ghost" size="sm" iconRight={ArrowRight}>
+                    Open pipeline
+                  </Go>
+                }
+              >
+                <LeadsBoard columns={PIPELINE_SUMMARY} size="sm" />
+              </Card>
+              <Card title="Projects at risk" description="3 of 9 active" flush>
+                <RiskTable />
+              </Card>
             </div>
-            <div className="grid content-start gap-4">
-              <Ph label="Today: next 5 items → Open Today" h={220} />
-              <Ph label="Team load: open tasks per member this week" h={160} />
+            <div className="grid min-w-0 content-start gap-4">
+              <Card
+                title="Today"
+                description="Sun 25 Oct"
+                actions={
+                  <Go to="s10-today" variant="ghost" size="sm" iconRight={ArrowRight}>
+                    Open Today
+                  </Go>
+                }
+              >
+                <TodayList />
+              </Card>
+              <Card title="Team load" description="Open tasks this week">
+                <TeamLoad />
+              </Card>
             </div>
           </div>
         </StateView>
@@ -313,7 +311,7 @@ export const SELL_SCREENS: ScreenDef[] = [
         {LEADS_HEADER}
         {LEADS_FILTERS}
         <StateView state={state} copy={{ empty: LEADS_EMPTY, area: 'Leads' }}>
-          <BoardWire />
+          <LeadsBoard />
         </StateView>
       </>
     ),
@@ -337,43 +335,15 @@ export const SELL_SCREENS: ScreenDef[] = [
         {LEADS_HEADER}
         {LEADS_FILTERS}
         <StateView state={state} copy={{ empty: LEADS_EMPTY, area: 'Leads' }}>
-          {state === 'selected' ? (
-            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md bg-brand-soft px-3 py-2">
-              <span className="text-body-medium">3 selected</span>
-              <Button size="sm">Change stage</Button>
-              <Button size="sm">Assign</Button>
-              <Button size="sm">Export</Button>
-            </div>
-          ) : (
-            <div className="mb-3 flex justify-end">
-              <Button size="sm">Columns</Button>
-            </div>
-          )}
-          <List label="☐ · Name and company · Stage · Value · Source · Owner · Follow-up">
-            {[
-              'Kite & Co',
-              'Lumen Foods',
-              'Orbit Fitness',
-              'Mitra Clinic',
-              'Tara Textiles',
-              'Northwind',
-            ].map((name, i) => (
-              <Row
-                key={name}
-                label={name}
-                meta="service · contact"
-                right={
-                  <span className="flex items-center gap-3">
-                    <Checkbox
-                      aria-label={`Select ${name}`}
-                      checked={state === 'selected' && i < 3}
-                    />
-                    <Bars n={1} className="w-40" />
-                  </span>
-                }
-              />
-            ))}
-          </List>
+          <LeadsTable
+            bulk={
+              <>
+                <Button size="sm">Change stage</Button>
+                <Button size="sm">Assign</Button>
+                <Button size="sm">Export</Button>
+              </>
+            }
+          />
         </StateView>
       </>
     ),
@@ -405,16 +375,56 @@ export const SELL_SCREENS: ScreenDef[] = [
           <div className="flex flex-wrap gap-2">
             <Button icon={Phone}>Call</Button>
             <Button icon={WhatsappLogo}>WhatsApp</Button>
-            <Button variant="highlight" icon={SealCheck}>
+            <Go to="s21-convert-lead" variant="highlight" icon={SealCheck}>
               Mark as won
-            </Button>
+            </Go>
           </div>
-          <Ph
-            label="Details: contact, phone, email, value, service, source, owner (edit inline)"
-            h={120}
+          <dl className="grid grid-cols-[120px_1fr] gap-x-4 gap-y-2 text-body">
+            {[
+              ['Contact', 'Sarah Lewis, Head of product'],
+              ['Email', 'sarah@northwind.example'],
+              ['Phone', '+44 20 7946 0958'],
+              ['Value', '₹2,40,000'],
+              ['Service', 'Mobile app'],
+              ['Source', 'Marketplace'],
+              ['Owner', 'Kiran Rao'],
+            ].map(([k, v]) => (
+              <div key={k} className="contents">
+                <dt className="text-muted-foreground">{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+            <span className="grid">
+              <span className="text-body-medium">Follow up: Fri 30 Oct, 11:00</span>
+              <span className="text-caption font-normal text-muted-foreground">
+                Call about the proposal
+              </span>
+            </span>
+            <span className="flex gap-2">
+              <Button size="sm">Change</Button>
+              <Button size="sm" icon={CheckCircle}>
+                Done
+              </Button>
+            </span>
+          </div>
+          <Textarea
+            label="Add a note"
+            placeholder="Called Sarah, she’ll confirm the budget by Friday"
+            rows={2}
           />
-          <Ph label="Follow-up: Fri 11:00 · change · done" h={56} />
-          <Ph label="Add a note or log a call" h={72} />
+          <div className="flex gap-2">
+            <Go to="s18-quote-builder" icon={Receipt}>
+              Create quote
+            </Go>
+            <Go to="s19-proposal-builder" icon={Signature}>
+              Open proposal
+            </Go>
+            <Go to="s14-lead-record" state="lost">
+              Mark as lost
+            </Go>
+          </div>
           <ActivityFeed
             items={[
               {
@@ -456,7 +466,7 @@ export const SELL_SCREENS: ScreenDef[] = [
       }
       return (
         <>
-          <BoardWire withDrawer />
+          <LeadsBoard />
           <Sheet defaultOpen modal={false}>
             <SheetContent
               title="Northwind"
@@ -478,7 +488,9 @@ export const SELL_SCREENS: ScreenDef[] = [
                 footer={
                   <>
                     <Button>Cancel</Button>
-                    <Button variant="primary">Mark as lost</Button>
+                    <Go to="s12-leads-board" variant="primary">
+                      Mark as lost
+                    </Go>
                   </>
                 }
               >
@@ -525,14 +537,16 @@ export const SELL_SCREENS: ScreenDef[] = [
     ],
     render: ({ state }) => (
       <>
-        <BoardWire />
+        <LeadsBoard />
         <Dialog defaultOpen>
           <DialogContent
             title="New lead"
             footer={
               <>
                 <Button>Cancel</Button>
-                <Button variant="primary">Add lead</Button>
+                <Go to="s12-leads-board" variant="primary">
+                  Add lead
+                </Go>
               </>
             }
           >
@@ -612,10 +626,17 @@ export const SELL_SCREENS: ScreenDef[] = [
       <div className="mx-auto grid max-w-3xl gap-4">
         <PageHeader title="Import leads" subtitle="Step 2 of 3 · Map columns" className="mb-0" />
         {state === 'upload' ? (
-          <Ph
-            label="Drop a CSV here or choose a file · up to 5,000 rows · download the template"
-            h={220}
-          />
+          <div className="grid justify-items-center gap-3 rounded-lg border-2 border-dashed border-border-strong bg-card px-6 py-12 text-center">
+            <UploadSimple size={32} weight="duotone" aria-hidden="true" className="text-primary" />
+            <p className="text-title-sm">Drop your CSV here</p>
+            <p className="text-body text-muted-foreground">
+              Up to 5,000 rows. The first row should have column names.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="primary">Choose a file</Button>
+              <Button variant="link">Download the template</Button>
+            </div>
+          </div>
         ) : state === 'loading' ? (
           <Alert tone="info" title="Importing 240 leads (120 done)">
             You can leave this page; we’ll tell you when it’s finished.
@@ -631,7 +652,9 @@ export const SELL_SCREENS: ScreenDef[] = [
               <Row label="Row 88 · Rao & Sons" meta="Value isn’t a number: “eighty thousand”" />
               <Row label="Row 190 · Kite & Co" meta="Already a lead (same email)" />
             </List>
-            <Button variant="primary">Open leads</Button>
+            <Go to="s13-leads-table" variant="primary">
+              Open leads
+            </Go>
           </>
         ) : (
           <>
@@ -666,10 +689,46 @@ export const SELL_SCREENS: ScreenDef[] = [
                 />
               ))}
             </List>
-            <Ph label="Preview: first 5 rows as they will be imported" h={140} />
+            <Card
+              title="Preview"
+              description="The first 3 of 240 rows, as they will be imported"
+              flush
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-body-sm">
+                  <caption className="sr-only">Import preview</caption>
+                  <thead>
+                    <tr className="bg-muted text-caption text-muted-foreground">
+                      {['Name', 'Company', 'Phone', 'Value', 'Source'].map((h) => (
+                        <th key={h} scope="col" className="px-3 py-2 text-left font-medium">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ['Priya Shah', 'Priya Stores', '+91 98480 22331', '₹40,000', 'Referral'],
+                      ['Rohan Das', 'Das & Sons', '+91 99490 11022', '₹1,20,000', 'Website'],
+                      ['Meghna Rao', 'Studio M', '+91 90000 55443', '₹65,000', 'Instagram'],
+                    ].map((r) => (
+                      <tr key={r[0]} className="border-t border-border">
+                        {r.map((c, k) => (
+                          <td key={k} className="px-3 py-2">
+                            {c}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
             <div className="flex justify-end gap-2">
               <Button>Back</Button>
-              <Button variant="primary">Import 240 leads</Button>
+              <Go to="s16-csv-import" state="result" variant="primary">
+                Import 240 leads
+              </Go>
             </div>
           </>
         )}
@@ -689,7 +748,10 @@ export const SELL_SCREENS: ScreenDef[] = [
     states: [...PUBLIC, { id: 'sent', label: 'Submitted' }],
     render: ({ state }) => (
       <div className="mx-auto grid w-full max-w-md gap-5 rounded-xl border border-border bg-card p-6">
-        <Ph label="Agency logo and name" h={40} />
+        <span className="flex items-center gap-2.5 text-body font-semibold">
+          <BrandTile />
+          One Stop Solutions
+        </span>
         {state === 'sent' ? (
           <div className="grid gap-2 text-center">
             <CheckCircle
@@ -775,7 +837,9 @@ export const SELL_SCREENS: ScreenDef[] = [
           actions={
             <>
               <Button>Preview</Button>
-              <Button variant="primary">Save and send</Button>
+              <Go to="s19-proposal-builder" state="send" variant="primary">
+                Save and send
+              </Go>
             </>
           }
         />
@@ -835,13 +899,15 @@ export const SELL_SCREENS: ScreenDef[] = [
           actions={
             <>
               <Button>Preview</Button>
-              <Button variant="primary">Send proposal</Button>
+              <Go to="s19-proposal-builder" state="send" variant="primary">
+                Send proposal
+              </Go>
             </>
           }
         />
         <StateView state={state} copy={{ area: 'proposals' }}>
           <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-            <nav aria-label="Blocks">
+            <nav aria-label="Blocks" className="max-lg:hidden">
               <ol className="grid gap-1 p-0">
                 {[
                   'Cover',
@@ -868,13 +934,7 @@ export const SELL_SCREENS: ScreenDef[] = [
               </Button>
             </nav>
             <div className="grid content-start gap-4 rounded-lg border border-border bg-card p-6">
-              <Ph
-                label="Cover: logo · Proposal for Kite & Co · 25 Oct 2026 · Prepared by Kiran Rao"
-                h={120}
-              />
-              <Ph label="About us: two or three sentences about your studio" h={88} />
-              <Ph label="Scope: Included / Not included (from the quote)" h={120} />
-              <Ph label="Price: the quote table with GST and the amount in words" h={120} />
+              <ProposalDoc editable />
             </div>
           </div>
         </StateView>
@@ -886,7 +946,9 @@ export const SELL_SCREENS: ScreenDef[] = [
               footer={
                 <>
                   <Button icon={WhatsappLogo}>Copy WhatsApp link</Button>
-                  <Button variant="primary">Send proposal</Button>
+                  <Go to="s14-lead-record" variant="primary">
+                    Send proposal
+                  </Go>
                 </>
               }
             >
@@ -938,17 +1000,7 @@ export const SELL_SCREENS: ScreenDef[] = [
           </Alert>
         ) : null}
         <article className="grid gap-4 rounded-xl border border-border bg-card p-6">
-          <Ph label="Cover: agency logo · Proposal for Kite & Co · date" h={120} />
-          {[
-            'Your goals',
-            'Scope',
-            'Phases and timeline (your sign-offs marked)',
-            'Price with GST and amount in words',
-            'Payment terms',
-            'Terms',
-          ].map((s) => (
-            <Ph key={s} label={s} h={72} />
-          ))}
+          <ProposalDoc />
         </article>
         {state === 'sign' ? (
           <section
@@ -957,23 +1009,28 @@ export const SELL_SCREENS: ScreenDef[] = [
           >
             <h2 className="text-title-md">Accept and sign</h2>
             <Input label="Your full name" required size="xl" />
-            <Ph label="Signature: type or draw" h={88} />
+            <Input
+              label="Signature"
+              hint="Type your name; it’s recorded with the time and your email code."
+              size="xl"
+              className="font-mono"
+            />
             <Input
               label="Code from your email"
               inputMode="numeric"
               size="xl"
               hint="We sent it to kiran@kiteandco.in."
             />
-            <Button variant="primary" size="xl" block>
+            <Go to="s20-proposal-view" state="signed" variant="primary" size="xl" block>
               Accept proposal
-            </Button>
+            </Go>
           </section>
         ) : state === 'default' ? (
           <div className="sticky bottom-0 flex gap-2 border-t border-border bg-background py-3">
             <Button size="xl">Ask a question</Button>
-            <Button variant="primary" size="xl" className="flex-1">
+            <Go to="s20-proposal-view" state="sign" variant="primary" size="xl" className="flex-1">
               Accept proposal
-            </Button>
+            </Go>
           </div>
         ) : null}
       </div>
@@ -995,7 +1052,7 @@ export const SELL_SCREENS: ScreenDef[] = [
     states: [{ id: 'default', label: 'Default' }],
     render: () => (
       <>
-        <BoardWire />
+        <LeadsBoard />
         <Dialog defaultOpen>
           <DialogContent
             icon={SealCheck}
@@ -1004,7 +1061,9 @@ export const SELL_SCREENS: ScreenDef[] = [
             footer={
               <>
                 <Button>Cancel</Button>
-                <Button variant="primary">Create client</Button>
+                <Go to="s23-client-record" state="invite" variant="primary">
+                  Create client
+                </Go>
               </>
             }
           >
@@ -1073,16 +1132,7 @@ export const SELL_SCREENS: ScreenDef[] = [
             area: 'Clients',
           }}
         >
-          <List label="Client and contact · Projects · Billed · Outstanding · Portal">
-            {['Acme Labs', 'Northwind', 'Saffron Stays', 'Kite & Co', 'Mitra Clinic'].map((c) => (
-              <Row
-                key={c}
-                label={c}
-                meta="main contact · city"
-                right={<Bars n={1} className="w-48" />}
-              />
-            ))}
-          </List>
+          <ClientsTable />
         </StateView>
       </>
     ),
@@ -1117,9 +1167,9 @@ export const SELL_SCREENS: ScreenDef[] = [
             actions={
               <>
                 <Button icon={WhatsappLogo}>WhatsApp</Button>
-                <Button variant="primary" icon={Plus}>
+                <Go to="s25-new-project" variant="primary" icon={Plus}>
                   New project
-                </Button>
+                </Go>
               </>
             }
           />
@@ -1143,16 +1193,62 @@ export const SELL_SCREENS: ScreenDef[] = [
             ]}
           />
           <div className="grid gap-4 lg:grid-cols-3">
-            <Ph label="Contacts: name · role · phone · email · preferred channel" h={140} />
-            <Ph
-              label="Billing: GSTIN (optional) · address · state · country · currency · time zone"
-              h={140}
-            />
+            <Card title="Contacts">
+              <ul className="grid gap-3 p-0">
+                <li className="flex items-center gap-3">
+                  <Avatar name="Kiran Kumar" />
+                  <span className="grid">
+                    <span className="text-body-medium">Kiran Kumar · Founder</span>
+                    <span className="text-caption font-normal text-muted-foreground">
+                      kiran@kiteandco.in · +91 98450 12345 · prefers WhatsApp
+                    </span>
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Avatar name="Divya Nair" />
+                  <span className="grid">
+                    <span className="text-body-medium">Divya Nair · Accounts</span>
+                    <span className="text-caption font-normal text-muted-foreground">
+                      accounts@kiteandco.in · prefers email
+                    </span>
+                  </span>
+                </li>
+              </ul>
+            </Card>
+            <Card title="Billing">
+              <dl className="grid grid-cols-[96px_1fr] gap-x-3 gap-y-1.5 text-body-sm">
+                <dt className="text-muted-foreground">GSTIN</dt>
+                <dd className="font-mono text-mono-sm">29ABCDE1234F1ZW</dd>
+                <dt className="text-muted-foreground">Address</dt>
+                <dd>12 Church Street, Bengaluru</dd>
+                <dt className="text-muted-foreground">State</dt>
+                <dd>Karnataka (29) · IGST applies</dd>
+                <dt className="text-muted-foreground">Currency</dt>
+                <dd>INR · IST</dd>
+              </dl>
+            </Card>
             <Card title="Money">
-              <Bars n={3} />
+              <dl className="grid gap-2 text-body">
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Quoted</dt>
+                  <dd className="tabular-nums">₹94,400</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Invoiced</dt>
+                  <dd className="tabular-nums">₹0</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Outstanding</dt>
+                  <dd className="tabular-nums">₹0</dd>
+                </div>
+              </dl>
             </Card>
           </div>
-          <Ph label="Notes" h={88} />
+          <Textarea
+            label="Notes"
+            defaultValue="Met at the Bengaluru design meetup. Wants the site live before the Diwali sale."
+            rows={2}
+          />
         </div>
       </StateView>
     ),

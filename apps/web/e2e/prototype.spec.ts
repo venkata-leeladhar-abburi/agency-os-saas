@@ -13,7 +13,7 @@ async function serious(page: Page) {
 
 test('the index lists all 42 R0 and R1 screens', async ({ page }) => {
   await page.goto('/prototype');
-  await expect(page.getByRole('heading', { name: 'Wireframes', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Prototype', level: 1 })).toBeVisible();
   const links = page.locator('main a[href^="/prototype/s"]');
   await expect(links).toHaveCount(42);
   expect(await serious(page)).toEqual([]);
@@ -90,7 +90,13 @@ for (const slug of SLUGS) {
     });
     const phonePage = await phone.newPage();
     await phonePage.goto(`/prototype/${slug}?chrome=0`);
-    const width = await phonePage.evaluate(() => document.documentElement.scrollWidth);
+    // The page, and every scrolling main area, must fit; boards scroll inside their own region.
+    const width = await phonePage.evaluate(() =>
+      Math.max(
+        document.documentElement.scrollWidth,
+        ...[...document.querySelectorAll('main')].map((m) => m.scrollWidth - m.clientWidth + 390),
+      ),
+    );
     expect(width, `${slug} is ${width}px wide on a 390px phone`).toBeLessThanOrEqual(390);
     await phone.close();
     // Dark theme, default state.

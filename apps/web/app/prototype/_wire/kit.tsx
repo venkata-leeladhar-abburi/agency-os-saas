@@ -1,53 +1,14 @@
 'use client';
 
 import { ArrowClockwise, LockSimple, type Icon } from '@phosphor-icons/react';
-import { Alert, Button, cn, EmptyState, Skeleton } from '@agency-os/ui';
+import { formatMoney } from '@agency-os/core';
+import { Alert, Button, EmptyState, Skeleton, type ButtonProps } from '@agency-os/ui';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 export type ScreenState = 'default' | 'loading' | 'empty' | 'error' | 'no-access' | (string & {});
 
-/** A grey wireframe box with a real label: what goes here. */
-export function Ph({
-  label,
-  className,
-  h = 96,
-  children,
-}: {
-  label: string;
-  className?: string;
-  h?: number | 'auto';
-  children?: ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        'flex min-w-0 flex-col gap-2 rounded-md border border-dashed border-border-strong bg-muted p-3',
-        className,
-      )}
-      style={{ minHeight: h === 'auto' ? undefined : h }}
-    >
-      <span className="text-caption text-muted-foreground">{label}</span>
-      {children}
-    </div>
-  );
-}
-
-/** Static grey lines standing for text. */
-export function Bars({ n = 3, className }: { n?: number; className?: string }) {
-  return (
-    <span aria-hidden="true" className={cn('grid gap-2', className)}>
-      {Array.from({ length: n }, (_, i) => (
-        <span
-          key={i}
-          className="block h-2.5 rounded-xs bg-border"
-          style={{ width: `${90 - ((i * 23) % 50)}%` }}
-        />
-      ))}
-    </span>
-  );
-}
-
-/** A wireframe row in a list: a label and grey detail. */
+/** A row in a list card: a label, a muted second line and an optional action. */
 export function Row({ label, meta, right }: { label: string; meta?: string; right?: ReactNode }) {
   return (
     <div className="flex min-h-row-default items-center justify-between gap-3 border-b border-border px-3 py-2 last:border-b-0">
@@ -158,3 +119,30 @@ export function StateView({
   }
   return <>{children}</>;
 }
+
+/** A button that moves to another prototype screen, so usability tasks can be clicked through. */
+export function Go({
+  to,
+  state,
+  children,
+  ...button
+}: { to: string; state?: string; children: ReactNode } & Omit<
+  ButtonProps,
+  'asChild' | 'children'
+>) {
+  // A loading button can't be followed, so it stays a (disabled) button.
+  if (button.loading) return <Button {...button}>{children}</Button>;
+  return (
+    <Button asChild {...button}>
+      <Link href={`/prototype/${to}${state ? `?state=${state}` : ''}`}>{children}</Link>
+    </Button>
+  );
+}
+
+/** Indian money from whole rupees, through core formatting. */
+export const inr = (rupees: number, compact = false) =>
+  formatMoney(
+    BigInt(Math.round(rupees * 100)),
+    'INR',
+    compact ? { compact: true } : { decimals: 0 },
+  );

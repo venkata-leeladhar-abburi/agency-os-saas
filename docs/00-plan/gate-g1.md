@@ -18,7 +18,7 @@
 | Wireframe test script (round R1) | `docs/01-research/wireframe-test-script.md` | Ready to run |
 
 ## Screenshots
-Desktop light and phone dark for every screen in `docs/screenshots/m04/`; components and patterns in `docs/screenshots/m01` to `m03`. A few to start with:
+Desktop light and phone dark for every screen in `docs/screenshots/m04/` (at the G1 commit; see PR #4); components and patterns in `docs/screenshots/m01` to `m03`. A few to start with:
 
 | | Desktop, light | Phone, dark |
 | --- | --- | --- |
