@@ -27,8 +27,8 @@ Updated by Claude at the end of every working session. The founder can read this
 | M5 | Accounts and workspaces | In progress | [#6](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/6) (part 1) | Part 1 (data layer): schema, RLS, roles, invitations, audit log, 21 database tests incl. cross-tenant. Part 2 (sign-in, setup, invites UI, switcher) needs the Supabase dev project. |
 | M6 | App shell and platform | In progress | [#7](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/7) (part 1) | Part 1 (no keys needed): plans and limits, notifications and settings, audit log reader, data export, Razorpay subscription webhook, health check with the database. Part 2 (settings screens, palette search, subscribing) needs sign-in (M5 part 2) and Razorpay test keys. |
 | M7 | Onboarding | Not started | | |
-| M8 | Leads | In progress | | Part 1 (data layer): stages, leads, timeline, follow-ups, board totals, filters, CSV import and export, enquiry form, 23 database tests. Part 2 (screens) needs sign-in. |
-| M9 | Clients and conversion | Not started | | |
+| M8 | Leads | In progress | [#8](https://github.com/venkata-leeladhar-abburi/agency-os-saas/pull/8) (part 1) | Part 1 (data layer): stages, leads, timeline, follow-ups, board totals, filters, CSV import and export, enquiry form, 23 database tests. Part 2 (screens) needs sign-in. |
+| M9 | Clients and conversion | In progress | | Part 1 (data layer): clients, contacts, GSTIN, lead to client, portal access by verified email, 16 database tests. Part 2 (screens, sending the portal link) needs sign-in. |
 | M10 | Quotes and proposals | Not started | | |
 | M11 | Projects, phases and gates | Not started | | |
 | M12 | Tasks and team | Not started | | |

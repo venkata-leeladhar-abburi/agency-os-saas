@@ -36,6 +36,16 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   lead_name_required: 'Add the lead’s name or company.',
   enquiry_closed: 'This form isn’t taking enquiries right now. Contact the agency directly.',
   consent_required: 'Tick the box to agree to be contacted.',
+  client_name_required: 'Add the client’s name.',
+  client_not_found: 'That client doesn’t exist or was deleted.',
+  contact_name_required: 'Add the contact’s name.',
+  contact_not_found: 'That contact doesn’t exist.',
+  gstin_invalid: 'Check the GSTIN.',
+  gstin_outside_india: 'A GSTIN is only for clients in India. Clear it or change the country.',
+  lead_not_won: 'Move the lead to Won first, then convert it to a client.',
+  portal_email_required: 'Add an email for this contact. The portal sign-in link goes to it.',
+  portal_user_locked:
+    'A portal login is linked when the contact signs in. It can’t be set by hand.',
 };
 
 export class AccountError extends Error {

@@ -15,3 +15,4 @@ export { hashToken, newToken } from './tokens';
 export * from './platform';
 export * from './billing';
 export * from './leads';
+export * from './clients';
