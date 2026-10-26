@@ -85,6 +85,20 @@
       "when": 1792986303021,
       "tag": "0011_projects_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792986699604,
+      "tag": "0012_tasks",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792986700753,
+      "tag": "0013_tasks_rls",
+      "breakpoints": true
     }
   ]
 }

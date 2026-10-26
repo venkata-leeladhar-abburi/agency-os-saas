@@ -31,7 +31,7 @@ Updated by Claude at the end of every working session. The founder can read this
 | M9 | Clients and conversion | In progress | | Part 1 (data layer): clients, contacts, GSTIN, lead to client, portal access by verified email, 16 database tests. Part 2 (screens, sending the portal link) needs sign-in. |
 | M10 | Quotes and proposals | In progress | | Part 1 (data layer): numbering, GST totals, proposals from the template, the public link with views, email-code signing with an unchangeable record, decline and expiry, plan limits; 15 database tests. Part 2 (editor, public page, PDFs, emails) needs sign-in, Storage and Resend. |
 | M11 | Projects, phases and gates | In progress | | Part 1 (data layer): templates, projects, team access, checklist progress, phase order, gate requests and decisions (client and internal) that can't be bypassed, portal view, saved templates; 17 database tests. Part 2 (screens) needs sign-in. |
-| M12 | Tasks and team | Not started | | |
+| M12 | Tasks and team | In progress | | Part 1 (data layer): tasks with board order, subtasks, my tasks, calendar range, comments with mentions, daily updates, team counts; 9 database tests. Part 2 (screens) needs sign-in. |
 | M13 | Invoices and payments | Not started | | |
 | M14 | Client portal | Not started | | |
 | M15 | Dashboard and Today | Not started | | |

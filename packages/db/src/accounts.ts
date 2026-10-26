@@ -75,6 +75,12 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   gate_not_your_decision: 'Someone else approves this gate.',
   gate_decision_locked: 'Gates are approved through the approval request, not edited directly.',
   gate_not_approved: 'The earlier gate needs approval first.',
+  task_title_required: 'Give the task a title.',
+  task_not_found: 'That task doesn’t exist or you’re not on its project.',
+  task_mismatch: 'Pick a phase, parent task and assignee from this project and workspace.',
+  comment_required: 'Write a comment first.',
+  comment_not_found: 'That comment doesn’t exist or isn’t yours.',
+  daily_update_empty: 'Add what you did, what’s next or what’s blocking you.',
   portal_email_required: 'Add an email for this contact. The portal sign-in link goes to it.',
   portal_user_locked:
     'A portal login is linked when the contact signs in. It can’t be set by hand.',
