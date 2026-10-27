@@ -12,8 +12,17 @@ export function normaliseIndianPhone(input: string): string | null {
   return m ? `+91${m[1]}` : null;
 }
 
+/**
+ * Something before one @, and a domain with a dot that has a character before it and two
+ * after. Checked by hand, not by one regex, so long inputs can't make it backtrack.
+ */
 export function isEmail(input: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input.trim());
+  const s = input.trim();
+  const at = s.indexOf('@');
+  if (at < 1 || at !== s.lastIndexOf('@') || /\s/.test(s)) return false;
+  const domain = s.slice(at + 1);
+  for (let i = 1; i <= domain.length - 3; i++) if (domain[i] === '.') return true;
+  return false;
 }
 
 /** Phone sign-in stays off until the SMS provider is set up (build plan M5). */

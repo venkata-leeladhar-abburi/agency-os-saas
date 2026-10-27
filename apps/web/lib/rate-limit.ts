@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 // Server only. Rate limits for public endpoints (security-and-compliance.md): a fixed window
 // per key. With UPSTASH_REDIS_REST_URL and _TOKEN set, counts live in Upstash Redis and are
 // shared by every server; without them, in this server's memory (enough for one instance and
@@ -53,6 +55,14 @@ async function upstashHit(key: string, limit: Limit): Promise<number | null> {
   }
 }
 
+/**
+ * The stored key: the id (an IP address, a link token) is hashed, so nothing from the request
+ * goes into the Redis URL and no raw IPs are kept.
+ */
+function keyOf(bucket: keyof typeof LIMITS, id: string) {
+  return `rl:${bucket}:${createHash('sha256').update(id).digest('hex').slice(0, 32)}`;
+}
+
 /** Counts one hit; true while the key is within its limit. */
 export async function allow(
   bucket: keyof typeof LIMITS,
@@ -60,7 +70,7 @@ export async function allow(
   now = Date.now(),
 ): Promise<boolean> {
   const limit = LIMITS[bucket];
-  const key = `rl:${bucket}:${id}`;
+  const key = keyOf(bucket, id);
   const count = (await upstashHit(key, limit)) ?? memoryHit(key, limit, now);
   return count <= limit.max;
 }
@@ -71,12 +81,12 @@ export async function exhausted(
   id: string,
   now = Date.now(),
 ): Promise<boolean> {
-  const key = `rl:${bucket}:${id}`;
+  const key = keyOf(bucket, id);
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (url && token) {
     try {
-      const res = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
+      const res = await fetch(`${url}/get/${key}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

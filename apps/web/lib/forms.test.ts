@@ -10,6 +10,8 @@ import {
   checkSettings,
   checkBranding,
   checkLogo,
+  fields,
+  parseAmount,
   DEFAULT_INVOICE_FOOTER,
 } from './forms';
 
@@ -228,5 +230,37 @@ describe('checkLogo', () => {
   it('refuses big files', async () => {
     const big = await checkLogo(file([0x89, 0x50, 0x4e, 0x47, ...new Array(600 * 1024).fill(0)]));
     expect(!big.ok && big.errors.logo).toMatch(/under 500 KB/);
+  });
+});
+
+describe('reading form fields', () => {
+  it('drops Next’s own fields and keeps a field named __proto__ as plain data', () => {
+    const form = new FormData();
+    form.append('name', 'Kite & Co');
+    form.append('$ACTION_ID_abc', 'x');
+    form.append('__proto__', 'polluted');
+    const f = fields(form);
+    expect(f.name).toBe('Kite & Co');
+    expect(Object.keys(f)).not.toContain('$ACTION_ID_abc');
+    expect(Object.getPrototypeOf(f)).toBe(Object.prototype);
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+});
+
+describe('parseAmount', () => {
+  it('takes a currency sign in front, commas and one decimal point', () => {
+    expect(parseAmount('₹4,86,000', 'INR')).toBe(48_600_000n);
+    expect(parseAmount('Rs. 1,000.50', 'INR')).toBe(100_050n);
+    expect(parseAmount('.5', 'INR')).toBe(50n);
+    expect(parseAmount('₹.5', 'INR')).toBe(50n);
+    expect(parseAmount('Rs.5', 'INR')).toBe(500n);
+    expect(parseAmount('', 'INR')).toBe(0n);
+    expect(parseAmount('1.2.3', 'INR')).toBeNull();
+    expect(parseAmount('12a', 'INR')).toBeNull();
+  });
+  it('stays fast on long hostile input', () => {
+    const started = performance.now();
+    expect(parseAmount(`${','.repeat(50_000)}x`, 'INR')).toBeNull();
+    expect(performance.now() - started).toBeLessThan(50);
   });
 });

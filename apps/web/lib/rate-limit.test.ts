@@ -30,7 +30,11 @@ describe('rate limits in Upstash', () => {
     expect(await allow('enquiries', '203.0.113.7')).toBe(false);
     const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://example.upstash.io/pipeline');
-    expect(JSON.parse(init.body as string)[0]).toEqual(['INCR', 'rl:enquiries:203.0.113.7']);
+    const [cmd, key] = JSON.parse(init.body as string)[0] as [string, string];
+    expect(cmd).toBe('INCR');
+    // The IP is hashed: nothing from the request goes to Redis as text.
+    expect(key).toMatch(/^rl:enquiries:[0-9a-f]{32}$/);
+    expect(key).not.toContain('203.0.113.7');
   });
   it('falls back to memory if Redis fails', async () => {
     vi.stubEnv('UPSTASH_REDIS_REST_URL', 'https://example.upstash.io');

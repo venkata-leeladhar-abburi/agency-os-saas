@@ -26,11 +26,14 @@ export type Checked<T, K extends string = string> =
 
 /** FormData to plain strings (the last value wins; checkboxes give "on"). */
 export function fields(form: FormData): Fields {
-  const out: Fields = {};
   // Next adds its own "$ACTION_…" fields to server action forms; they aren't the user's.
-  for (const [k, v] of form.entries())
-    if (typeof v === 'string' && !k.startsWith('$ACTION')) out[k] = v;
-  return out;
+  // Object.fromEntries makes own properties, so a field named "__proto__" can't reach the
+  // prototype. The last value of a repeated field wins.
+  return Object.fromEntries(
+    [...form.entries()].filter(
+      (e): e is [string, string] => typeof e[1] === 'string' && !e[0].startsWith('$ACTION'),
+    ),
+  );
 }
 
 const text = (f: Fields, key: string) => (f[key] ?? '').trim();
@@ -43,9 +46,18 @@ export function parseAmount(input: string, currency: string): bigint | null {
 
 function money(input: string, currency: string): bigint | null {
   if (!input) return 0n;
-  if (!/^[^\d-]*-?[\d,]*(\.\d*)?$/.test(input.trim())) return null;
+  // A currency sign or "Rs." may come first; from the first digit or minus on, only digits,
+  // commas and one decimal point. Split in two so the check stays linear (no regex backtracking).
+  const s = input.trim();
+  let start = s.search(/[\d-]/);
+  // A dot just before the number is a decimal point (".5", "₹.5"), unless it ends "Rs.".
+  if (start > 0 && s[start - 1] === '.' && !/[a-z]/i.test(s[start - 2] ?? '')) start--;
+  const amount = start < 0 ? '' : s.slice(start);
+  if (!/^-?[\d,]*(\.\d*)?$/.test(amount)) return null;
   try {
-    return parseMoney(input, currency);
+    // Parse from the first digit, so the dot in "Rs." isn't read as a decimal point.
+    // ".5" is 0.5: give the decimal a leading zero for the parser.
+    return parseMoney(amount.replace(/^(-?)\./, '$10.'), currency);
   } catch {
     return null;
   }

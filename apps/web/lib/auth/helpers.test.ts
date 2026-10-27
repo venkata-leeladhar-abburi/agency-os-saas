@@ -22,6 +22,21 @@ describe('isEmail', () => {
   it('accepts and rejects', () => {
     expect(isEmail(' kiran@onestop.in ')).toBe(true);
     expect(isEmail('kiran@')).toBe(false);
+    expect(isEmail('a@b.cd.e')).toBe(true);
+    for (const bad of [
+      '@onestop.in',
+      'kiran@onestop',
+      'kiran@onestop.i',
+      'ki ran@onestop.in',
+      'a@b@c.in',
+      'a@.in',
+    ])
+      expect(isEmail(bad)).toBe(false);
+  });
+  it('stays fast on long hostile input', () => {
+    const started = performance.now();
+    expect(isEmail(`a@${'b'.repeat(50_000)}`)).toBe(false);
+    expect(performance.now() - started).toBeLessThan(50);
   });
 });
 
