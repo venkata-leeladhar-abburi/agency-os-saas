@@ -11,7 +11,7 @@ export async function GET(
 ) {
   const { workspace, id } = await params;
   if (!(await canOpenWorkspace(workspace))) return notFoundResponse();
-  const found = await getInvoice(id);
+  const found = await getInvoice(id, workspace);
   if (!found) return notFoundResponse();
   return pdfResponse(
     createElement(InvoicePdf, { ...found, brand: pdfBrand(found.settings) }),

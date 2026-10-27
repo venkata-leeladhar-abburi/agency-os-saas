@@ -1,5 +1,5 @@
 import { PageHeader } from '@agency-os/ui';
-import { getClient, clientOptions, nextInvoiceNumber, settings } from '@/lib/data';
+import { clientOptions, nextInvoiceNumber, settings } from '@/lib/data';
 import { istDateIn } from '@/lib/data/views';
 import { InvoiceEditor } from './invoice-editor';
 
@@ -14,13 +14,11 @@ export default async function NewInvoicePage({
 }) {
   const [{ workspace }, { client }] = await Promise.all([params, searchParams]);
   const [options, s, nextNumber] = await Promise.all([
-    clientOptions(),
-    settings(),
-    nextInvoiceNumber(),
+    clientOptions(workspace),
+    settings(workspace),
+    nextInvoiceNumber(workspace),
   ]);
-  const clients = await Promise.all(
-    options.map(async (o) => ({ ...o, stateCode: (await getClient(o.id))!.client.stateCode })),
-  );
+  const clients = options;
   return (
     <>
       <PageHeader

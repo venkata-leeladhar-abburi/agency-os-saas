@@ -17,7 +17,7 @@ export default async function NotificationSettings({
         subtitle="What you hear about, in the app and by email"
         className="mb-0"
       />
-      <NotificationPrefs slug={workspace} prefs={(await settings()).notificationPrefs} />
+      <NotificationPrefs slug={workspace} prefs={(await settings(workspace)).notificationPrefs} />
     </>
   );
 }

@@ -20,6 +20,9 @@ Claude adds questions here and asks them in one batch. The founder answers inlin
 | 14 | **Support and sender email:** which address do clients and users reply to, and which domain sends emails? | M6 | Replies go to the agency member who sent the message; sender set when the domain is ready |
 | 15 | **Beta agencies:** which 5 to 10 agencies (India and abroad) will join the beta after One Stop? | G3 | Claude prepares an invite page and onboarding email; you pick the agencies |
 | 16 | **Analytics region:** PostHog US or EU cloud? | M6 | EU cloud |
+| 17 | **Pay link secret:** add `LINK_SIGNING_SECRET` (32+ random characters, `openssl rand -hex 32`) to the dev and later production environments. Changing it later breaks pay links already sent. | M13 | Issuing invoices on the database stops with a clear error until it's set; example mode doesn't need it |
+| 18 | **Sign-in email template:** in Supabase, Authentication, Email templates, change the magic link to `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email` (the app's redirect already ends in `/auth/callback?next=…`), so a link opened on another phone or laptop still signs in | M5 | The default link works only in the browser that asked for it |
+| 19 | **Test sign-in for browser checks:** may Claude create one test user (an `example.com` address) in the Supabase dev project, so the signed-in screens can be checked in a browser before G3? | M13 | Signed-in screens are tested by their data functions against Postgres, not yet in a browser |
 
 ## Answered
 

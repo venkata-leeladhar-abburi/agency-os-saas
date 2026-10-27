@@ -25,7 +25,7 @@ export default async function InvoicesPage({
 }) {
   const [{ workspace }, { status }] = await Promise.all([params, searchParams]);
   const base = `/w/${workspace}/invoices`;
-  const all = await invoices();
+  const all = await invoices(workspace);
   const filter = parseInvoiceFilter(status);
   const rows = filterInvoices(all, filter);
   const overdue = all.filter((i) => i.status === 'overdue').length;

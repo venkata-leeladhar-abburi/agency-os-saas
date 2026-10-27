@@ -17,7 +17,7 @@ export default async function NewQuotePage({
   const [{ workspace }, { for: forValue }] = await Promise.all([params, searchParams]);
   const [recipients, s, nextNumber] = await Promise.all([
     quoteRecipients(),
-    settings(),
+    settings(workspace),
     nextQuoteNumber(),
   ]);
   const known = [

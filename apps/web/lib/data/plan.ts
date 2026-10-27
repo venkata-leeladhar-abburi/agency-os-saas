@@ -99,8 +99,11 @@ export function planPrice(plan: Plan): string {
   return minor === 0 ? 'Free' : `${formatMoney(minor, 'INR', { decimals: 0 })} a month`;
 }
 
-export function limitInfo(resource: LimitedResource, check: LimitCheck): LimitInfo {
-  const current = store().settings.plan;
+export function limitInfo(
+  resource: LimitedResource,
+  check: LimitCheck,
+  current: Plan = store().settings.plan,
+): LimitInfo {
   const plan = PLAN_DETAILS[current].name;
   const needed = check.used + 1;
   const plans = PLANS.filter((p) => {

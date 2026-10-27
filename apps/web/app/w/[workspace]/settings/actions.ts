@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { saveSettings } from '@/lib/data';
+import { AccountError } from '@agency-os/db';
+import { saveSettings, exampleMode } from '@/lib/data';
 import { audit } from '@/lib/data/audit';
 import { callerIp } from '@/lib/origin';
 
@@ -18,13 +19,19 @@ export async function saveSettingsAction(
   const f = fields(form);
   const checked = checkSettings(f, form.getAll('services').map(String));
   if (!checked.ok) return { errors: checked.errors, values: f };
-  await saveSettings(checked.value);
-  audit(
-    'settings.saved',
-    checked.value.name,
-    `Prefix ${checked.value.invoicePrefix}, GSTIN ${checked.value.gstin ?? 'none'}`,
-    await callerIp(),
-  );
+  try {
+    await saveSettings(checked.value, slug);
+  } catch (error) {
+    if (error instanceof AccountError) return { message: error.message, values: f };
+    throw error;
+  }
+  if (exampleMode())
+    audit(
+      'settings.saved',
+      checked.value.name,
+      `Prefix ${checked.value.invoicePrefix}, GSTIN ${checked.value.gstin ?? 'none'}`,
+      await callerIp(),
+    );
   revalidatePath(`/w/${slug}`, 'layout');
   return { done: Date.now() };
 }

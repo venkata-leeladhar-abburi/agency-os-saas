@@ -13,7 +13,7 @@ export default async function NewProjectPage({
   searchParams: Promise<{ client?: string }>;
 }) {
   const [{ workspace }, { client }] = await Promise.all([params, searchParams]);
-  const clients = await clientOptions();
+  const clients = await clientOptions(workspace);
   return (
     <div className="mx-auto grid max-w-3xl gap-6">
       <PageHeader

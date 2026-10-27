@@ -13,7 +13,7 @@ export default async function BrandingSettings({
   params: Promise<{ workspace: string }>;
 }) {
   const { workspace } = await params;
-  const s = await settings();
+  const s = await settings(workspace);
   const review = s.brandColour ? reviewBrandColour(s.brandColour) : null;
   return (
     <>

@@ -28,8 +28,13 @@ const REMINDER_TONE: Record<ReminderState, BadgeProps['tone']> = {
   cancelled: 'neutral',
 };
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const found = await getInvoice((await params).id);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ workspace: string; id: string }>;
+}) {
+  const { workspace, id } = await params;
+  const found = await getInvoice(id, workspace);
   return { title: `${found?.invoice.number ?? 'Draft invoice'} · Agency OS` };
 }
 
@@ -45,7 +50,7 @@ export default async function InvoicePage({
   params: Promise<{ workspace: string; id: string }>;
 }) {
   const { workspace, id } = await params;
-  const found = await getInvoice(id);
+  const found = await getInvoice(id, workspace);
   if (!found) notFound();
   const { invoice, client, totals, state, settings, reminders } = found;
   const payUrl = `${await siteOrigin()}/pay/${invoice.payToken}`;

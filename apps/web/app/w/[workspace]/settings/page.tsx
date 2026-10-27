@@ -15,7 +15,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ works
         subtitle="Your details, tax and invoices, and your enquiry form"
         className="mb-0"
       />
-      <SettingsForm slug={workspace} settings={await settings()} />
+      <SettingsForm slug={workspace} settings={await settings(workspace)} />
       <Card
         title="Enquiry form"
         description="Put this link on your website or Instagram. Each enquiry becomes a lead with source Website."

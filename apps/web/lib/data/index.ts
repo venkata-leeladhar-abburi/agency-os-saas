@@ -23,6 +23,9 @@ import type {
   ProjectInput,
   SettingsInput,
 } from '../forms';
+import { workspaceCtx } from '../server/workspace';
+import * as dbInvoices from './db/invoices';
+import { limitInfo, needsUpgrade, type LimitInfo } from './plan';
 import { activity, EXAMPLE_USER, newId, store } from './shared';
 import type { Client, Invoice, Lead, Project, StageId, WorkspaceSettings } from './types';
 import {
@@ -229,12 +232,13 @@ export async function clients(): Promise<ClientRow[]> {
   });
 }
 
-export async function clientOptions() {
+async function exampleClientOptions() {
   return store().clients.map((c) => ({
     id: c.id,
     name: c.name,
     currency: c.currency,
     country: c.country,
+    stateCode: c.stateCode,
   }));
 }
 
@@ -391,7 +395,7 @@ function invoiceView(inv: Invoice) {
   return { invoice: inv, client, totals, state };
 }
 
-export async function invoices(): Promise<InvoiceRow[]> {
+async function exampleInvoices(): Promise<InvoiceRow[]> {
   return store().invoices.map((inv) => {
     const { client, totals, state } = invoiceView(inv);
     return {
@@ -411,7 +415,7 @@ export async function invoices(): Promise<InvoiceRow[]> {
   });
 }
 
-export async function getInvoice(id: string) {
+async function exampleGetInvoice(id: string) {
   const inv = store().invoices.find((i) => i.id === id);
   if (!inv) return null;
   const view = invoiceView(inv);
@@ -423,7 +427,7 @@ export async function getInvoice(id: string) {
 }
 
 /** The number the next issued invoice gets, for the editor's subtitle. */
-export async function nextInvoiceNumber(): Promise<string> {
+async function exampleNextInvoiceNumber(): Promise<string> {
   const s = store();
   return formatInvoiceNumber(s.settings.invoicePrefix, new Date(), s.invoiceSequence + 1);
 }
@@ -434,7 +438,7 @@ function issueNumber(): string {
   return formatInvoiceNumber(s.settings.invoicePrefix, new Date(), s.invoiceSequence);
 }
 
-export async function createInvoice(input: InvoiceInput): Promise<string> {
+async function exampleCreateInvoice(input: InvoiceInput): Promise<string> {
   const id = newId('inv');
   const today = istDate(new Date());
   store().invoices.unshift({
@@ -466,26 +470,26 @@ export function invoiceReminders(inv: Invoice, paid: boolean, now = new Date()) 
 }
 
 /** A new pay link: the old one stops working at once (for a link sent to the wrong person). */
-export async function newPayLink(id: string): Promise<string | null> {
+async function exampleNewPayLink(id: string): Promise<string | null> {
   const inv = store().invoices.find((i) => i.id === id);
   if (!inv?.number) return null;
   inv.payToken = randomBytes(16).toString('base64url');
   return inv.number;
 }
 
-export async function setInvoiceReminders(id: string, on: boolean) {
+async function exampleSetInvoiceReminders(id: string, on: boolean) {
   const inv = store().invoices.find((i) => i.id === id);
   if (inv) inv.reminders = on;
 }
 
-export async function issueInvoice(id: string) {
+async function exampleIssueInvoice(id: string) {
   const inv = store().invoices.find((i) => i.id === id);
   if (!inv || inv.number) return;
   inv.number = issueNumber();
   inv.issuedOn = istDate(new Date());
 }
 
-export async function recordPayment(id: string, input: PaymentInput) {
+async function exampleRecordPayment(id: string, input: PaymentInput) {
   const inv = store().invoices.find((i) => i.id === id);
   inv?.payments.push({
     id: newId('pay'),
@@ -498,16 +502,20 @@ export async function recordPayment(id: string, input: PaymentInput) {
 
 // ---------- Workspace ----------
 
-export async function settings() {
+async function exampleSettings() {
   return store().settings;
 }
 
-export async function saveSettings(input: SettingsInput) {
-  Object.assign(store().settings, input);
+export async function saveSettings(input: SettingsInput, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) await dbInvoices.saveSettingsFor(ctx, input);
+  else Object.assign(store().settings, input);
 }
 
-export async function saveBrandColour(colour: string | null) {
-  store().settings.brandColour = colour;
+export async function saveBrandColour(colour: string | null, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) await dbInvoices.saveBrandColourFor(ctx, colour);
+  else store().settings.brandColour = colour;
 }
 
 export async function saveLogo(logo: WorkspaceSettings['logo']) {
@@ -667,4 +675,84 @@ export async function projectMessages(projectId: string) {
   return store()
     .messages.filter((m) => m.projectId === projectId)
     .sort((a, b) => a.at.localeCompare(b.at));
+}
+
+// ---------- Example data or the database ----------
+// Each function below serves the example store when EXAMPLE_MODE=true and the database
+// otherwise, as the signed-in member of the workspace in the URL (RLS applies).
+
+/** The workspace context for database mode; example mode needs none. */
+/**
+ * The database context for a workspace's screens, or null for the example store: in example
+ * mode, and for callers that pass no slug (public pages and jobs not wired to the database yet).
+ */
+async function ctxFor(slug: string | undefined) {
+  if (exampleMode() || !slug) return null;
+  return workspaceCtx(slug);
+}
+
+export async function clientOptions(slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (!ctx) return exampleClientOptions();
+  return dbInvoices.clientChoices(ctx);
+}
+
+export async function invoices(slug?: string): Promise<InvoiceRow[]> {
+  const ctx = await ctxFor(slug);
+  return ctx ? dbInvoices.invoiceRows(ctx) : exampleInvoices();
+}
+
+export async function getInvoice(id: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  return ctx ? dbInvoices.invoiceDetail(ctx, id) : exampleGetInvoice(id);
+}
+
+export async function nextInvoiceNumber(slug?: string): Promise<string> {
+  const ctx = await ctxFor(slug);
+  return ctx ? dbInvoices.nextNumber(ctx) : exampleNextInvoiceNumber();
+}
+
+export async function createInvoice(input: InvoiceInput, slug?: string): Promise<string> {
+  const ctx = await ctxFor(slug);
+  return ctx ? dbInvoices.createInvoiceFor(ctx, input) : exampleCreateInvoice(input);
+}
+
+export async function issueInvoice(id: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) await dbInvoices.issueInvoiceFor(ctx, id);
+  else await exampleIssueInvoice(id);
+}
+
+export async function recordPayment(id: string, input: PaymentInput, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) await dbInvoices.recordPaymentFor(ctx, id, input);
+  else await exampleRecordPayment(id, input);
+}
+
+export async function setInvoiceReminders(id: string, on: boolean, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) await dbInvoices.setRemindersFor(ctx, id, on);
+  else await exampleSetInvoiceReminders(id, on);
+}
+
+/** A new pay link; returns the invoice number (example mode) for the audit line. */
+export async function newPayLink(id: string, slug?: string): Promise<string | null> {
+  const ctx = await ctxFor(slug);
+  if (!ctx) return exampleNewPayLink(id);
+  await dbInvoices.newPayLinkFor(ctx, id);
+  // The database writes its own audit entry.
+  return null;
+}
+
+export async function settings(slug?: string) {
+  const ctx = await ctxFor(slug);
+  return ctx ? dbInvoices.settingsFor(ctx) : exampleSettings();
+}
+
+/** Before making an invoice: null when the plan has room, else what the limit dialog shows. */
+export async function invoiceLimit(slug: string): Promise<LimitInfo | null> {
+  const ctx = await ctxFor(slug);
+  if (!ctx) return needsUpgrade('invoices_per_month');
+  const check = await dbInvoices.invoiceRoom(ctx);
+  return check.allowed ? null : limitInfo('invoices_per_month', check, ctx.plan);
 }

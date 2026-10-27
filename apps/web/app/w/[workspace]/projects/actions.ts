@@ -13,7 +13,7 @@ export async function createProjectAction(
   form: FormData,
 ): Promise<FormState> {
   const f = fields(form);
-  const ids = (await clientOptions()).map((c) => c.id);
+  const ids = (await clientOptions(slug)).map((c) => c.id);
   const checked = checkProject(f, ids, await people());
   if (!checked.ok) return { errors: checked.errors, values: f };
   const id = await createProject(checked.value);

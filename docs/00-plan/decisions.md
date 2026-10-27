@@ -314,3 +314,11 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Reminders:** the daily job reads `remindersDue` (one per invoice a day, to the client's primary contact) and records each with `markReminderSent` once the email provider accepts it.
 - **Tests:** 15 database tests against a real Postgres: numbering and the April restart, the locks, payments and over-payment, the monthly limit, roles and cross-tenant isolation, project-lead scope, the pay link and its replacement, reminders, the portal.
 
+### D-051 Invoice and settings screens read and write the database
+**Status:** Accepted · **Date:** 27 Oct 2026
+- **How a screen reaches the database:** each `/w/<workspace>` page passes its slug to the data function. `workspaceCtx(slug)` (once per request) finds the signed-in member's workspace; signed out goes to sign-in, not a member gives the same 404 as no such workspace. Every query then runs through `withUser`, so RLS decides what the member sees. In example mode, or when a caller passes no slug (public pages and jobs not wired yet), the same functions use the example store, so the domains still to wire keep working.
+- **Wired now:** the invoice list, invoice page, editor (draft or issue in one transaction), payments, reminders switch, new pay link, invoice PDF and reminder preview; workspace settings (name, GSTIN, LUT, prefix, payment terms, services, address, bank, footer, migration 0016) and the brand colour. The plan check before a new invoice counts issued invoices this month in the database.
+- **Audit:** the database writes the audit entries for these actions; the screens add their own only in example mode, so nothing is logged twice.
+- **Not yet in database mode:** logo upload (needs Storage; the form says so and keeps the brand colour working) and online payment on the pay page (needs Razorpay).
+- **Tests:** 5 web tests run these functions as a member against a real Postgres (skipped without `TEST_DATABASE_URL`), including another workspace seeing nothing.
+

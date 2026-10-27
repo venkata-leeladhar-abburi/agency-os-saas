@@ -13,7 +13,7 @@ export async function GET(
   if (!(await canOpenWorkspace(workspace))) return notFoundResponse();
   const found = await getQuote(id);
   if (!found) return notFoundResponse();
-  const s = await settings();
+  const s = await settings(workspace);
   return pdfResponse(
     createElement(QuotePdf, {
       quote: found.quote,

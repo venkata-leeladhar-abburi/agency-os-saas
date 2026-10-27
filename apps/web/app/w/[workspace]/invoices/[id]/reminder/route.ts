@@ -10,7 +10,7 @@ export async function GET(
 ) {
   const { workspace, id } = await params;
   if (!(await canOpenWorkspace(workspace))) return notFoundResponse();
-  const found = await getInvoice(id);
+  const found = await getInvoice(id, workspace);
   if (!found?.invoice.number || !found.reminders) return notFoundResponse();
   const next =
     found.reminders.find((r) => r.state === 'due' || r.state === 'scheduled') ??
