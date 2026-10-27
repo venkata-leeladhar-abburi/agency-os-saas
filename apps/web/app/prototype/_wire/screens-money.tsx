@@ -544,7 +544,12 @@ export const PORTAL_SCREENS: ScreenDef[] = [
                 </>
               }
             >
-              <Textarea label="Your changes" rows={4} />
+              <Textarea
+                label="Your changes"
+                required
+                rows={4}
+                hint="Say what to change so the team can act on it."
+              />
             </DialogContent>
           </Dialog>
         ) : null}
@@ -641,7 +646,7 @@ export const PORTAL_SCREENS: ScreenDef[] = [
         {state === 'empty' ? (
           <div className="rounded-xl border border-border bg-card">
             <EmptyState compact icon={ChatCircleDots} title="No messages yet">
-              Ask the team anything. They usually reply within a working day.
+              Ask the team anything. They see it straight away and get an email.
             </EmptyState>
           </div>
         ) : (

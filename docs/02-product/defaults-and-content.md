@@ -97,6 +97,7 @@ Default channels; each member changes them per category in Settings → Notifica
 | Gate approval requested | Approver (client) | Portal | On | Approve [gate title] |
 | Gate approved or changes requested | Project lead | On | On | [Client] approved [gate title] |
 | Task assigned or mentioned | Member | On | Off | — |
+| New message in a project | The other side: project team, or the client's contacts | On (the client: portal) | On | New message from [name] about [project] |
 | Invoice sent | Client contact | Portal | On | Invoice [number] from [workspace] |
 | Invoice reminder | Client contact | — | On | Invoice [number] is due on [date] |
 | Payment received | Owners, finance, project lead | On | On | Payment received: [amount] for [number] |
@@ -104,9 +105,9 @@ Default channels; each member changes them per category in Settings → Notifica
 | Member invited | Invitee | — | On | [Name] invited you to [workspace] on Agency OS |
 | Daily digest | Owners | — | On (08:30 local) | Today at [workspace] |
 
-## 8. Plans and limits **(founder: open question 5)**
+## 8. Plans and limits
 
-Proposed limits to enforce at M6, consistent with the product brief:
+Confirmed by the founder on 26 Oct 2026 (open question 5, D-040) and enforced since M6:
 
 | Plan | Members | Active clients with portal | Open leads | Quotes, proposals, invoices | Branding |
 | --- | --- | --- | --- | --- | --- |

@@ -13,6 +13,16 @@ import {
   UserPlus,
 } from '@phosphor-icons/react';
 import {
+  channelsFor,
+  NOTIFICATION_KEYS,
+  NOTIFICATION_KINDS,
+  PLAN_DETAILS,
+  formatMoney,
+  DIGEST_LOCAL_TIME,
+  type NotificationKey,
+  type NotificationKind,
+} from '@agency-os/core';
+import {
   Alert,
   Badge,
   Button,
@@ -30,9 +40,91 @@ import {
   Skeleton,
   Switch,
 } from '@agency-os/ui';
+import Link from 'next/link';
 import { Go, List, Row, StateView } from './kit';
 import { LeadsBoard } from './parts';
 import { NO_EMPTY, PUBLIC, STANDARD, type ScreenDef } from './types';
+
+const SETTINGS_TABS: [label: string, state?: string][] = [
+  ['Workspace'],
+  ['Branding'],
+  ['Members and roles', 'default'],
+  ['Tax and invoices'],
+  ['Plan and billing'],
+  ['Notifications', 'notifications'],
+  ['Data export'],
+  ['Audit log'],
+];
+
+const NOTIFICATION_AREAS = [
+  ['sales', 'Sales'],
+  ['delivery', 'Delivery'],
+  ['money', 'Money'],
+  ['team', 'Team'],
+] as const;
+
+/** What a team member can change: kinds with an in-app list or an email for them, from core's defaults. */
+const MEMBER_KINDS = NOTIFICATION_KEYS.filter((key) => {
+  const kind: NotificationKind = NOTIFICATION_KINDS[key];
+  return kind.inApp === 'on' || kind.inApp === 'off' || key === 'digest.daily';
+});
+
+function NotificationRow({ kindKey }: { kindKey: NotificationKey }) {
+  const kind: NotificationKind = NOTIFICATION_KINDS[kindKey];
+  const channels = channelsFor(kindKey);
+  const teamInApp = kind.inApp === 'on' || kind.inApp === 'off';
+  return (
+    <Row
+      label={kind.label}
+      meta={
+        channels.email === 'digest'
+          ? `Email in the daily digest at ${DIGEST_LOCAL_TIME}`
+          : kind.recipients
+      }
+      right={
+        <span className="flex shrink-0 items-center gap-4">
+          {teamInApp ? (
+            <Switch aria-label={`${kind.label}: in the app`} defaultChecked={channels.inApp} />
+          ) : (
+            <span className="w-9 text-caption text-muted-foreground">—</span>
+          )}
+          {kind.subject === null ? (
+            <span className="w-9 text-caption text-muted-foreground">—</span>
+          ) : (
+            <Switch
+              aria-label={`${kind.label}: by email`}
+              defaultChecked={channels.email !== 'off'}
+            />
+          )}
+        </span>
+      }
+    />
+  );
+}
+
+function NotificationSettings() {
+  return (
+    <div className="grid gap-4">
+      <p className="text-body text-muted-foreground">
+        Choose how you hear about each event. The first switch is the list in the app, the second is
+        email. Clients choose theirs in the portal.
+      </p>
+      {NOTIFICATION_AREAS.map(([area, label]) => {
+        const kinds = MEMBER_KINDS.filter((key) => NOTIFICATION_KINDS[key].area === area);
+        return kinds.length ? (
+          <List key={area} label={`${label} · in the app, by email`}>
+            {kinds.map((key) => (
+              <NotificationRow key={key} kindKey={key} />
+            ))}
+          </List>
+        ) : null;
+      })}
+    </div>
+  );
+}
+
+const planPrice = (plan: 'starter' | 'growth') =>
+  `${formatMoney(BigInt(PLAN_DETAILS[plan].priceMinor ?? 0), 'INR', { decimals: 0 })} a month`;
 
 function AuthCard({ children }: { children: React.ReactNode }) {
   return (
@@ -448,7 +540,7 @@ export const R0_SCREENS: ScreenDef[] = [
         {state === 'empty' ? (
           <div className="rounded-lg border border-border bg-card">
             <EmptyState compact icon={Bell} title="No notifications yet">
-              New enquiries, signed proposals, approvals and payments show up here.
+              New enquiries, signed proposals, approvals, messages and payments show up here.
             </EmptyState>
           </div>
         ) : state === 'loading' ? (
@@ -484,13 +576,22 @@ export const R0_SCREENS: ScreenDef[] = [
                 </Badge>
               }
             />
+            <Row
+              label="New message from Srinivas Beere about Acme Labs website"
+              meta="5 h ago"
+              right={
+                <Badge tone="brand" dot size="sm">
+                  New
+                </Badge>
+              }
+            />
             <Row label="Payment received: ₹47,200 for OSS/26-27/012" meta="Yesterday" />
             <Row label="Srinivas Beere approved PRD and timeline" meta="14 Oct" />
           </List>
         )}
-        <Button variant="link" size="sm">
+        <Go to="s07-settings" state="notifications" variant="link" size="sm">
           Notification settings
-        </Button>
+        </Go>
       </div>
     ),
   },
@@ -504,130 +605,148 @@ export const R0_SCREENS: ScreenDef[] = [
     frame: 'app',
     role: 'owner',
     active: 'settings',
-    crumbs: ['Settings', 'Members and roles'],
+    crumbs: (state) => [
+      'Settings',
+      state === 'notifications' ? 'Notifications' : 'Members and roles',
+    ],
     pagePrimary: true,
     purpose:
       'Workspace, branding, members and roles, tax and invoices, plan and billing, notifications, data export, audit log. Primary on this tab: Invite member.',
-    states: [...STANDARD, { id: 'limit', label: 'Plan limit reached' }],
+    states: [
+      ...STANDARD,
+      { id: 'limit', label: 'Plan limit reached' },
+      { id: 'notifications', label: 'Notifications tab' },
+    ],
     render: ({ state }) => (
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[200px_minmax(0,1fr)]">
         <nav aria-label="Settings" className="min-w-0">
           <ul className="grid gap-0.5 p-0 max-lg:flex max-lg:overflow-x-auto">
-            {[
-              'Workspace',
-              'Branding',
-              'Members and roles',
-              'Tax and invoices',
-              'Plan and billing',
-              'Notifications',
-              'Data export',
-              'Audit log',
-            ].map((item) => (
-              <li key={item}>
-                <a
-                  href="#settings"
-                  aria-current={item === 'Members and roles' ? 'page' : undefined}
-                  className="block rounded-sm px-2.5 py-1.5 text-body-medium whitespace-nowrap text-muted-foreground no-underline hover:bg-accent aria-[current=page]:bg-card aria-[current=page]:text-foreground aria-[current=page]:shadow-xs"
-                >
-                  {item}
-                </a>
-              </li>
-            ))}
+            {SETTINGS_TABS.map(([item, tab]) => {
+              const current = (state === 'notifications' ? 'notifications' : 'default') === tab;
+              return (
+                <li key={item}>
+                  <Link
+                    href={
+                      tab
+                        ? `/prototype/s07-settings${tab === 'default' ? '' : `?state=${tab}`}`
+                        : '#settings'
+                    }
+                    aria-current={current ? 'page' : undefined}
+                    className="block rounded-sm px-2.5 py-1.5 text-body-medium whitespace-nowrap text-muted-foreground no-underline hover:bg-accent aria-[current=page]:bg-card aria-[current=page]:text-foreground aria-[current=page]:shadow-xs"
+                  >
+                    {item}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
-        <div className="grid min-w-0 content-start gap-4">
-          <PageHeader
-            title="Members and roles"
-            subtitle="3 of 5 members on Agency Starter"
-            actions={
-              <Button variant="primary" icon={UserPlus}>
-                Invite member
-              </Button>
-            }
-            className="mb-0"
-          />
-          <StateView
-            state={state}
-            copy={{
-              empty: {
-                title: 'Only you so far',
-                text: 'Invite your team. Each person gets a role that decides what they see.',
-                action: 'Invite member',
-                icon: UserPlus,
-              },
-              area: 'Settings',
-            }}
-          >
-            {state === 'limit' ? (
-              <Alert
-                tone="warning"
-                title="Your plan has 5 members, and all are in use"
-                action={<Button size="sm">See plans</Button>}
-              >
-                Upgrade to Agency Growth for up to 20 members. Existing members keep working.
-              </Alert>
-            ) : null}
-            <List label="Members">
-              <Row
-                label="Kiran Rao"
-                meta="kiran@onestop.in"
-                right={<Badge size="sm">Owner</Badge>}
-              />
-              <Row
-                label="Ananya Iyer"
-                meta="Designer"
-                right={<Badge size="sm">Project lead</Badge>}
-              />
-              <Row label="Arjun Mehta" meta="Developer" right={<Badge size="sm">Member</Badge>} />
-              <Row
-                label="meera@onestop.in"
-                meta="Invited 2 days ago · expires in 5 days"
-                right={
-                  <Badge size="sm" tone="warning" dot>
-                    Invite pending
-                  </Badge>
-                }
-              />
-            </List>
-            <Card title="What each role can see" flush>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-body-sm">
-                  <caption className="sr-only">Roles and permissions</caption>
-                  <thead>
-                    <tr className="bg-muted text-caption text-muted-foreground">
-                      {['Area', 'Owner', 'Project lead', 'Member', 'Finance'].map((h) => (
-                        <th key={h} scope="col" className="px-3 py-2 text-left font-medium">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ['Leads, quotes, proposals', 'Edit', 'View', '—', 'View'],
-                      ['Projects and gates', 'Edit, approve', 'Edit own', 'View own', 'View'],
-                      ['Invoices and payments', 'Edit', 'View own projects', '—', 'Edit'],
-                      ['Settings and billing', 'Edit', '—', '—', '—'],
-                    ].map((r) => (
-                      <tr key={r[0]} className="border-t border-border">
-                        {r.map((c, k) => (
-                          <td
-                            key={k}
-                            className={
-                              k === 0 ? 'px-3 py-2 font-medium' : 'px-3 py-2 text-muted-foreground'
-                            }
-                          >
-                            {c}
-                          </td>
+        {state === 'notifications' ? (
+          <div className="grid min-w-0 content-start gap-4">
+            <PageHeader
+              title="Notifications"
+              subtitle="Changes save as you make them"
+              className="mb-0"
+            />
+            <NotificationSettings />
+          </div>
+        ) : (
+          <div className="grid min-w-0 content-start gap-4">
+            <PageHeader
+              title="Members and roles"
+              subtitle="3 of 5 members on Agency Starter"
+              actions={
+                <Button variant="primary" icon={UserPlus}>
+                  Invite member
+                </Button>
+              }
+              className="mb-0"
+            />
+            <StateView
+              state={state}
+              copy={{
+                empty: {
+                  title: 'Only you so far',
+                  text: 'Invite your team. Each person gets a role that decides what they see.',
+                  action: 'Invite member',
+                  icon: UserPlus,
+                },
+                area: 'Settings',
+              }}
+            >
+              {state === 'limit' ? (
+                <Alert
+                  tone="warning"
+                  title="Your plan has 5 members, and all are in use"
+                  action={<Button size="sm">See plans</Button>}
+                >
+                  Upgrade to Agency Growth for up to 20 members. Existing members keep working.
+                </Alert>
+              ) : null}
+              <List label="Members">
+                <Row
+                  label="Kiran Rao"
+                  meta="kiran@onestop.in"
+                  right={<Badge size="sm">Owner</Badge>}
+                />
+                <Row
+                  label="Ananya Iyer"
+                  meta="Designer"
+                  right={<Badge size="sm">Project lead</Badge>}
+                />
+                <Row label="Arjun Mehta" meta="Developer" right={<Badge size="sm">Member</Badge>} />
+                <Row
+                  label="meera@onestop.in"
+                  meta="Invited 2 days ago · expires in 5 days"
+                  right={
+                    <Badge size="sm" tone="warning" dot>
+                      Invite pending
+                    </Badge>
+                  }
+                />
+              </List>
+              <Card title="What each role can see" flush>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-body-sm">
+                    <caption className="sr-only">Roles and permissions</caption>
+                    <thead>
+                      <tr className="bg-muted text-caption text-muted-foreground">
+                        {['Area', 'Owner', 'Project lead', 'Member', 'Finance'].map((h) => (
+                          <th key={h} scope="col" className="px-3 py-2 text-left font-medium">
+                            {h}
+                          </th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </StateView>
-        </div>
+                    </thead>
+                    <tbody>
+                      {[
+                        ['Leads, quotes, proposals', 'Edit', 'View', '—', 'View'],
+                        ['Projects and gates', 'Edit, approve', 'Edit own', 'View own', 'View'],
+                        ['Invoices and payments', 'Edit', 'View own projects', '—', 'Edit'],
+                        ['Settings and billing', 'Edit', '—', '—', '—'],
+                      ].map((r) => (
+                        <tr key={r[0]} className="border-t border-border">
+                          {r.map((c, k) => (
+                            <td
+                              key={k}
+                              className={
+                                k === 0
+                                  ? 'px-3 py-2 font-medium'
+                                  : 'px-3 py-2 text-muted-foreground'
+                              }
+                            >
+                              {c}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </StateView>
+          </div>
+        )}
       </div>
     ),
   },
@@ -710,11 +829,15 @@ export const R0_SCREENS: ScreenDef[] = [
             <div className="grid gap-2">
               {[
                 [
-                  'Agency Starter',
-                  '₹1,499 a month',
+                  PLAN_DETAILS.starter.name,
+                  planPrice('starter'),
                   '5 members · 10 clients with a portal · unlimited leads',
                 ],
-                ['Agency Growth', '₹3,499 a month', '20 members · unlimited clients and leads'],
+                [
+                  PLAN_DETAILS.growth.name,
+                  planPrice('growth'),
+                  '20 members · unlimited clients and leads',
+                ],
               ].map(([plan, price, detail]) => (
                 <div
                   key={plan}
@@ -727,9 +850,6 @@ export const R0_SCREENS: ScreenDef[] = [
                   <span className="text-body font-semibold tabular-nums">{price}</span>
                 </div>
               ))}
-              <p className="text-caption font-normal text-muted-foreground">
-                Prices are proposals until the founder confirms them (open question 5).
-              </p>
             </div>
           </DialogContent>
         </Dialog>
