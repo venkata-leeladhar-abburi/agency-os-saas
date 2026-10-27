@@ -350,6 +350,15 @@ async function trash(tx: Tx, leadId: string, at: Date | null) {
   await tx.update(leads).set({ deletedAt: at }).where(eq(leads.id, leadId));
 }
 
+/** One lead (not in the trash), or null when it doesn't exist or RLS hides it. */
+export async function getLead(tx: Tx, leadId: string): Promise<Lead | null> {
+  const [lead] = await tx
+    .select()
+    .from(leads)
+    .where(and(eq(leads.id, leadId), isNull(leads.deletedAt)));
+  return lead ?? null;
+}
+
 // ---- Activity ----
 
 export type ActivityKind = 'note' | 'call' | 'email' | 'whatsapp' | 'meeting';

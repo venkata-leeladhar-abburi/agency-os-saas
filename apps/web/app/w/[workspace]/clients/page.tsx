@@ -10,7 +10,7 @@ export const metadata = { title: 'Clients · Agency OS' };
 export default async function ClientsPage({ params }: { params: Promise<{ workspace: string }> }) {
   const { workspace } = await params;
   const base = `/w/${workspace}/clients`;
-  const rows = await clients();
+  const rows = await clients(workspace);
   return (
     <>
       <PageHeader

@@ -25,6 +25,7 @@ import type {
 } from '../forms';
 import { workspaceCtx } from '../server/workspace';
 import * as dbInvoices from './db/invoices';
+import * as dbPeople from './db/people';
 import { limitInfo, needsUpgrade, type LimitInfo } from './plan';
 import { activity, EXAMPLE_USER, newId, store } from './shared';
 import type { Client, Invoice, Lead, Project, StageId, WorkspaceSettings } from './types';
@@ -79,9 +80,10 @@ export type LeadRow = {
   overdue?: boolean;
 };
 
-export async function leads() {
+export async function leads(slug?: string) {
   const now = new Date();
-  const all = store().leads;
+  const ctx = await ctxFor(slug);
+  const all = ctx ? await dbPeople.leadList(ctx) : store().leads;
   const rows: LeadRow[] = all.map((l) => {
     const f = followUp(l.followUpAt, now);
     return {
@@ -99,7 +101,9 @@ export async function leads() {
   return { rows, board: leadBoard(all, now) };
 }
 
-export async function getLead(id: string): Promise<Lead | null> {
+export async function getLead(id: string, slug?: string): Promise<Lead | null> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPeople.leadDetail(ctx, id);
   return store().leads.find((l) => l.id === id) ?? null;
 }
 
@@ -108,7 +112,9 @@ function followUpAt(on: string | null): string | null {
   return on ? new Date(`${on}T11:00:00+05:30`).toISOString() : null;
 }
 
-export async function createLead(input: LeadInput): Promise<string> {
+export async function createLead(input: LeadInput, slug?: string): Promise<string> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPeople.createLeadFor(ctx, input);
   const id = newId('lead');
   store().leads.unshift({
     id,
@@ -131,7 +137,9 @@ export async function createLead(input: LeadInput): Promise<string> {
   return id;
 }
 
-export async function moveLead(id: string, stage: StageId) {
+export async function moveLead(id: string, stage: StageId, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPeople.moveLeadFor(ctx, id, stage);
   const lead = await getLead(id);
   if (!lead || lead.stage === stage) return;
   lead.stage = stage;
@@ -139,7 +147,14 @@ export async function moveLead(id: string, stage: StageId) {
   lead.activities.unshift(activity('stage', `moved it to ${stageName(stage)}`));
 }
 
-export async function markLeadLost(id: string, reason: Lead['lostReason'], note: string) {
+export async function markLeadLost(
+  id: string,
+  reason: NonNullable<Lead['lostReason']>,
+  note: string,
+  slug?: string,
+) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPeople.markLeadLostFor(ctx, id, reason, note);
   const lead = await getLead(id);
   if (!lead) return;
   lead.stage = 'lost';
@@ -148,18 +163,24 @@ export async function markLeadLost(id: string, reason: Lead['lostReason'], note:
   lead.activities.unshift(activity('lost', note ? `marked it lost: ${note}` : 'marked it lost'));
 }
 
-export async function addLeadNote(id: string, note: string) {
+export async function addLeadNote(id: string, note: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPeople.addLeadNoteFor(ctx, id, note);
   const lead = await getLead(id);
   lead?.activities.unshift(activity('note', note));
 }
 
-export async function setLeadFollowUp(id: string, on: string | null) {
+export async function setLeadFollowUp(id: string, on: string | null, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPeople.setLeadFollowUpFor(ctx, id, on);
   const lead = await getLead(id);
   if (lead) lead.followUpAt = followUpAt(on);
 }
 
 /** Won: the lead becomes a client (or links to the one it already is). Returns the client id. */
-export async function winLead(id: string): Promise<string | null> {
+export async function winLead(id: string, slug?: string): Promise<string | null> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPeople.winLeadFor(ctx, id);
   const lead = await getLead(id);
   if (!lead) return null;
   if (!lead.clientId) {
@@ -215,7 +236,20 @@ function clientMoney(client: Client) {
   return { billed, outstanding, drafts: quoted };
 }
 
-export async function clients(): Promise<ClientRow[]> {
+export async function clients(slug?: string): Promise<ClientRow[]> {
+  const ctx = await ctxFor(slug);
+  if (ctx)
+    return (await dbPeople.clientList(ctx)).map(({ client: c, money: m, projects }) => ({
+      id: c.id,
+      name: c.name,
+      contact: c.contactName,
+      city: c.city ?? '—',
+      projects,
+      billedMinor: m.billed,
+      outstandingMinor: m.outstanding,
+      currency: c.currency,
+      portal: PORTAL_LABEL[c.portal],
+    }));
   return store().clients.map((c) => {
     const m = clientMoney(c);
     return {
@@ -242,7 +276,18 @@ async function exampleClientOptions() {
   }));
 }
 
-export async function getClient(id: string) {
+export async function getClient(id: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) {
+    const found = await dbPeople.clientDetail(ctx, id);
+    if (!found) return null;
+    return {
+      ...found,
+      // Projects move to the database next; until then a real client shows none.
+      projects: [] as ProjectRow[],
+      invoices: (await dbInvoices.invoiceRows(ctx)).filter((i) => i.clientId === id),
+    };
+  }
   const client = store().clients.find((c) => c.id === id);
   if (!client) return null;
   const m = clientMoney(client);
@@ -254,7 +299,9 @@ export async function getClient(id: string) {
   };
 }
 
-export async function createClient(input: ClientInput): Promise<string> {
+export async function createClient(input: ClientInput, slug?: string): Promise<string> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPeople.createClientFor(ctx, input);
   const id = newId('client');
   store().clients.unshift({
     id,
@@ -267,7 +314,9 @@ export async function createClient(input: ClientInput): Promise<string> {
   return id;
 }
 
-export async function inviteToPortal(id: string) {
+export async function inviteToPortal(id: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPeople.inviteToPortalFor(ctx, id);
   const client = store().clients.find((c) => c.id === id);
   if (client && client.portal === 'not_invited') client.portal = 'invited';
 }
@@ -749,10 +798,13 @@ export async function settings(slug?: string) {
   return ctx ? dbInvoices.settingsFor(ctx) : exampleSettings();
 }
 
-/** Before making an invoice: null when the plan has room, else what the limit dialog shows. */
-export async function invoiceLimit(slug: string): Promise<LimitInfo | null> {
+/** Before adding: null when the plan has room, else what the limit dialog shows. */
+export async function planLimit(
+  slug: string,
+  resource: 'invoices_per_month' | 'open_leads' | 'portal_clients',
+): Promise<LimitInfo | null> {
   const ctx = await ctxFor(slug);
-  if (!ctx) return needsUpgrade('invoices_per_month');
-  const check = await dbInvoices.invoiceRoom(ctx);
-  return check.allowed ? null : limitInfo('invoices_per_month', check, ctx.plan);
+  if (!ctx) return needsUpgrade(resource);
+  const check = await dbInvoices.planRoom(ctx, resource);
+  return check.allowed ? null : limitInfo(resource, check, ctx.plan);
 }

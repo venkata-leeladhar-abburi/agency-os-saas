@@ -57,7 +57,7 @@ export function LeadsBoard({
         // Lost needs a reason, so it opens the lead to ask for one.
         if (to === 'lost') return router.push(`${base}/${id}?lost=1`);
         startTransition(async () => {
-          const next = await moveLeadAction(id, to);
+          const next = await moveLeadAction(base.split('/')[2]!, id, to);
           if (next) router.push(`${base.replace(/\/leads$/, '')}/${next}`);
           else router.refresh();
         });

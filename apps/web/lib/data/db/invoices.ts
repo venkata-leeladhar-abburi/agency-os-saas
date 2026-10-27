@@ -4,6 +4,7 @@ import {
   createInvoice as dbCreateInvoice,
   getClient,
   getInvoice as dbGetInvoice,
+  checkPlanLimit,
   invoicePlanCheck,
   invoicesPaidIn,
   issueInvoice as dbIssueInvoice,
@@ -19,7 +20,7 @@ import {
   updateWorkspaceSettings,
   workspaceSettings,
 } from '@agency-os/db';
-import { formatDate, formatMoney } from '@agency-os/core';
+import { formatDate, formatMoney, type LimitedResource } from '@agency-os/core';
 import type { InvoiceInput, PaymentInput, SettingsInput } from '../../forms';
 import { asMember, linkSecret, type WorkspaceCtx } from '../../server/workspace';
 import type { InvoiceRow } from '../index';
@@ -176,8 +177,13 @@ export async function newPayLinkFor(ctx: WorkspaceCtx, id: string) {
   return asMember(ctx, (tx) => replacePayLink(tx, id, ctx.session.userId, linkSecret()));
 }
 
-export async function invoiceRoom(ctx: WorkspaceCtx, now = new Date()) {
-  return asMember(ctx, (tx) => invoicePlanCheck(tx, ctx.workspaceId, now));
+/** Whether the plan has room for one more; invoices count those issued this month. */
+export async function planRoom(ctx: WorkspaceCtx, resource: LimitedResource, now = new Date()) {
+  return asMember(ctx, (tx) =>
+    resource === 'invoices_per_month'
+      ? invoicePlanCheck(tx, ctx.workspaceId, now)
+      : checkPlanLimit(tx, ctx.workspaceId, resource),
+  );
 }
 
 export async function settingsFor(ctx: WorkspaceCtx) {

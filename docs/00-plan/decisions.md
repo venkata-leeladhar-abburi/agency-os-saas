@@ -322,3 +322,13 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Not yet in database mode:** logo upload (needs Storage; the form says so and keeps the brand colour working) and online payment on the pay page (needs Razorpay).
 - **Tests:** 5 web tests run these functions as a member against a real Postgres (skipped without `TEST_DATABASE_URL`), including another workspace seeing nothing.
 
+### D-052 Leads and clients on the database
+**Status:** Accepted · **Date:** 27 Oct 2026
+- **Wired:** the leads board and table, lead page (timeline, notes, follow-up, stage, lost with reason, won), new lead; the clients list (billed and outstanding from issued invoices, project count), client page (timeline, invoices), new client with the GSTIN check, and the portal invite. Plan limits for open leads and clients with a portal use the database's counts.
+- **Stages:** the screens keep the five stages; the database keeps each workspace's own, seeded with the same five. Won and Lost match by kind, open stages by order (first New, second Contacted, the rest Proposal). Renaming or adding stages waits for the stage editor (not in the MVP screens).
+- **Won:** one transaction moves the lead to Won and makes the client from it (`convertLeadToClient`); doing it again returns the same client.
+- **Timeline:** database activity kinds map to the timeline's words (added, moved, note, lost with the note, won, portal invite, quotes and proposals); follow-up changes stay off the timeline, as in example mode. Names come from members' profiles.
+- **Until projects are wired:** a real client's page shows no projects (the count on the list is real).
+- **Portal invite:** gives the primary contact access and records it on the client's timeline; the sign-in email waits for Resend.
+- **Tests:** 6 web tests against Postgres: add, move, note, follow-up, lost, won once, GSTIN, money and portal, and another workspace seeing none of it.
+

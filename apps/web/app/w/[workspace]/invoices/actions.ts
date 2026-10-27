@@ -7,7 +7,7 @@ import {
   clientOptions,
   createInvoice,
   getInvoice,
-  invoiceLimit,
+  planLimit,
   issueInvoice,
   recordPayment,
   newPayLink,
@@ -50,7 +50,7 @@ export async function createInvoiceAction(
   const f = fields(form);
   const checked = checkInvoice(f, await clientOptions(slug));
   if (!checked.ok) return { errors: checked.errors, lineErrors: checked.lineErrors, values: f };
-  const limit = await invoiceLimit(slug);
+  const limit = await planLimit(slug, 'invoices_per_month');
   if (limit) return { limit, values: f };
   let id: string;
   try {

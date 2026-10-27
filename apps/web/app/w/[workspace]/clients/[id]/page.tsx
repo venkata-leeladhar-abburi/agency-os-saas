@@ -22,8 +22,13 @@ const STATUS_TONE: Record<string, BadgeProps['tone']> = {
   partially_paid: 'info',
 };
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const found = await getClient((await params).id);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ workspace: string; id: string }>;
+}) {
+  const { workspace, id } = await params;
+  const found = await getClient(id, workspace);
   return { title: `${found?.client.name ?? 'Client'} · Agency OS` };
 }
 
@@ -35,7 +40,7 @@ export default async function ClientPage({
   searchParams: Promise<{ from?: string }>;
 }) {
   const [{ workspace, id }, { from }] = await Promise.all([params, searchParams]);
-  const found = await getClient(id);
+  const found = await getClient(id, workspace);
   if (!found) notFound();
   const { client, money, projects, invoices } = found;
   const ws = (p: string) => `/w/${workspace}${p}`;

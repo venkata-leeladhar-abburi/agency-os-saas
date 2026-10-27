@@ -17,7 +17,7 @@ export default async function LeadsPage({
 }) {
   const [{ workspace }, { view }] = await Promise.all([params, searchParams]);
   const base = `/w/${workspace}/leads`;
-  const { rows, board } = await leads();
+  const { rows, board } = await leads(workspace);
   const open = rows.filter((r) => r.stage !== 'Won' && r.stage !== 'Lost');
   const total = open.reduce((sum, r) => sum + r.valueMinor, 0n);
   return (

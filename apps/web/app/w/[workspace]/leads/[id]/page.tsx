@@ -30,8 +30,13 @@ const TONE: Record<string, BadgeProps['tone']> = {
   lost: 'outline',
 };
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const lead = await getLead((await params).id);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ workspace: string; id: string }>;
+}) {
+  const { workspace, id } = await params;
+  const lead = await getLead(id, workspace);
   return { title: `${lead ? leadTitle(lead) : 'Lead'} · Agency OS` };
 }
 
@@ -41,7 +46,7 @@ export default async function LeadPage({
   params: Promise<{ workspace: string; id: string }>;
 }) {
   const { workspace, id } = await params;
-  const lead = await getLead(id);
+  const lead = await getLead(id, workspace);
   if (!lead) notFound();
   const title = leadTitle(lead);
   const docs = await docsFor({ leadId: lead.id }, workspace);
