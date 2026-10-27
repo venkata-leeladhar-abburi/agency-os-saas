@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomInt } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomInt } from 'node:crypto';
 
 /** A 128-bit-plus random token for links (invites, public proposals). Only its hash is stored. */
 export function newToken(): { token: string; hash: string } {
@@ -25,4 +25,15 @@ export function sha256Json(value: unknown): string {
     typeof v === 'bigint' ? v.toString() : v,
   );
   return createHash('sha256').update(json).digest('hex');
+}
+
+/**
+ * A link token the server can show again without storing it: an HMAC of what it opens and a
+ * version, keyed by LINK_SIGNING_SECRET. Only its hash is stored (for lookup); raising the
+ * version makes a new link and the old one stops working.
+ */
+export function linkToken(secret: string, scope: string, id: string, version: number): string {
+  if (!secret || secret.length < 32)
+    throw new Error('LINK_SIGNING_SECRET must be set to at least 32 characters.');
+  return createHmac('sha256', secret).update(`${scope}:${id}:${version}`).digest('base64url');
 }
