@@ -110,6 +110,24 @@ function totalsFor(i: Invoice, items: InvoiceItemInput[]): InvoiceTotals {
   });
 }
 
+/**
+ * An invoice's totals from what it stored when made (place of supply, LUT, rate) and its
+ * lines, so an issued invoice shows what it said even if the settings change later.
+ */
+export function totalsOfInvoice(invoice: Invoice, items: InvoiceItem[]): InvoiceTotals {
+  return totalsFor(
+    invoice,
+    items.map((i) => ({
+      description: i.description,
+      sacCode: i.sacCode,
+      quantity: i.quantity,
+      rateMinor: i.rateMinor,
+      discountMinor: i.discountMinor,
+      taxRateBp: i.taxRateBp,
+    })),
+  );
+}
+
 async function writeItems(tx: Tx, invoice: Invoice, items: InvoiceItemInput[]) {
   if (items.length === 0) throw new AccountError('invoice_items_required');
   let totals: InvoiceTotals;
@@ -458,6 +476,8 @@ export async function getInvoice(
   const sent = await tx.select().from(reminders).where(eq(reminders.invoiceId, inv.id));
   return {
     invoice: view(inv, today),
+    /** The stored row, for totalsOfInvoice. */
+    row: inv,
     client: client!,
     items,
     payments: paid,
@@ -695,4 +715,40 @@ export async function portalInvoices(tx: Tx): Promise<PortalInvoice[]> {
     totalMinor: BigInt(x.totalMinor as string),
     amountPaidMinor: BigInt(x.amountPaidMinor as string),
   }));
+}
+
+/** The number the next issued invoice gets (a preview: issuing takes it for real). */
+export async function nextInvoiceNumber(tx: Tx, workspaceId: string, now = new Date()) {
+  const ws = await workspaceOf(tx, workspaceId);
+  const today = localDate(now, ws.timeZone);
+  const fy = financialYear(today);
+  // Every number taken belongs to an invoice row (taking one and issuing share a transaction).
+  const [row] = await tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(invoices)
+    .where(and(eq(invoices.workspaceId, workspaceId), eq(invoices.financialYear, fy)));
+  return formatInvoiceNumber(ws.invoicePrefix, today, (row?.n ?? 0) + 1);
+}
+
+/** Invoices with a payment received in a calendar month ("YYYY-MM"), for "Received". */
+export async function invoicesPaidIn(tx: Tx, workspaceId: string, month: string) {
+  const rows = await tx
+    .selectDistinct({ id: payments.invoiceId })
+    .from(payments)
+    .where(
+      and(
+        eq(payments.workspaceId, workspaceId),
+        gte(payments.receivedOn, `${month}-01`),
+        sql`${payments.receivedOn} < (${`${month}-01`}::date + interval '1 month')`,
+      ),
+    );
+  return new Set(rows.map((r) => r.id));
+}
+
+/** Room for one more issued invoice this month on the workspace's plan. */
+export async function invoicePlanCheck(tx: Tx, workspaceId: string, now = new Date()) {
+  const ws = await workspaceOf(tx, workspaceId);
+  return checkPlanLimit(tx, workspaceId, 'invoices_per_month', 1, {
+    used: await issuedThisMonth(tx, workspaceId, ws.timeZone, now),
+  });
 }
