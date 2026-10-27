@@ -18,3 +18,13 @@ jobs:
           languages: javascript-typescript
           queries: security-extended
       - uses: github/codeql-action/analyze@v3
+        with:
+          output: sarif-results
+      # The Security tab has the details; this puts a one-line summary of each finding in the log.
+      - name: List findings
+        if: always()
+        run: |
+          for f in sarif-results/*.sarif; do
+            jq -r '.runs[].results[] |
+              "\(.ruleId) | \(.level) | \(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine) | \(.message.text | gsub("\n"; " "))"' "$f" | sort -u
+          done
