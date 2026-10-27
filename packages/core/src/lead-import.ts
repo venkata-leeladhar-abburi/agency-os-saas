@@ -1,3 +1,4 @@
+import { isEmail } from './email';
 import { parseDecimal } from './decimal';
 import { toLeadSource, type LeadSource } from './leads';
 import { minorDigits, type CurrencyCode } from './money';
@@ -64,7 +65,6 @@ export function normalizePhone(text: string): string {
   return text.trim().replace(/(?!^\+)[^\d]/g, '');
 }
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SUFFIX: Record<string, bigint> = {
   k: 1_000n,
   thousand: 1_000n,
@@ -79,12 +79,19 @@ const SUFFIX: Record<string, bigint> = {
 
 /** Reads amounts as people write them: "4,86,000", "₹4.86 L", "2 Cr", "$1,200.50", "50k". */
 export function parseAmountText(text: string, currency: CurrencyCode): bigint {
-  const match = /^([\d.,\s]+?)\s*([a-z]+)?$/i.exec(text.replace(/[^\d.,a-z\s]/gi, '').trim());
-  const multiplier = match?.[2] ? SUFFIX[match[2].toLowerCase()] : 1n;
-  if (!match || !multiplier) throw new RangeError(`Not an amount: ${text}`);
+  // A number, then an optional word ("L", "Cr", "k"). Split by hand rather than with one
+  // regex, so a long crafted cell can't make it backtrack (CodeQL js/polynomial-redos).
+  const cleaned = text.replace(/[^\d.,a-z\s]/gi, '').trim();
+  let cut = cleaned.length;
+  while (cut > 0 && /[a-z]/i.test(cleaned[cut - 1]!)) cut--;
+  const word = cleaned.slice(cut);
+  const number = cleaned.slice(0, cut).trim();
+  const multiplier = word ? SUFFIX[word.toLowerCase()] : 1n;
+  if (!/^[\d.,\s]+$/.test(number) || !/\d/.test(number) || !multiplier)
+    throw new RangeError(`Not an amount: ${text}`);
   const digits = minorDigits(currency);
   const extra = 7; // room for the decimals of "4.865 L"
-  const scaled = parseDecimal(match[1]!.replace(/[,\s]/g, ''), digits + extra) * multiplier;
+  const scaled = parseDecimal(number.replace(/[,\s]/g, ''), digits + extra) * multiplier;
   const unit = 10n ** BigInt(extra);
   if (scaled % unit !== 0n)
     throw new RangeError(`More decimal places than the currency has: ${text}`);
@@ -107,7 +114,7 @@ export function toLeadImport(
   const name = get('name') ?? company;
   if (!name) errors.push('Add a name or a company.');
   const email = get('email')?.toLowerCase() ?? null;
-  if (email && !EMAIL.test(email)) errors.push(`Check the email "${email}".`);
+  if (email && !isEmail(email)) errors.push(`Check the email "${email}".`);
   const rawPhone = get('phone');
   const phone = rawPhone ? normalizePhone(rawPhone) : null;
   if (rawPhone && (phone!.replace('+', '').length < 7 || phone!.replace('+', '').length > 15))

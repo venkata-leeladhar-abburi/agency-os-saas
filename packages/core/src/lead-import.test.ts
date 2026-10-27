@@ -111,3 +111,19 @@ describe('amounts as people write them', () => {
     expect(() => parseAmountText('1.234', 'INR')).toThrow('decimal places');
   });
 });
+
+describe('parseAmountText on crafted input', () => {
+  it('stays fast and still rejects it (CodeQL js/polynomial-redos)', () => {
+    const started = performance.now();
+    expect(() => parseAmountText(`\t${'\t'.repeat(50_000)}x1`, 'INR')).toThrow(RangeError);
+    expect(() => parseAmountText(`1${' '.repeat(50_000)}!`, 'INR')).not.toThrow();
+    expect(performance.now() - started).toBeLessThan(100);
+  });
+  it('keeps reading the usual forms', () => {
+    expect(parseAmountText('₹4.86 L', 'INR')).toBe(48_600_000n);
+    expect(parseAmountText('2 Cr', 'INR')).toBe(2_000_000_000n);
+    expect(parseAmountText('50k', 'INR')).toBe(5_000_000n);
+    expect(() => parseAmountText('4 L 5', 'INR')).toThrow(RangeError);
+    expect(() => parseAmountText('L', 'INR')).toThrow(RangeError);
+  });
+});

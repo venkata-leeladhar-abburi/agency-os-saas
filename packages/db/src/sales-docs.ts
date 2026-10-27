@@ -3,6 +3,7 @@ import {
   financialYear,
   formatDate,
   formatQuoteNumber,
+  isEmail,
   PROPOSAL_VALIDITY_DAYS,
   standardProposal,
   zonedTime,
@@ -640,8 +641,7 @@ function open(p: Proposal) {
  */
 export async function requestSigningCode(db: Db, token: string, email: string, now = new Date()) {
   const destination = email.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destination))
-    throw new AccountError('signer_email_invalid');
+  if (!isEmail(destination)) throw new AccountError('signer_email_invalid');
   return withLink(db, token, now, async (tx, p) => {
     open(p);
     const [recent] = await tx
