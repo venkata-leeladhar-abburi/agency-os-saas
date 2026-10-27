@@ -148,6 +148,8 @@ export const proposals = pgTable(
     publicTokenHash: text('public_token_hash'),
     /** SHA-256 of what was sent (blocks and quote), so the signature covers exactly that. */
     documentSha256: text('document_sha256'),
+    /** The email the link was sent to; the signing code goes there. */
+    sentTo: text('sent_to'),
     sentAt: timestamp('sent_at', { withTimezone: true }),
     sentBy: uuid('sent_by').references(() => authUsers.id, { onDelete: 'set null' }),
     firstViewedAt: timestamp('first_viewed_at', { withTimezone: true }),

@@ -120,6 +120,13 @@
       "when": 1793079109038,
       "tag": "0016_workspace_invoice_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793089409113,
+      "tag": "0017_proposal_sent_to",
+      "breakpoints": true
     }
   ]
 }

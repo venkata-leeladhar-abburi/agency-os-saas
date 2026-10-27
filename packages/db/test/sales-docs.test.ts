@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { acceptInvitation, createWorkspace, inviteMember } from '../src/accounts';
 import { withService, withUser, type Session } from '../src/client';
 import { convertLeadToClient, createClient } from '../src/clients';
-import { createLead, leadActivities } from '../src/leads';
+import { createLead, getLead, leadActivities, listStages } from '../src/leads';
 import { listNotifications } from '../src/platform';
 import {
   createProposal,
@@ -12,6 +12,8 @@ import {
   declineProposal,
   expireProposals,
   getQuote,
+  proposalByLink,
+  proposalLinkToken,
   proposalSignature,
   requestSigningCode,
   sendProposal,
@@ -360,9 +362,9 @@ describe('proposals', () => {
     expect((await as(owner, (tx) => listNotifications(tx, ws))).map((n) => n.kind)).toContain(
       'proposal.decided',
     );
-    expect((await as(owner, (tx) => leadActivities(tx, ws, leadId)))[0]).toMatchObject({
-      kind: 'proposal_signed',
-    });
+    expect((await as(owner, (tx) => leadActivities(tx, ws, leadId))).map((a) => a.kind)).toEqual(
+      expect.arrayContaining(['proposal_signed', 'stage_change', 'converted']),
+    );
   });
 
   it('can’t be signed twice, reopened, or have its evidence changed', async () => {
@@ -388,9 +390,45 @@ describe('proposals', () => {
     );
   });
 
-  it('lets a signed proposal convert the lead even before it is moved to Won', async () => {
-    const { created } = await as(owner, (tx) => convertLeadToClient(tx, leadId, owner.userId));
-    expect(created).toBe(true);
+  it('wins the lead when signed: it moves to Won and becomes a client, once', async () => {
+    const lead = (await as(owner, (tx) => getLead(tx, leadId)))!;
+    const won = (await as(owner, (tx) => listStages(tx, ws))).find((s) => s.kind === 'won')!;
+    expect(lead.stageId).toBe(won.id);
+    expect(lead.convertedClientId).not.toBeNull();
+    const { clientId, created } = await as(owner, (tx) =>
+      convertLeadToClient(tx, leadId, owner.userId),
+    );
+    expect({ clientId, created }).toEqual({ clientId: lead.convertedClientId, created: false });
+    expect((await as(owner, (tx) => getQuote(tx, quoteId)))!.clientId).toBe(clientId);
+    const link = await proposalByLink(t.db, token, later(3));
+    expect(link).toMatchObject({
+      proposal: { status: 'signed', clientId },
+      clientName: 'Example Kite & Co',
+      signature: { signerName: 'Example Priya' },
+      workspace: { name: 'One Stop Solutions' },
+    });
+  });
+
+  it('makes a link that can be copied again, and keeps the address it was sent to', async () => {
+    const secret = 'x'.repeat(40);
+    const lead4 = await as(owner, (tx) =>
+      createLead(tx, ws, { name: 'Example Four', email: 'four@example.com' }, owner.userId),
+    );
+    const p6 = await as(owner, (tx) =>
+      createProposal(tx, ws, { leadId: lead4 }, owner.userId, now),
+    );
+    await expect(
+      as(owner, (tx) => sendProposal(tx, p6, owner.userId, now, { secret, email: 'nope' })),
+    ).rejects.toMatchObject({ code: 'signer_email_invalid' });
+    const { token: t6 } = await as(owner, (tx) =>
+      // Sent later than the others, so the expiry check below doesn't count it.
+      sendProposal(tx, p6, owner.userId, later(15), { secret, email: ' Four@Example.com ' }),
+    );
+    expect(t6).toBe(proposalLinkToken(secret, p6));
+    expect((await proposalByLink(t.db, t6, later(16))).proposal).toMatchObject({
+      sentTo: 'four@example.com',
+      viewCount: 0,
+    });
   });
 
   it('can be declined, and expires after 14 days', async () => {
