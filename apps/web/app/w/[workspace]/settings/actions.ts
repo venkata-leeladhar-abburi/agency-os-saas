@@ -45,7 +45,7 @@ export async function savePrefsAction(
     fields(form),
     NOTIFICATION_CATEGORIES.map((c) => c.id),
   );
-  await saveNotificationPrefs(prefs);
+  await saveNotificationPrefs(prefs, slug);
   revalidatePath(`/w/${slug}/settings/notifications`);
   return { done: Date.now() };
 }

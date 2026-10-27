@@ -1,4 +1,6 @@
 // Server only. The in-app notification list and each person's settings for it.
+import { ctxFor } from './ctx';
+import * as dbTeam from './db/team';
 import { newId, store } from './shared';
 import type { NotificationCategory, WorkspaceSettings } from './types';
 import { relativeTime } from './views';
@@ -40,6 +42,8 @@ export type NotificationRow = {
 export async function notifications(
   slug: string,
 ): Promise<{ rows: NotificationRow[]; unread: number }> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbTeam.notificationList(ctx, slug);
   const now = new Date();
   const rows = [...store().notifications]
     .sort((a, b) => b.at.localeCompare(a.at))
@@ -56,15 +60,38 @@ export async function notifications(
   return { rows, unread: store().notifications.filter((n) => !n.read).length };
 }
 
-export async function markRead(id: string) {
+export async function markRead(id: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) {
+    await dbTeam.markReadFor(ctx, id);
+    return;
+  }
   const n = store().notifications.find((x) => x.id === id);
   if (n) n.read = true;
 }
 
-export async function markAllRead() {
+export async function markAllRead(slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) {
+    await dbTeam.markReadFor(ctx);
+    return;
+  }
   for (const n of store().notifications) n.read = true;
 }
 
-export async function saveNotificationPrefs(prefs: WorkspaceSettings['notificationPrefs']) {
+/** The signed-in member's settings (the example workspace's in example mode). */
+export async function notificationPrefs(
+  slug?: string,
+): Promise<WorkspaceSettings['notificationPrefs']> {
+  const ctx = await ctxFor(slug);
+  return ctx ? dbTeam.prefsFor(ctx) : store().settings.notificationPrefs;
+}
+
+export async function saveNotificationPrefs(
+  prefs: WorkspaceSettings['notificationPrefs'],
+  slug?: string,
+) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbTeam.savePrefsFor(ctx, prefs);
   store().settings.notificationPrefs = prefs;
 }

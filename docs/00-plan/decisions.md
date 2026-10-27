@@ -352,3 +352,14 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Plan limits:** quotes and proposals a month count those sent this month, as the database enforces it.
 - **Tests:** 6 web tests against Postgres (quote with GST, one proposal per quote, edit, send and link, view counting and preview, signing with the code and winning the lead, decline once, another workspace seeing none of it), 2 more database tests, 2 email tests.
 
+### D-055 Team, notifications and the audit log on the database
+**Status:** Accepted · **Date:** 27 Oct 2026
+- **Wired:** the members page (invite, send again, cancel, change role, remove), the team page (members with their projects and open tasks, daily updates), the notification bell and list (mark read, mark all read), each member's notification settings, the audit log with its filter and pages, and the workspace header (the member's name and unread count).
+- **Emails of members:** sign-in emails live in Supabase's `auth.users`, which members can't read. Migration 0018 adds `workspace_member_emails(workspace)`, a guarded function that returns them only for that workspace's members and only to roles that can see members.
+- **Invite links:** only the hash is stored, so the link shows once, when the invite is made or sent again (as in example mode). Sending again cancels the old invite and makes a new one, so the old link stops working at once.
+- **Notifications now:** an assignment, an @mention or an internal sign-off request is put in the recipients' lists as soon as the change is saved (the database works out who; the app delivers with the service role, as members can't write each other's lists). Notifications respect each person's in-app setting. Their emails, and the client's sign-off email, go out with the job runner (Inngest) and Resend.
+- **Settings:** the screen's seven categories map to the database's notification kinds (enquiry, proposal viewed and decided, gate decided, task assigned or mentioned, payment received, message); email is on or off per category.
+- **Audit log:** the database records invoices, payments, settings, branding, invitations and proposal decisions itself. The app records the rest (invite sent again or cancelled, role changed, member removed) as the member, in the same words as example mode; entries the database wrote are put into words from what they store.
+- **Errors:** refusals such as "a workspace needs at least one owner" are turned into the form's message after the transaction ends, as a failed statement aborts it.
+- **Tests:** 6 web tests against Postgres: invite, refuse a second invite, send again (old link stops), join; cancel, roles, last owner, not removing yourself; one daily update a day; assignment and mention notifications and marking read; settings per person; the audit log in words with its filter, for owners only, and another workspace seeing none of it.
+

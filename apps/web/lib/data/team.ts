@@ -2,6 +2,7 @@
 import { randomBytes } from 'node:crypto';
 import { inviteExpiry, ROLE_LABELS, type Role } from '@agency-os/core';
 import { ctxFor } from './ctx';
+import * as dbTeam from './db/team';
 import * as dbWork from './db/work';
 import { EXAMPLE_USER, newId, store } from './shared';
 import type { Invitation, Member } from './types';
@@ -33,7 +34,9 @@ export type InviteRow = Invitation & {
   expires: string;
 };
 
-export async function team(now = new Date()) {
+export async function team(slug?: string, now = new Date()) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbTeam.teamFor(ctx, now);
   const s = store();
   const members = s.members.map((m) => ({
     ...m,
@@ -58,7 +61,13 @@ export async function team(now = new Date()) {
 
 type Outcome = { ok: true } | { ok: false; error: string };
 
-export async function invite(email: string, role: Role): Promise<Outcome & { token?: string }> {
+export async function invite(
+  email: string,
+  role: Role,
+  slug?: string,
+): Promise<Outcome & { token?: string }> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbTeam.inviteFor(ctx, email, role);
   const s = store();
   const address = email.trim().toLowerCase();
   if (role === 'owner')
@@ -90,7 +99,12 @@ export async function invite(email: string, role: Role): Promise<Outcome & { tok
 }
 
 /** A fresh link and another 7 days; the old link stops working. */
-export async function resendInvite(id: string): Promise<Invitation | null> {
+export async function resendInvite(
+  id: string,
+  slug?: string,
+): Promise<Pick<Invitation, 'email' | 'token'> | null> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbTeam.resendFor(ctx, id);
   const i = store().invitations.find((x) => x.id === id && !x.revokedAt && !x.acceptedAt);
   if (!i) return null;
   i.token = randomBytes(16).toString('base64url');
@@ -99,7 +113,12 @@ export async function resendInvite(id: string): Promise<Invitation | null> {
   return i;
 }
 
-export async function revokeInvite(id: string): Promise<Invitation | null> {
+export async function revokeInvite(
+  id: string,
+  slug?: string,
+): Promise<Pick<Invitation, 'email'> | null> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbTeam.revokeFor(ctx, id);
   const i = store().invitations.find((x) => x.id === id && !x.revokedAt && !x.acceptedAt);
   if (i) i.revokedAt = new Date().toISOString();
   return i ?? null;
@@ -110,7 +129,10 @@ const owners = () => store().members.filter((m) => m.role === 'owner');
 export async function changeRole(
   memberId: string,
   role: Role,
+  slug?: string,
 ): Promise<Outcome & { member?: Member }> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbTeam.changeRoleFor(ctx, memberId, role);
   const m = store().members.find((x) => x.id === memberId);
   if (!m) return { ok: false, error: 'That person isn’t a member any more.' };
   if (m.role === 'owner' && role !== 'owner' && owners().length === 1)
@@ -122,7 +144,12 @@ export async function changeRole(
   return { ok: true, member: m };
 }
 
-export async function removeMember(memberId: string): Promise<Outcome & { member?: Member }> {
+export async function removeMember(
+  memberId: string,
+  slug?: string,
+): Promise<Outcome & { member?: Member }> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbTeam.removeFor(ctx, memberId);
   const s = store();
   const m = s.members.find((x) => x.id === memberId);
   if (!m) return { ok: false, error: 'That person isn’t a member any more.' };
@@ -163,7 +190,9 @@ export async function acceptInvite(token: string, name: string): Promise<Outcome
   return { ok: true };
 }
 
-export async function dailyUpdates(on = istDate(new Date())) {
+export async function dailyUpdates(slug?: string, on = istDate(new Date())) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbTeam.dailyUpdatesOn(ctx, on);
   const s = store();
   const posted = s.dailyUpdates.filter((d) => d.on === on);
   return {
@@ -174,7 +203,15 @@ export async function dailyUpdates(on = istDate(new Date())) {
 }
 
 /** One update per person a day; posting again replaces it. */
-export async function postDailyUpdate(input: { done: string; next: string; blockers: string }) {
+export async function postDailyUpdate(
+  input: { done: string; next: string; blockers: string },
+  slug?: string,
+) {
+  const ctx = await ctxFor(slug);
+  if (ctx) {
+    await dbTeam.postDailyUpdateFor(ctx, input);
+    return;
+  }
   const s = store();
   const on = istDate(new Date());
   s.dailyUpdates = s.dailyUpdates.filter((d) => !(d.on === on && d.member === EXAMPLE_USER.name));

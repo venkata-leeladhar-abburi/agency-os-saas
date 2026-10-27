@@ -21,6 +21,9 @@ import {
   requestGateApproval,
   subtasks as dbSubtasks,
   updateTask as dbUpdateTask,
+  deliverEvent,
+  withService,
+  type NotificationEvent,
   type Tx,
 } from '@agency-os/db';
 import type { ProjectInput, TaskInput } from '../../forms';
@@ -64,6 +67,20 @@ export async function memberById(ctx: WorkspaceCtx, userId: string) {
 /** The signed-in member's name, for "My tasks". */
 export async function myName(ctx: WorkspaceCtx): Promise<string> {
   return asMember(ctx, async (tx) => (await members(tx, ctx.workspaceId)).name(ctx.session.userId));
+}
+
+// ---------- Notifications ----------
+
+/**
+ * Puts the in-app notifications for what the member just did (an assignment, a mention, a
+ * sign-off request) in the recipients' lists, once the change is saved. The database works out
+ * who; delivering takes the service role, as members can't write each other's notifications.
+ * Emails for them go out with the job runner (Inngest) and Resend.
+ */
+async function deliver(ctx: WorkspaceCtx, events: NotificationEvent[]) {
+  for (const event of events)
+    if (event.userIds.length)
+      await withService(ctx.db, ctx.workspaceId, (tx) => deliverEvent(tx, event));
 }
 
 // ---------- Projects ----------
@@ -216,17 +233,18 @@ export async function createProjectFor(ctx: WorkspaceCtx, input: ProjectInput): 
 
 /**
  * Asks for the current phase's sign-off. The gate's title comes from the template; when the
- * lead words it differently, that goes with the request as its message. The email to the client
- * waits for the job runner (Inngest) and Resend.
+ * lead words it differently, that goes with the request as its message. An internal approver
+ * sees it in the app; the email to the client waits for the job runner (Inngest) and Resend.
  */
 export async function requestGateFor(ctx: WorkspaceCtx, id: string, title: string) {
-  return asMember(ctx, async (tx) => {
+  const event = await asMember(ctx, async (tx) => {
     const p = await dbGetProject(tx, id);
     if (!p || p.workspaceId !== ctx.workspaceId) throw new AccountError('project_not_found');
     const gate = p.phases[currentPhase(p)]?.gate;
     if (!gate) throw new AccountError('gate_not_found');
-    await requestGateApproval(tx, gate.id, title === gate.title ? undefined : title);
+    return requestGateApproval(tx, gate.id, title === gate.title ? undefined : title);
   });
+  await deliver(ctx, [event]);
 }
 
 // ---------- Tasks ----------
@@ -371,26 +389,34 @@ async function taskFields(tx: Tx, ctx: WorkspaceCtx, input: TaskInput) {
   };
 }
 
-/** Adds a task. The assignee's notification waits for the job runner. */
+/** Adds a task; the assignee (if someone else) is told in the app. */
 export async function createTaskFor(ctx: WorkspaceCtx, input: TaskInput): Promise<string> {
-  return asMember(ctx, async (tx) => {
+  const { id, events } = await asMember(ctx, async (tx) => {
     const fields = await taskFields(tx, ctx, input);
-    const { id } = await dbCreateTask(
+    return dbCreateTask(
       tx,
       ctx.workspaceId,
       { projectId: input.projectId, status: input.status, ...fields },
       ctx.session.userId,
     );
-    return id;
   });
+  await deliver(ctx, events);
+  return id;
 }
 
 export async function updateTaskFor(ctx: WorkspaceCtx, id: string, input: TaskInput) {
-  return asMember(ctx, async (tx) => {
-    await dbUpdateTask(tx, id, await taskFields(tx, ctx, input), ctx.session.userId);
+  const events = await asMember(ctx, async (tx) => {
+    const assigned = await dbUpdateTask(
+      tx,
+      id,
+      await taskFields(tx, ctx, input),
+      ctx.session.userId,
+    );
     const t = await dbGetTask(tx, id);
     if (t && t.status !== input.status) await moveTask(tx, { taskId: id, status: input.status });
+    return assigned;
   });
+  await deliver(ctx, events);
 }
 
 export async function setTaskStatusFor(ctx: WorkspaceCtx, id: string, status: Task['status']) {
@@ -414,12 +440,12 @@ export async function toggleSubtaskFor(ctx: WorkspaceCtx, subtaskId: string, don
   return asMember(ctx, (tx) => moveTask(tx, { taskId: subtaskId, status: done ? 'done' : 'todo' }));
 }
 
-/** Adds a comment; returns the names it mentions (their notifications wait for the job runner). */
+/** Adds a comment; the people it mentions are told in the app. Returns their names. */
 export async function addCommentFor(ctx: WorkspaceCtx, id: string, text: string) {
-  return asMember(ctx, async (tx) => {
+  const { named, events } = await asMember(ctx, async (tx) => {
     const people = await members(tx, ctx.workspaceId);
     const named = mentions(text, people.names);
-    await addTaskComment(
+    const { events } = await addTaskComment(
       tx,
       {
         workspaceId: ctx.workspaceId,
@@ -430,6 +456,8 @@ export async function addCommentFor(ctx: WorkspaceCtx, id: string, text: string)
       ctx.session.userId,
     );
     const me = people.name(ctx.session.userId);
-    return named.filter((n) => n !== me);
+    return { named: named.filter((n) => n !== me), events };
   });
+  await deliver(ctx, events);
+  return named;
 }

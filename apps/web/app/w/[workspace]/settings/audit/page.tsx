@@ -16,7 +16,10 @@ export default async function AuditPage({
 }) {
   const [{ workspace }, { action, page }] = await Promise.all([params, searchParams]);
   const known = action && action in AUDIT_ACTIONS ? action : undefined;
-  const { rows, total, pages } = await auditEntries({ action: known, page: Number(page) || 1 });
+  const { rows, total, pages } = await auditEntries(
+    { action: known, page: Number(page) || 1 },
+    workspace,
+  );
   const current = Math.min(pages, Math.max(1, Number(page) || 1));
   const href = (p: number) =>
     `/w/${workspace}/settings/audit?${new URLSearchParams({ ...(known ? { action: known } : {}), page: String(p) })}`;

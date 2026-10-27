@@ -826,7 +826,8 @@ export async function planLimit(
     | 'open_leads'
     | 'portal_clients'
     | 'quotes_per_month'
-    | 'proposals_per_month',
+    | 'proposals_per_month'
+    | 'members',
 ): Promise<LimitInfo | null> {
   const ctx = await ctxFor(slug);
   if (!ctx) return needsUpgrade(resource);

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkNotificationPrefs, checkSettings } from '../forms';
 import { createClient, createLead, saveLogo } from './index';
 import { exampleStore, resetExampleStore } from './example-store';
@@ -12,6 +12,14 @@ import {
   portalProject,
   sendMessage,
 } from './portal';
+
+// These run the example store's flows; outside example mode they would go to the database.
+beforeAll(() => {
+  vi.stubEnv('EXAMPLE_MODE', 'true');
+});
+afterAll(() => {
+  vi.unstubAllEnvs();
+});
 
 beforeEach(() => {
   resetExampleStore();

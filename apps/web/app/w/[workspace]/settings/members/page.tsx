@@ -44,7 +44,7 @@ function access(role: Role, area: (typeof AREAS)[number]): string {
 
 export default async function MembersPage({ params }: { params: Promise<{ workspace: string }> }) {
   const { workspace } = await params;
-  const [{ members, invites }, plan] = await Promise.all([team(), planOverview()]);
+  const [{ members, invites }, plan] = await Promise.all([team(workspace), planOverview()]);
   const seats = plan.rows.find((r) => r.resource === 'members')!;
   return (
     <>

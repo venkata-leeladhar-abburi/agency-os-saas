@@ -15,11 +15,11 @@ export async function notificationsAction(
 }
 
 export async function markReadAction(slug: string, id: string) {
-  await markRead(id);
+  await markRead(id, slug);
   revalidatePath(`/w/${slug}`, 'layout');
 }
 
 export async function markAllReadAction(slug: string) {
-  await markAllRead();
+  await markAllRead(slug);
   revalidatePath(`/w/${slug}`, 'layout');
 }

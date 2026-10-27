@@ -1,4 +1,6 @@
 // Server only. The audit log: important actions, who did them, when and from where.
+import { ctxFor } from './ctx';
+import * as dbTeam from './db/team';
 import { EXAMPLE_USER, newId, store } from './shared';
 import type { AuditEntry } from './types';
 
@@ -17,6 +19,11 @@ export const AUDIT_ACTIONS: Record<string, string> = {
   'payment.recorded': 'Recorded a payment',
   'proposal.sent': 'Sent a proposal',
   'client.portal_invited': 'Invited a client to the portal',
+  'invitation.created': 'Invited a member',
+  'invoice.cancelled': 'Cancelled an invoice',
+  'proposal.signed': 'A client signed a proposal',
+  'proposal.declined': 'A client declined a proposal',
+  'subscription.updated': 'Changed the subscription',
   'data.exported': 'Exported data',
   'example.removed': 'Removed example data',
 };
@@ -39,12 +46,34 @@ export function audit(
   });
 }
 
+/**
+ * Records an action in the audit log: the example store, or the database as the member. Use it
+ * for actions the database doesn't record by itself (it records invoices, payments, settings,
+ * branding, invitations and proposal decisions).
+ */
+export async function recordAudit(
+  slug: string,
+  action: keyof typeof AUDIT_ACTIONS,
+  subject: string,
+  detail = '',
+  ip: string | null = null,
+) {
+  const ctx = await ctxFor(slug);
+  if (ctx) await dbTeam.writeAudit(ctx, { action, subject, detail, ip });
+  else audit(action, subject, detail, ip);
+}
+
 /** Newest first, optionally one kind of action; at most 200 rows a page. */
-export async function auditEntries(filter: { action?: string; page?: number } = {}): Promise<{
+export async function auditEntries(
+  filter: { action?: string; page?: number } = {},
+  slug?: string,
+): Promise<{
   rows: AuditEntry[];
   total: number;
   pages: number;
 }> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbTeam.auditFor(ctx, filter);
   const size = 200;
   const all = store().audit.filter((e) => !filter.action || e.action === filter.action);
   const page = Math.max(1, filter.page ?? 1);

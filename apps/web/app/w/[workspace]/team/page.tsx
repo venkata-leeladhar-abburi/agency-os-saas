@@ -8,7 +8,10 @@ export const metadata = { title: 'Team · Agency OS' };
 
 export default async function TeamPage({ params }: { params: Promise<{ workspace: string }> }) {
   const { workspace } = await params;
-  const [{ members, invites }, updates] = await Promise.all([team(), dailyUpdates()]);
+  const [{ members, invites }, updates] = await Promise.all([
+    team(workspace),
+    dailyUpdates(workspace),
+  ]);
   return (
     <>
       <PageHeader
