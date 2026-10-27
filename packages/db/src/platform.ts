@@ -259,11 +259,42 @@ export async function checkPlanLimit(
 
 // ---- Audit log ----
 
+/** Records an action by the signed-in member (RLS: as themselves, in their workspace). */
+export async function addAuditEntry(
+  tx: Tx,
+  entry: {
+    workspaceId: string;
+    actorId: string;
+    action: string;
+    subjectType?: string | null;
+    subjectId?: string | null;
+    changes?: Record<string, unknown>;
+    ip?: string | null;
+    userAgent?: string | null;
+  },
+) {
+  await tx.insert(auditLog).values({
+    workspaceId: entry.workspaceId,
+    actorId: entry.actorId,
+    action: entry.action,
+    subjectType: entry.subjectType ?? null,
+    subjectId: entry.subjectId ?? null,
+    changes: entry.changes ?? null,
+    ip: entry.ip ?? null,
+    userAgent: entry.userAgent ?? null,
+  });
+}
+
 /** Newest first, with the actor's name. RLS shows it only to roles with audit.read. */
 export async function listAuditLog(
   tx: Tx,
   workspaceId: string,
-  { limit = 50, before }: { limit?: number; before?: Date } = {},
+  {
+    limit = 50,
+    before,
+    action,
+    offset = 0,
+  }: { limit?: number; before?: Date; action?: string; offset?: number } = {},
 ) {
   return tx
     .select({
@@ -284,10 +315,23 @@ export async function listAuditLog(
       and(
         eq(auditLog.workspaceId, workspaceId),
         before ? lt(auditLog.createdAt, before) : undefined,
+        action ? eq(auditLog.action, action) : undefined,
       ),
     )
     .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
+}
+
+/** How many entries the audit log has, optionally of one action. */
+export async function auditCount(tx: Tx, workspaceId: string, action?: string) {
+  const [row] = await tx
+    .select({ n: count() })
+    .from(auditLog)
+    .where(
+      and(eq(auditLog.workspaceId, workspaceId), action ? eq(auditLog.action, action) : undefined),
+    );
+  return row?.n ?? 0;
 }
 
 // ---- Data export ----

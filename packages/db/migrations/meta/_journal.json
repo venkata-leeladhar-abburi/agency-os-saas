@@ -127,6 +127,13 @@
       "when": 1793089409113,
       "tag": "0017_proposal_sent_to",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793091098653,
+      "tag": "0018_member_emails",
+      "breakpoints": true
     }
   ]
 }

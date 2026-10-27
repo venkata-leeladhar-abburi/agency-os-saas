@@ -5,7 +5,7 @@ import {
   workspaceDefaults,
   type Role,
 } from '@agency-os/core';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import type { Tx } from './client';
 import { auditLog, invitations, memberships, profiles, workspaces } from './schema';
@@ -238,11 +238,59 @@ export async function listMembers(tx: Tx, workspaceId: string) {
       role: memberships.role,
       status: memberships.status,
       name: profiles.fullName,
+      joinedAt: memberships.createdAt,
     })
     .from(memberships)
     .leftJoin(profiles, eq(profiles.id, memberships.userId))
     .where(eq(memberships.workspaceId, workspaceId))
     .orderBy(asc(memberships.createdAt));
+}
+
+/** Members' sign-in emails, by user id (only for roles that can see members). */
+export async function memberEmails(tx: Tx, workspaceId: string): Promise<Map<string, string>> {
+  const rows = await tx.execute<{ user_id: string; email: string | null }>(
+    sql`select * from workspace_member_emails(${workspaceId}::uuid)`,
+  );
+  return new Map(rows.flatMap((r) => (r.email ? [[r.user_id, r.email] as const] : [])));
+}
+
+/** Invitations not yet accepted or cancelled, newest first (expired ones included). */
+export async function listInvitations(tx: Tx, workspaceId: string) {
+  return tx
+    .select()
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.workspaceId, workspaceId),
+        isNull(invitations.acceptedAt),
+        isNull(invitations.revokedAt),
+      ),
+    )
+    .orderBy(desc(invitations.createdAt));
+}
+
+/** Sends an invite again: the old link stops working and a new one works for 7 days. */
+export async function resendInvitation(tx: Tx, invitationId: string, actorId: string) {
+  const [old] = await tx
+    .select()
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.id, invitationId),
+        isNull(invitations.acceptedAt),
+        isNull(invitations.revokedAt),
+      ),
+    );
+  if (!old) throw new AccountError('invite_not_found');
+  await revokeInvitation(tx, old.id);
+  const { id, token } = await inviteMember(tx, {
+    workspaceId: old.workspaceId,
+    email: old.email ?? undefined,
+    phone: old.phone ?? undefined,
+    role: old.role,
+    invitedBy: actorId,
+  });
+  return { id, token, email: old.email ?? old.phone ?? '' };
 }
 
 export async function changeRole(tx: Tx, membershipId: string, role: Role) {
