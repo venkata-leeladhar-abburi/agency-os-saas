@@ -227,6 +227,16 @@ export async function getProject(tx: Tx, projectId: string) {
   };
 }
 
+/** Phase id to name for these projects, in one query (for task lists). */
+export async function phaseNames(tx: Tx, projectIds: string[]): Promise<Map<string, string>> {
+  if (projectIds.length === 0) return new Map();
+  const rows = await tx
+    .select({ id: phases.id, name: phases.name })
+    .from(phases)
+    .where(inArray(phases.projectId, projectIds));
+  return new Map(rows.map((r) => [r.id, r.name]));
+}
+
 export async function listProjects(
   tx: Tx,
   workspaceId: string,

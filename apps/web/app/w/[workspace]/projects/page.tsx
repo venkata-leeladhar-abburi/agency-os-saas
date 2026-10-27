@@ -10,7 +10,7 @@ export const metadata = { title: 'Projects · Agency OS' };
 export default async function ProjectsPage({ params }: { params: Promise<{ workspace: string }> }) {
   const { workspace } = await params;
   const base = `/w/${workspace}/projects`;
-  const rows = await projects();
+  const rows = await projects(workspace);
   const atRisk = rows.filter((p) => p.health !== 'On track').length;
   return (
     <>

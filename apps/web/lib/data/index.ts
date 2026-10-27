@@ -23,9 +23,10 @@ import type {
   ProjectInput,
   SettingsInput,
 } from '../forms';
-import { workspaceCtx } from '../server/workspace';
+import { ctxFor } from './ctx';
 import * as dbInvoices from './db/invoices';
 import * as dbPeople from './db/people';
+import * as dbWork from './db/work';
 import { limitInfo, needsUpgrade, type LimitInfo } from './plan';
 import { activity, EXAMPLE_USER, newId, store } from './shared';
 import type { Client, Invoice, Lead, Project, StageId, WorkspaceSettings } from './types';
@@ -40,9 +41,7 @@ import {
   stageName,
 } from './views';
 
-export function exampleMode(): boolean {
-  return process.env.EXAMPLE_MODE === 'true';
-}
+export { exampleMode } from './ctx';
 
 export type WorkspaceSummary = {
   id: string;
@@ -283,8 +282,7 @@ export async function getClient(id: string, slug?: string) {
     if (!found) return null;
     return {
       ...found,
-      // Projects move to the database next; until then a real client shows none.
-      projects: [] as ProjectRow[],
+      projects: (await projects(slug)).filter((p) => p.clientId === id),
       invoices: (await dbInvoices.invoiceRows(ctx)).filter((i) => i.clientId === id),
     };
   }
@@ -337,7 +335,7 @@ export type ProjectRow = {
 };
 
 /** Why a project needs attention (prd-mvp.md E1.9: overdue gates or tasks), most urgent first. */
-export function projectRisks(p: Project, now = new Date()): string[] {
+export function projectRisks(p: Project, now = new Date(), lateTasks?: number): string[] {
   const todayOn = istDate(now);
   const reasons: string[] = [];
   if (todayOn > p.dueOn)
@@ -346,47 +344,74 @@ export function projectRisks(p: Project, now = new Date()): string[] {
     const days = Math.floor((now.getTime() - new Date(p.gate.sentAt).getTime()) / 86_400_000);
     if (days >= 1) reasons.push(`${p.gate.title}: waiting ${days} ${days === 1 ? 'day' : 'days'}`);
   }
-  const late = store().tasks.filter(
-    (t) => t.projectId === p.id && t.status !== 'done' && t.dueOn && t.dueOn < todayOn,
-  ).length;
+  const late =
+    lateTasks ??
+    store().tasks.filter(
+      (t) => t.projectId === p.id && t.status !== 'done' && t.dueOn && t.dueOn < todayOn,
+    ).length;
   if (late) reasons.push(`${late} ${late === 1 ? 'task' : 'tasks'} overdue`);
   const used = budgetUsed(p.usedMinor, p.budgetMinor);
   if (used >= 90) reasons.push(`Budget ${used}% used`);
   return reasons;
 }
 
-function projectHealth(p: Project, now = new Date()) {
+function projectHealth(p: Project, now = new Date(), lateTasks?: number) {
   if (istDate(now) > p.dueOn) return 'Late' as const;
-  return projectRisks(p, now).length ? ('At risk' as const) : ('On track' as const);
+  return projectRisks(p, now, lateTasks).length ? ('At risk' as const) : ('On track' as const);
 }
 
-export async function projects(): Promise<ProjectRow[]> {
+function projectRow(p: Project, client: string, health: ProjectRow['health']): ProjectRow {
+  const phases = p.template === 'seven_phases' ? 7 : 1;
+  return {
+    id: p.id,
+    name: p.name,
+    client,
+    clientId: p.clientId,
+    lead: p.lead,
+    phase: p.phase,
+    health,
+    nextGate: p.gate ? p.gate.title : '—',
+    due: formatDate(p.dueOn),
+    progress: Math.round((p.phase / phases) * 100),
+  };
+}
+
+export async function projects(slug?: string): Promise<ProjectRow[]> {
+  const ctx = await ctxFor(slug);
+  if (ctx) {
+    const now = new Date();
+    return (await dbWork.projectList(ctx, now)).map(({ project, client, late }) =>
+      projectRow(project, client.name, projectHealth(project, now, late)),
+    );
+  }
   return store().projects.map((p) => {
     const client = store().clients.find((c) => c.id === p.clientId);
-    const phases = p.template === 'seven_phases' ? 7 : 1;
-    return {
-      id: p.id,
-      name: p.name,
-      client: client?.name ?? '—',
-      clientId: p.clientId,
-      lead: p.lead,
-      phase: p.phase,
-      health: projectHealth(p),
-      nextGate: p.gate ? p.gate.title : '—',
-      due: formatDate(p.dueOn),
-      progress: Math.round((p.phase / phases) * 100),
-    };
+    return projectRow(p, client?.name ?? '—', projectHealth(p));
   });
 }
 
-export async function getProject(id: string) {
+export async function getProject(id: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) {
+    const now = new Date();
+    const found = await dbWork.projectDetail(ctx, id, now);
+    return found
+      ? {
+          project: found.project,
+          client: found.client,
+          health: projectHealth(found.project, now, found.late),
+        }
+      : null;
+  }
   const project = store().projects.find((p) => p.id === id);
   if (!project) return null;
   const client = store().clients.find((c) => c.id === project.clientId)!;
   return { project, client, health: projectHealth(project) };
 }
 
-export async function createProject(input: ProjectInput): Promise<string> {
+export async function createProject(input: ProjectInput, slug?: string): Promise<string> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.createProjectFor(ctx, input);
   const id = newId('project');
   store().projects.unshift({
     id,
@@ -407,7 +432,9 @@ export async function createProject(input: ProjectInput): Promise<string> {
   return id;
 }
 
-export async function requestGate(id: string, title: string) {
+export async function requestGate(id: string, title: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.requestGateFor(ctx, id, title);
   const found = await getProject(id);
   if (!found) return;
   found.project.gate = {
@@ -720,6 +747,7 @@ export async function today(slug: string): Promise<TodayItem[]> {
   return items;
 }
 
+/** Example mode only for now: messages need their own table, which comes with the portal. */
 export async function projectMessages(projectId: string) {
   return store()
     .messages.filter((m) => m.projectId === projectId)
@@ -731,14 +759,6 @@ export async function projectMessages(projectId: string) {
 // otherwise, as the signed-in member of the workspace in the URL (RLS applies).
 
 /** The workspace context for database mode; example mode needs none. */
-/**
- * The database context for a workspace's screens, or null for the example store: in example
- * mode, and for callers that pass no slug (public pages and jobs not wired to the database yet).
- */
-async function ctxFor(slug: string | undefined) {
-  if (exampleMode() || !slug) return null;
-  return workspaceCtx(slug);
-}
 
 export async function clientOptions(slug?: string) {
   const ctx = await ctxFor(slug);

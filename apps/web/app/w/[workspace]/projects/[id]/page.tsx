@@ -14,14 +14,19 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Thread } from '@/components/portal/portal-bits';
 import { Activities } from '@/components/workspace/activity';
-import { getProject, projectMessages } from '@/lib/data';
+import { exampleMode, getProject, projectMessages } from '@/lib/data';
 import { tasks } from '@/lib/data/tasks';
 import { budgetUsed, relativeInSentence, relativeTime } from '@/lib/data/views';
 import { RequestGateForm } from './request-gate';
 import { TeamMessageForm } from './team-message';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const found = await getProject((await params).id);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ workspace: string; id: string }>;
+}) {
+  const { workspace, id } = await params;
+  const found = await getProject(id, workspace);
   return { title: `${found?.project.name ?? 'Project'} · Agency OS` };
 }
 
@@ -31,7 +36,7 @@ export default async function ProjectPage({
   params: Promise<{ workspace: string; id: string }>;
 }) {
   const { workspace, id } = await params;
-  const found = await getProject(id);
+  const found = await getProject(id, workspace);
   if (!found) notFound();
   const { project, client, health } = found;
   const template = project.template === 'seven_phases' ? SEVEN_PHASES : BLANK_TEMPLATE;
@@ -39,8 +44,9 @@ export default async function ProjectPage({
   const gates = template.phases.flatMap((p, i) => (p.gate ? [i] : []));
   const current = template.phases[project.phase];
   const used = budgetUsed(project.usedMinor, project.budgetMinor);
-  const projectTasks = await tasks({ projectId: project.id });
-  const messages = await projectMessages(project.id);
+  const projectTasks = await tasks({ projectId: project.id }, workspace);
+  // Messages need their own table, which comes with the portal; example mode only for now.
+  const messages = exampleMode() ? await projectMessages(project.id) : null;
   const lastDecision = project.gateHistory[0];
 
   return (
@@ -141,25 +147,27 @@ export default async function ProjectPage({
           </ul>
         </Card>
       ) : null}
-      <Card
-        title="Messages"
-        description={`With ${client.contactName}. They read and reply in their portal.`}
-        id="messages"
-      >
-        <div className="grid gap-4">
-          <Thread
-            you="You"
-            messages={messages.map((m) => ({
-              id: m.id,
-              who: m.who,
-              mine: !m.fromClient,
-              text: m.text,
-              when: relativeTime(m.at),
-            }))}
-          />
-          <TeamMessageForm slug={workspace} id={project.id} />
-        </div>
-      </Card>
+      {messages ? (
+        <Card
+          title="Messages"
+          description={`With ${client.contactName}. They read and reply in their portal.`}
+          id="messages"
+        >
+          <div className="grid gap-4">
+            <Thread
+              you="You"
+              messages={messages.map((m) => ({
+                id: m.id,
+                who: m.who,
+                mine: !m.fromClient,
+                text: m.text,
+                when: relativeTime(m.at),
+              }))}
+            />
+            <TeamMessageForm slug={workspace} id={project.id} />
+          </div>
+        </Card>
+      ) : null}
       <Card
         title="Tasks"
         description={

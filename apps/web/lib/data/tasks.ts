@@ -1,8 +1,11 @@
 // Server only. Tasks: the board, my tasks, task detail, subtasks and comments.
 import type { TaskInput } from '../forms';
+import { ctxFor } from './ctx';
+import * as dbWork from './db/work';
 import { notify } from './notifications';
 import { EXAMPLE_USER, newId, store } from './shared';
 import { TASK_PRIORITIES, TASK_STATUSES, type Task, type TaskStatus } from './types';
+import { phaseNames } from './project-phases';
 import { mentions, taskDue } from './views';
 
 export type TaskRow = {
@@ -19,15 +22,15 @@ export type TaskRow = {
   comments: number;
 };
 
-function row(t: Task, now: Date): TaskRow {
+function row(t: Task, now: Date, client?: string, comments?: number): TaskRow {
   const project = store().projects.find((p) => p.id === t.projectId);
-  const client = store().clients.find((c) => c.id === project?.clientId);
+  client ??= store().clients.find((c) => c.id === project?.clientId)?.name;
   const due = taskDue(t.dueOn, t.status === 'done', now);
   const done = t.subtasks.filter((s) => s.done).length;
   return {
     id: t.id,
     title: t.title,
-    project: [client?.name, t.phase].filter(Boolean).join(' · '),
+    project: [client, t.phase].filter(Boolean).join(' · '),
     projectId: t.projectId,
     assignee: t.assignee,
     due: due.text,
@@ -35,12 +38,18 @@ function row(t: Task, now: Date): TaskRow {
     priority: TASK_PRIORITIES.find((p) => p.id === t.priority)!.name as TaskRow['priority'],
     status: TASK_STATUSES.find((s) => s.id === t.status)!.name as TaskRow['status'],
     subtasks: t.subtasks.length ? `${done}/${t.subtasks.length}` : null,
-    comments: t.comments.length,
+    comments: comments ?? t.comments.length,
   };
 }
 
-export async function tasks(filter: { projectId?: string; assignee?: string } = {}) {
+export async function tasks(
+  filter: { projectId?: string; assignee?: string } = {},
+  slug?: string,
+): Promise<TaskRow[]> {
   const now = new Date();
+  const ctx = await ctxFor(slug);
+  if (ctx)
+    return (await dbWork.taskList(ctx, filter)).map((t) => row(t.task, now, t.client, t.comments));
   return store()
     .tasks.filter(
       (t) =>
@@ -50,7 +59,14 @@ export async function tasks(filter: { projectId?: string; assignee?: string } = 
     .map((t) => row(t, now));
 }
 
-export async function getTask(id: string) {
+export async function getTask(id: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) {
+    const found = await dbWork.taskDetail(ctx, id);
+    return found
+      ? { ...found, due: taskDue(found.task.dueOn, found.task.status === 'done') }
+      : null;
+  }
   const task = store().tasks.find((t) => t.id === id);
   if (!task) return null;
   const project = store().projects.find((p) => p.id === task.projectId)!;
@@ -58,14 +74,24 @@ export async function getTask(id: string) {
   return { task, project, client, due: taskDue(task.dueOn, task.status === 'done') };
 }
 
-export async function projectOptions() {
+/** Projects to pick from, with their phase names. */
+export async function projectOptions(slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.projectChoices(ctx);
   return store().projects.map((p) => {
     const client = store().clients.find((c) => c.id === p.clientId);
-    return { id: p.id, name: `${client?.name ?? ''} · ${p.name}`, template: p.template };
+    return {
+      id: p.id,
+      name: `${client?.name ?? ''} · ${p.name}`,
+      template: p.template,
+      phases: phaseNames(p.template),
+    };
   });
 }
 
-export async function createTask(input: TaskInput): Promise<string> {
+export async function createTask(input: TaskInput, slug?: string): Promise<string> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.createTaskFor(ctx, input);
   const id = newId('task');
   store().tasks.unshift({
     id,
@@ -77,22 +103,30 @@ export async function createTask(input: TaskInput): Promise<string> {
   return id;
 }
 
-export async function updateTask(id: string, input: TaskInput) {
+export async function updateTask(id: string, input: TaskInput, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.updateTaskFor(ctx, id, input);
   const task = store().tasks.find((t) => t.id === id);
   if (task) Object.assign(task, input);
 }
 
-export async function setTaskStatus(id: string, status: TaskStatus) {
+export async function setTaskStatus(id: string, status: TaskStatus, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.setTaskStatusFor(ctx, id, status);
   const task = store().tasks.find((t) => t.id === id);
   if (task) task.status = status;
 }
 
-export async function addSubtask(id: string, title: string) {
+export async function addSubtask(id: string, title: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.addSubtaskFor(ctx, id, title);
   const task = store().tasks.find((t) => t.id === id);
   task?.subtasks.push({ id: newId('s'), title, done: false });
 }
 
-export async function toggleSubtask(id: string, subtaskId: string, done: boolean) {
+export async function toggleSubtask(id: string, subtaskId: string, done: boolean, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.toggleSubtaskFor(ctx, subtaskId, done);
   const sub = store()
     .tasks.find((t) => t.id === id)
     ?.subtasks.find((s) => s.id === subtaskId);
@@ -100,7 +134,9 @@ export async function toggleSubtask(id: string, subtaskId: string, done: boolean
 }
 
 /** Adds a comment; returns who was mentioned (they get the "mentioned" notification). */
-export async function addComment(id: string, text: string): Promise<string[]> {
+export async function addComment(id: string, text: string, slug?: string): Promise<string[]> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.addCommentFor(ctx, id, text);
   const task = store().tasks.find((t) => t.id === id);
   if (!task) return [];
   task.comments.push({

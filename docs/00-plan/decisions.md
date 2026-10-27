@@ -332,3 +332,13 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Portal invite:** gives the primary contact access and records it on the client's timeline; the sign-in email waits for Resend.
 - **Tests:** 6 web tests against Postgres: add, move, note, follow-up, lost, won once, GSTIN, money and portal, and another workspace seeing none of it.
 
+### D-053 Projects and tasks on the database
+**Status:** Accepted · **Date:** 27 Oct 2026
+- **Wired:** the projects list, project page (phases, the current gate and its request, client decisions, tasks), new project from a template; the tasks board and table (everyone, mine, one person's), task page (edit, status, subtasks, comments with @mentions), new task; client pages now list their projects.
+- **People by name:** the forms pick the project lead and assignees by name, as in example mode; the data layer turns a name into the member's id (the first active member with that name). Pickers list active members with a name.
+- **Current phase:** the first phase not done or skipped; its gate shows once requested (waiting, approved, changes asked). The gate's title comes from the template; a request worded differently sends that wording as its message.
+- **Phases on tasks:** task forms list the project's own phases from the database, so saved templates work too.
+- **Health:** late tasks are counted from the database (open tasks past their due date, IST).
+- **Not yet:** budget used stays at zero until time and costs are tracked; project messages need their own table, which comes with the portal, so the Messages card shows in example mode only. Notifications for gate requests, assignments and mentions are returned by the database functions and wait for the job runner (Inngest) to deliver them.
+- **Tests:** 4 web tests against Postgres: a project from the seven phases, the gate request, tasks with subtasks, comments, mentions and status, late tasks, and another workspace seeing none of it.
+

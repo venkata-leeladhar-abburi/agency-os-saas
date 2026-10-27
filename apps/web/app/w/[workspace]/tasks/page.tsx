@@ -3,8 +3,7 @@ import { buttonVariants, PageHeader, TabLinks } from '@agency-os/ui';
 import Link from 'next/link';
 import { Empty } from '@/components/workspace/page-bits';
 import { TaskBoard, TasksTable } from '@/components/workspace/tables';
-import { EXAMPLE_USER } from '@/lib/data';
-import { member } from '@/lib/data/team';
+import { member, myName } from '@/lib/data/team';
 import { tasks } from '@/lib/data/tasks';
 
 export const metadata = { title: 'Tasks · Agency OS' };
@@ -20,9 +19,9 @@ export default async function TasksPage({
   const base = `/w/${workspace}/tasks`;
   const mine = who === 'me';
   // ?who=<member id> from the dashboard's team load: one person's tasks.
-  const person = !mine && who ? await member(who) : null;
-  const assignee = mine ? EXAMPLE_USER.name : person?.name;
-  const rows = await tasks(assignee ? { assignee } : {});
+  const person = !mine && who ? await member(who, workspace) : null;
+  const assignee = mine ? await myName(workspace) : person?.name;
+  const rows = await tasks(assignee ? { assignee } : {}, workspace);
   const open = rows.filter((t) => t.status !== 'Done');
   const overdue = rows.filter((t) => t.overdue).length;
   const q = (v: string | undefined, w: boolean) =>

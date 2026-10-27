@@ -2,10 +2,17 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { AccountError } from '@agency-os/db';
 import { clientOptions, createProject, EXAMPLE_USER, people, requestGate } from '@/lib/data';
 import { sendMessage } from '@/lib/data/portal';
 import { checkProject, fields } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
+
+/** The words for an error the database raised; anything else is a real failure. */
+function shown(error: unknown): string {
+  if (error instanceof AccountError) return error.message;
+  throw error;
+}
 
 export async function createProjectAction(
   slug: string,
@@ -14,9 +21,14 @@ export async function createProjectAction(
 ): Promise<FormState> {
   const f = fields(form);
   const ids = (await clientOptions(slug)).map((c) => c.id);
-  const checked = checkProject(f, ids, await people());
+  const checked = checkProject(f, ids, await people(slug));
   if (!checked.ok) return { errors: checked.errors, values: f };
-  const id = await createProject(checked.value);
+  let id: string;
+  try {
+    id = await createProject(checked.value, slug);
+  } catch (error) {
+    return { message: shown(error), values: f };
+  }
   revalidatePath(`/w/${slug}`, 'layout');
   redirect(`/w/${slug}/projects/${id}`);
 }
@@ -30,7 +42,11 @@ export async function requestGateAction(
   const title = String(form.get('title') ?? '').trim();
   if (!title)
     return { errors: { title: 'Say what the client is approving, like “Homepage design”.' } };
-  await requestGate(id, title);
+  try {
+    await requestGate(id, title, slug);
+  } catch (error) {
+    return { message: shown(error), values: { title } };
+  }
   revalidatePath(`/w/${slug}`, 'layout');
   return { done: Date.now() };
 }

@@ -23,7 +23,7 @@ export default async function NewProjectPage({
       <NewProjectForm
         slug={workspace}
         clients={clients}
-        people={await people()}
+        people={await people(workspace)}
         defaults={{
           clientId: clients.some((c) => c.id === client) ? client : undefined,
           startOn: istDateIn(0),

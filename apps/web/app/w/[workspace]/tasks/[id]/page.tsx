@@ -5,7 +5,6 @@ import { notFound } from 'next/navigation';
 import { Activities } from '@/components/workspace/activity';
 import { Submit } from '@/components/workspace/form-bits';
 import { people } from '@/lib/data';
-import { phaseNames } from '@/lib/data/project-phases';
 import { getTask, projectOptions } from '@/lib/data/tasks';
 import { TASK_STATUSES } from '@/lib/data/types';
 import { setStatusAction } from '../actions';
@@ -18,8 +17,13 @@ const TONE: Record<string, BadgeProps['tone']> = {
   done: 'success',
 };
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const found = await getTask((await params).id);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ workspace: string; id: string }>;
+}) {
+  const { workspace, id } = await params;
+  const found = await getTask(id, workspace);
   return { title: `${found?.task.title ?? 'Task'} · Agency OS` };
 }
 
@@ -29,13 +33,13 @@ export default async function TaskPage({
   params: Promise<{ workspace: string; id: string }>;
 }) {
   const { workspace, id } = await params;
-  const found = await getTask(id);
+  const found = await getTask(id, workspace);
   if (!found) notFound();
   const { task, project, client, due } = found;
-  const projects = (await projectOptions()).map((p) => ({
+  const projects = (await projectOptions(workspace)).map((p) => ({
     id: p.id,
     name: p.name,
-    phases: phaseNames(p.template),
+    phases: p.phases,
   }));
   const status = TASK_STATUSES.find((s) => s.id === task.status)!;
 
@@ -85,7 +89,7 @@ export default async function TaskPage({
               slug={workspace}
               id={task.id}
               projects={projects}
-              people={await people()}
+              people={await people(workspace)}
               values={{
                 title: task.title,
                 projectId: task.projectId,

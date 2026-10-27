@@ -1,16 +1,28 @@
 // Server only. The team: members, roles, invitations and daily updates.
 import { randomBytes } from 'node:crypto';
 import { inviteExpiry, ROLE_LABELS, type Role } from '@agency-os/core';
+import { ctxFor } from './ctx';
+import * as dbWork from './db/work';
 import { EXAMPLE_USER, newId, store } from './shared';
 import type { Invitation, Member } from './types';
 import { dueIn, istDate, relativeInSentence } from './views';
 
-export async function people(): Promise<string[]> {
+export async function people(slug?: string): Promise<string[]> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.peopleOf(ctx);
   return store().members.map((m) => m.name);
 }
 
+/** The signed-in member's name (Kiran in example mode), for "My tasks". */
+export async function myName(slug?: string): Promise<string> {
+  const ctx = await ctxFor(slug);
+  return ctx ? dbWork.myName(ctx) : EXAMPLE_USER.name;
+}
+
 /** One member by id, for links like "this person's tasks". */
-export async function member(id: string) {
+export async function member(id: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbWork.memberById(ctx, id);
   const m = store().members.find((x) => x.id === id);
   return m ? { id: m.id, name: m.name } : null;
 }

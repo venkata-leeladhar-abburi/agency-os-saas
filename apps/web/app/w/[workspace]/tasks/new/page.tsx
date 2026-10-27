@@ -1,6 +1,5 @@
 import { PageHeader } from '@agency-os/ui';
 import { people } from '@/lib/data';
-import { phaseNames } from '@/lib/data/project-phases';
 import { projectOptions } from '@/lib/data/tasks';
 import { NewTaskForm } from './new-task-form';
 
@@ -14,10 +13,10 @@ export default async function NewTaskPage({
   searchParams: Promise<{ project?: string }>;
 }) {
   const [{ workspace }, { project }] = await Promise.all([params, searchParams]);
-  const projects = (await projectOptions()).map((p) => ({
+  const projects = (await projectOptions(workspace)).map((p) => ({
     id: p.id,
     name: p.name,
-    phases: phaseNames(p.template),
+    phases: p.phases,
   }));
   return (
     <div className="mx-auto grid max-w-2xl gap-6">
@@ -25,7 +24,7 @@ export default async function NewTaskPage({
       <NewTaskForm
         slug={workspace}
         projects={projects}
-        people={await people()}
+        people={await people(workspace)}
         defaults={{ projectId: projects.some((p) => p.id === project) ? project : undefined }}
       />
     </div>
