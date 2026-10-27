@@ -23,6 +23,7 @@ Claude adds questions here and asks them in one batch. The founder answers inlin
 | 17 | **Pay link secret:** add `LINK_SIGNING_SECRET` (32+ random characters, `openssl rand -hex 32`) to the dev and later production environments. Changing it later breaks pay links already sent. | M13 | Issuing invoices on the database stops with a clear error until it's set; example mode doesn't need it |
 | 18 | **Sign-in email template:** in Supabase, Authentication, Email templates, change the magic link to `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email` (the app's redirect already ends in `/auth/callback?next=…`), so a link opened on another phone or laptop still signs in | M5 | The default link works only in the browser that asked for it |
 | 19 | **Test sign-in for browser checks:** may Claude create one test user (an `example.com` address) in the Supabase dev project, so the signed-in screens can be checked in a browser before G3? | M13 | Signed-in screens are tested by their data functions against Postgres, not yet in a browser |
+| 20 | **Signing code email:** the wording isn't in the content docs. Proposed (D-054): subject “482915 is your code to sign with One Stop Solutions”; body “Use this code to sign “Proposal for …”: 482915. It works for 10 minutes. If you didn’t ask to sign, you can ignore this email.” Keep, or change? | M10 | The proposed wording |
 
 ## Answered
 

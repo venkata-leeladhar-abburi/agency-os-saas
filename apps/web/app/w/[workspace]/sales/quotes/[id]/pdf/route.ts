@@ -11,7 +11,7 @@ export async function GET(
 ) {
   const { workspace, id } = await params;
   if (!(await canOpenWorkspace(workspace))) return notFoundResponse();
-  const found = await getQuote(id);
+  const found = await getQuote(id, workspace);
   if (!found) return notFoundResponse();
   const s = await settings(workspace);
   return pdfResponse(

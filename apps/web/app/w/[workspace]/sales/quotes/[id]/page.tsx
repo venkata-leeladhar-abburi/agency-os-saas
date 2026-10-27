@@ -7,8 +7,13 @@ import { LimitedActionButton } from '@/components/workspace/limited-action';
 import { getQuote } from '@/lib/data/sales';
 import { createProposalAction } from '../../actions';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const found = await getQuote((await params).id);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ workspace: string; id: string }>;
+}) {
+  const { workspace, id } = await params;
+  const found = await getQuote(id, workspace);
   return { title: `${found?.quote.number ?? 'Quote'} · Agency OS` };
 }
 
@@ -18,7 +23,7 @@ export default async function QuotePage({
   params: Promise<{ workspace: string; id: string }>;
 }) {
   const { workspace, id } = await params;
-  const found = await getQuote(id);
+  const found = await getQuote(id, workspace);
   if (!found) notFound();
   const { quote, totals, proposal } = found;
   const ws = (p: string) => `/w/${workspace}${p}`;

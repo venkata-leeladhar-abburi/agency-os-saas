@@ -821,7 +821,12 @@ export async function settings(slug?: string) {
 /** Before adding: null when the plan has room, else what the limit dialog shows. */
 export async function planLimit(
   slug: string,
-  resource: 'invoices_per_month' | 'open_leads' | 'portal_clients',
+  resource:
+    | 'invoices_per_month'
+    | 'open_leads'
+    | 'portal_clients'
+    | 'quotes_per_month'
+    | 'proposals_per_month',
 ): Promise<LimitInfo | null> {
   const ctx = await ctxFor(slug);
   if (!ctx) return needsUpgrade(resource);

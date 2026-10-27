@@ -19,8 +19,13 @@ const TONE: Record<ProposalView, BadgeProps['tone']> = {
   expired: 'warning',
 };
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const found = await getProposal((await params).id);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ workspace: string; id: string }>;
+}) {
+  const { workspace, id } = await params;
+  const found = await getProposal(id, workspace);
   return { title: `${found?.proposal.title ?? 'Proposal'} · Agency OS` };
 }
 
@@ -30,7 +35,7 @@ export default async function ProposalPage({
   params: Promise<{ workspace: string; id: string }>;
 }) {
   const { workspace, id } = await params;
-  const found = await getProposal(id);
+  const found = await getProposal(id, workspace);
   if (!found) notFound();
   const { proposal: p, quote, totals, status, settings } = found;
   const ws = (path: string) => `/w/${workspace}${path}`;

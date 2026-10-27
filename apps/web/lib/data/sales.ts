@@ -9,6 +9,11 @@ import {
   standardProposal,
 } from '@agency-os/core';
 import type { QuoteInput } from '../forms';
+import { AccountError } from '@agency-os/db';
+import { renderSigningCode } from '@agency-os/emails';
+import { emailReady, sendEmail } from '../email';
+import { ctxFor, exampleMode } from './ctx';
+import * as dbSales from './db/sales';
 import { winLead } from './index';
 import { notify } from './notifications';
 import { activity, brandOf, EXAMPLE_USER, newId, store } from './shared';
@@ -45,7 +50,24 @@ function quoteView(id: string) {
   return { quote, totals: quoteTotals(quote, store().settings) };
 }
 
+const PROPOSAL_STATUS_TEXT = (s: ProposalView, views: number) =>
+  s === 'viewed' ? `Viewed ${views}×` : statusLabel(s);
+
 export async function salesDocs(slug: string): Promise<SalesRow[]> {
+  const ctx = await ctxFor(slug);
+  if (ctx)
+    return (await dbSales.salesItems(ctx)).map((i) => ({
+      id: i.id,
+      kind: i.kind,
+      title: i.title,
+      number: i.number,
+      forName: i.forName,
+      amount: dbSales.salesAmount(i),
+      status: i.status === 'quote' ? 'Quote only' : PROPOSAL_STATUS_TEXT(i.status, i.views),
+      statusKey: i.status,
+      updated: dbSales.salesDate(i),
+      href: `/w/${slug}/sales/${i.kind === 'Quote' ? 'quotes' : 'proposals'}/${i.id}`,
+    }));
   const now = new Date();
   const proposals = store().proposals.map((p): SalesRow => {
     const q = quoteView(p.quoteId)!;
@@ -57,7 +79,7 @@ export async function salesDocs(slug: string): Promise<SalesRow[]> {
       number: q.quote.number,
       forName: q.quote.recipient,
       amount: formatMoney(q.totals.total.amountMinor, q.quote.currency),
-      status: status === 'viewed' ? `Viewed ${p.views}×` : statusLabel(status),
+      status: PROPOSAL_STATUS_TEXT(status, p.views),
       statusKey: status,
       updated: formatDate(p.sentAt ?? p.createdAt, { year: false }),
       href: `/w/${slug}/sales/proposals/${p.id}`,
@@ -94,7 +116,9 @@ function statusLabel(s: ProposalView) {
   }[s];
 }
 
-export async function getQuote(id: string) {
+export async function getQuote(id: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbSales.quoteDetail(ctx, id);
   const v = quoteView(id);
   if (!v) return null;
   const proposal = store().proposals.find((p) => p.quoteId === id) ?? null;
@@ -102,7 +126,9 @@ export async function getQuote(id: string) {
 }
 
 /** Who a quote can be for: open leads and every client. */
-export async function quoteRecipients() {
+export async function quoteRecipients(slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbSales.recipients(ctx);
   return {
     leads: store()
       .leads.filter((l) => l.stage !== 'won' && l.stage !== 'lost')
@@ -116,11 +142,15 @@ export async function quoteRecipients() {
   };
 }
 
-export async function nextQuoteNumber() {
+export async function nextQuoteNumber(slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbSales.nextNumber(ctx);
   return formatQuoteNumber(store().settings.invoicePrefix, new Date(), store().quoteSequence + 1);
 }
 
-export async function createQuote(input: QuoteInput): Promise<string> {
+export async function createQuote(input: QuoteInput, slug?: string): Promise<string> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbSales.createQuoteFor(ctx, input);
   const s = store();
   const lead = input.leadId ? s.leads.find((l) => l.id === input.leadId) : undefined;
   const client = input.clientId
@@ -149,7 +179,9 @@ export async function createQuote(input: QuoteInput): Promise<string> {
 }
 
 /** A proposal from the Standard proposal template, filled from the quote and the workspace. */
-export async function createProposal(quoteId: string): Promise<string | null> {
+export async function createProposal(quoteId: string, slug?: string): Promise<string | null> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbSales.createProposalFor(ctx, quoteId);
   const s = store();
   const existing = s.proposals.find((p) => p.quoteId === quoteId);
   if (existing) return existing.id;
@@ -186,20 +218,33 @@ export async function createProposal(quoteId: string): Promise<string | null> {
   return id;
 }
 
-export async function getProposal(id: string) {
+/** The proposal page: with `hash`, the fingerprint of what it says now (for the signed PDF). */
+export async function getProposal(id: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbSales.proposalDetail(ctx, id);
   const proposal = store().proposals.find((p) => p.id === id);
   if (!proposal) return null;
   const v = quoteView(proposal.quoteId)!;
-  return { proposal, ...v, status: proposalStatus(proposal), settings: store().settings };
+  return {
+    proposal,
+    ...v,
+    status: proposalStatus(proposal),
+    settings: store().settings,
+    hash: proposalHash(proposal, v.quote),
+  };
 }
 
-export async function saveProposalText(id: string, t: ProposalText) {
+export async function saveProposalText(id: string, t: ProposalText, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbSales.saveProposalTextFor(ctx, id, t);
   const p = store().proposals.find((x) => x.id === id);
   if (!p || p.status === 'accepted' || p.status === 'declined') return;
   p.blocks = applyProposalText(p.blocks, t);
 }
 
-export async function sendProposal(id: string, email: string) {
+export async function sendProposal(id: string, email: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbSales.sendProposalFor(ctx, id, email);
   const s = store();
   const p = s.proposals.find((x) => x.id === id);
   if (!p) return;
@@ -219,7 +264,12 @@ export async function sendProposal(id: string, email: string) {
 // ---------- The client's side (public link) ----------
 
 /** The proposal behind a public link. Counts a view unless the agency is previewing it. */
-export async function proposalByToken(token: string, countView: boolean) {
+export async function proposalByToken(
+  token: string,
+  countView: boolean,
+  request: { ip?: string | null; userAgent?: string | null } = {},
+) {
+  if (!exampleMode()) return dbSales.proposalForLink(token, countView, request);
   const p = store().proposals.find((x) => x.token === token && x.status !== 'draft');
   if (!p) return null;
   if (countView && (p.status === 'sent' || p.status === 'viewed')) {
@@ -244,7 +294,9 @@ export async function proposalByToken(token: string, countView: boolean) {
     ...quoteView(p.quoteId)!,
     status: proposalStatus(p),
     workspace: store().settings.name,
+    settings: store().settings,
     brand: brandOf(),
+    hash: proposalHash(p, quoteView(p.quoteId)!.quote),
   };
 }
 
@@ -276,8 +328,41 @@ function signable(p: Proposal | undefined): p is Proposal {
   return Boolean(p) && (proposalStatus(p!) === 'sent' || proposalStatus(p!) === 'viewed');
 }
 
+/** The database's errors in the signing form's words, on the field they belong to. */
+function signingError(error: unknown): Outcome {
+  if (!(error instanceof AccountError)) throw error;
+  const field = error.code.startsWith('signing_code')
+    ? 'code'
+    : error.code === 'signer_name_required'
+      ? 'name'
+      : undefined;
+  return { ok: false, field, error: error.message };
+}
+
 /** Step one of signing: a 6-digit code to the client's email, valid for 10 minutes. */
 export async function startSigning(token: string): Promise<Outcome & { code?: string }> {
+  if (!exampleMode()) {
+    if (!emailReady())
+      return {
+        ok: false,
+        error: 'Signing isn’t available yet because email isn’t set up. Ask the agency to help.',
+      };
+    try {
+      const started = await dbSales.signingCodeFor(token);
+      const mail = await renderSigningCode({
+        agency: { name: started.agency },
+        title: started.title,
+        code: started.code,
+        minutes: CODE_MINUTES,
+      });
+      const sent = await sendEmail({ to: started.email, ...mail });
+      if (!sent.ok)
+        return { ok: false, error: 'We couldn’t send the code. Try again in a minute.' };
+      return { ok: true };
+    } catch (error) {
+      return signingError(error);
+    }
+  }
   const p = store().proposals.find((x) => x.token === token);
   if (!signable(p)) return { ok: false, error: 'This proposal can no longer be signed.' };
   if (!p.email)
@@ -300,6 +385,14 @@ export async function acceptProposal(
   token: string,
   input: { name: string; code: string; ip: string; userAgent?: string | null },
 ): Promise<Outcome> {
+  if (!exampleMode()) {
+    try {
+      await dbSales.signFor(token, input);
+      return { ok: true };
+    } catch (error) {
+      return signingError(error);
+    }
+  }
   const s = store();
   const p = s.proposals.find((x) => x.token === token);
   if (!signable(p)) return { ok: false, error: 'This proposal can no longer be signed.' };
@@ -348,6 +441,14 @@ export async function acceptProposal(
 }
 
 export async function declineProposal(token: string, reason: string): Promise<Outcome> {
+  if (!exampleMode()) {
+    try {
+      await dbSales.declineFor(token, reason);
+      return { ok: true };
+    } catch (error) {
+      return signingError(error);
+    }
+  }
   const p = store().proposals.find((x) => x.token === token);
   if (!signable(p)) return { ok: false, error: 'This proposal can no longer be declined.' };
   p.status = 'declined';
@@ -371,6 +472,19 @@ export async function declineProposal(token: string, reason: string): Promise<Ou
 
 /** A lead's or client's quotes and proposals, newest first. */
 export async function docsFor(filter: { leadId?: string; clientId?: string }, slug: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) {
+    const ids = new Set(
+      (await dbSales.salesItems(ctx))
+        .filter(
+          (i) =>
+            (filter.leadId && i.leadId === filter.leadId) ||
+            (filter.clientId && i.clientId === filter.clientId),
+        )
+        .map((i) => i.id),
+    );
+    return (await salesDocs(slug)).filter((row) => ids.has(row.id));
+  }
   return (await salesDocs(slug)).filter((row) => {
     const quoteId =
       row.kind === 'Quote' ? row.id : store().proposals.find((p) => p.id === row.id)?.quoteId;

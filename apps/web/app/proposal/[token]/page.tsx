@@ -9,6 +9,7 @@ import { TooManyTries } from '@/components/too-many-tries';
 import { exampleMode } from '@/lib/data';
 import { proposalByToken } from '@/lib/data/sales';
 import { findByLink } from '@/lib/link-guard';
+import { callerIp, callerUserAgent } from '@/lib/origin';
 import { DeclineButton, SignPanel } from './sign-panel';
 
 // Proposal links are private: keep them out of search engines.
@@ -22,7 +23,8 @@ export default async function PublicProposalPage({
   searchParams: Promise<{ preview?: string }>;
 }) {
   const [{ token }, { preview }] = await Promise.all([params, searchParams]);
-  const lookup = await findByLink(() => proposalByToken(token, preview !== '1'));
+  const request = { ip: await callerIp(), userAgent: await callerUserAgent() };
+  const lookup = await findByLink(() => proposalByToken(token, preview !== '1', request));
   if (!lookup) notFound();
   if ('blocked' in lookup) return <TooManyTries />;
   const found = lookup.found;

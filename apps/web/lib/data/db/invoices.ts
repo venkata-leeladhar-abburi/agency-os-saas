@@ -14,6 +14,7 @@ import {
   nextInvoiceNumber,
   recordPayment as dbRecordPayment,
   replacePayLink,
+  sentThisMonth,
   setInvoiceReminders as dbSetReminders,
   totalsOfInvoice,
   updateBranding,
@@ -182,7 +183,17 @@ export async function planRoom(ctx: WorkspaceCtx, resource: LimitedResource, now
   return asMember(ctx, (tx) =>
     resource === 'invoices_per_month'
       ? invoicePlanCheck(tx, ctx.workspaceId, now)
-      : checkPlanLimit(tx, ctx.workspaceId, resource),
+      : resource === 'quotes_per_month' || resource === 'proposals_per_month'
+        ? (async () =>
+            checkPlanLimit(tx, ctx.workspaceId, resource, 1, {
+              used: await sentThisMonth(
+                tx,
+                ctx.workspaceId,
+                resource === 'quotes_per_month' ? 'quote' : 'proposal',
+                now,
+              ),
+            }))()
+        : checkPlanLimit(tx, ctx.workspaceId, resource),
   );
 }
 

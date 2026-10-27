@@ -16,9 +16,9 @@ export default async function NewQuotePage({
 }) {
   const [{ workspace }, { for: forValue }] = await Promise.all([params, searchParams]);
   const [recipients, s, nextNumber] = await Promise.all([
-    quoteRecipients(),
+    quoteRecipients(workspace),
     settings(workspace),
-    nextQuoteNumber(),
+    nextQuoteNumber(workspace),
   ]);
   const known = [
     ...recipients.leads.map((l) => `lead:${l.id}`),

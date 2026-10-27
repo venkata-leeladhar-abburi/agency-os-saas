@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getInvoice, settings } from '../data';
 import { resetExampleStore } from '../data/example-store';
 import { portalInvoice } from '../data/portal';
@@ -7,6 +7,14 @@ import { InvoicePdf } from './invoice';
 import { ProposalPdf } from './proposal';
 import { QuotePdf } from './quote';
 import { pdfBrand, pdfFileName, pdfResponse } from './render';
+
+// These run the example store's flows; outside example mode they would go to the database.
+beforeAll(() => {
+  vi.stubEnv('EXAMPLE_MODE', 'true');
+});
+afterAll(() => {
+  vi.unstubAllEnvs();
+});
 
 beforeEach(() => {
   resetExampleStore();

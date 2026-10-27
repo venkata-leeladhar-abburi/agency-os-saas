@@ -342,3 +342,13 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Not yet:** budget used stays at zero until time and costs are tracked; project messages need their own table, which comes with the portal, so the Messages card shows in example mode only. Notifications for gate requests, assignments and mentions are returned by the database functions and wait for the job runner (Inngest) to deliver them.
 - **Tests:** 4 web tests against Postgres: a project from the seven phases, the gate request, tasks with subtasks, comments, mentions and status, late tasks, and another workspace seeing none of it.
 
+### D-054 Quotes and proposals on the database
+**Status:** Accepted · **Date:** 27 Oct 2026
+- **Wired:** the sales list, quote page, new quote (with the valid-until date typed in the editor), quote PDF; proposal from a quote (one per quote), editing, sending, the proposal page and PDF; quotes and proposals on a lead's page. The public link `/proposal/<token>`: view (counted, except the agency's preview), sign, decline, the signed PDF.
+- **Link:** like pay links (D-050), the token is an HMAC of the proposal id keyed by `LINK_SIGNING_SECRET`, so the agency can copy the link again; only its hash is stored. A proposal can't be re-sent, so there's one version.
+- **Where the code goes:** new column `proposals.sent_to` (migration 0017) keeps the address the proposal was sent to; the signing code goes there. The signing code email is a new template in `packages/emails` (wording proposed here for the founder to review: subject "482915 is your code to sign with One Stop Solutions"). It goes out through Resend once `RESEND_API_KEY` and `EMAIL_FROM` are set; until then the page says signing isn't available yet. Sending the proposal by email also waits for Resend; the agency copies the link or shares it on WhatsApp meanwhile.
+- **Signing wins the lead:** as in example mode, a signed proposal moves its lead to Won and makes the client (on behalf of the person who sent it), and the quote and proposal point to that client. Sending moves a lead in New or Contacted to Proposal.
+- **Totals:** quote pages and PDFs show the totals the quote was saved with (its own place of supply and LUT), not recalculated from today's settings, so a sent quote can't change. The signed PDF checks the hash recorded when the proposal was sent.
+- **Plan limits:** quotes and proposals a month count those sent this month, as the database enforces it.
+- **Tests:** 6 web tests against Postgres (quote with GST, one proposal per quote, edit, send and link, view counting and preview, signing with the code and winning the lead, decline once, another workspace seeing none of it), 2 more database tests, 2 email tests.
+

@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { exampleMode } from '@/lib/data';
 import { acceptProposal, declineProposal, startSigning } from '@/lib/data/sales';
 import { checkCode, checkSignName, fields } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
@@ -25,12 +24,6 @@ export async function startSigningAction(
   const f = fields(form);
   const checked = checkSignName(f);
   if (!checked.ok) return { step: 'name', errors: checked.errors, values: f };
-  if (!exampleMode())
-    return {
-      step: 'name',
-      values: f,
-      message: 'Signing isn’t available yet because email isn’t set up. Ask the agency to help.',
-    };
   const ip = await callerIp();
   if (!(await allow('signingFromNetwork', ip)) || !(await allow('signingCodeRequests', token)))
     return { step: 'name', values: f, message: TOO_MANY };

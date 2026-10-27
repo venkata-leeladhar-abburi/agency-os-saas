@@ -1,6 +1,5 @@
 import { createElement } from 'react';
-import { settings } from '@/lib/data';
-import { proposalByToken, proposalHash } from '@/lib/data/sales';
+import { proposalByToken } from '@/lib/data/sales';
 import { findByLink, tooManyResponse } from '@/lib/link-guard';
 import { ProposalPdf } from '@/lib/pdf/proposal';
 import { pdfBrand, pdfResponse } from '@/lib/pdf/render';
@@ -14,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   if ('blocked' in lookup) return tooManyResponse();
   const found = lookup.found;
   if (found.status !== 'accepted' || !found.proposal.signature) return notFoundResponse();
-  const s = await settings();
+  const s = found.settings;
   return pdfResponse(
     createElement(ProposalPdf, {
       proposal: found.proposal,
@@ -23,7 +22,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
       status: found.status,
       settings: s,
       brand: pdfBrand(s),
-      currentHash: proposalHash(found.proposal, found.quote),
+      currentHash: found.hash,
     }),
     `signed-proposal-${found.quote.number}`,
   );

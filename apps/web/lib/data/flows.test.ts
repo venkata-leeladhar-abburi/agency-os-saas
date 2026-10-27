@@ -1,7 +1,15 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetExampleStore } from './example-store';
 import { importLeads } from './lead-import';
 import { acceptProposal, declineProposal, startSigning } from './sales';
+
+// These run the example store's flows; outside example mode they would go to the database.
+beforeAll(() => {
+  vi.stubEnv('EXAMPLE_MODE', 'true');
+});
+afterAll(() => {
+  vi.unstubAllEnvs();
+});
 
 beforeEach(() => {
   resetExampleStore();
