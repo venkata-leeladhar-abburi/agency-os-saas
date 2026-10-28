@@ -363,3 +363,11 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Errors:** refusals such as "a workspace needs at least one owner" are turned into the form's message after the transaction ends, as a failed statement aborts it.
 - **Tests:** 6 web tests against Postgres: invite, refuse a second invite, send again (old link stops), join; cancel, roles, last owner, not removing yourself; one daily update a day; assignment and mention notifications and marking read; settings per person; the audit log in words with its filter, for owners only, and another workspace seeing none of it.
 
+### D-056 Data export on the database
+**Status:** Accepted · **Date:** 28 Oct 2026
+- **CSV:** the eight lists (leads, clients, projects, tasks, quotes, invoices, payments, team) keep the same columns as example mode; they're built from the same functions the screens use, so a CSV matches what the member sees. Quotes use the totals they were saved with.
+- **JSON:** "Download everything" is `exportWorkspace` from packages/db: every table of the workspace, now including invoices, invoice lines, payments and reminders. Access secrets (link token hashes, signing codes) stay out; money stays in minor units, as strings.
+- **Who:** only roles with `data.export` (owner, admin). Others see "You don't have access to data export" on the page, and the download links answer 404, like any page that isn't there. The download route checks membership itself, as route handlers don't pass through the workspace layout.
+- **Audit:** each download is recorded (the JSON by the database, each CSV by the app).
+- **Tests:** 3 web tests against Postgres: every list from real records (with GST totals and a part payment), the JSON with the money tables and no secrets and its audit entry, and nothing for a member.
+

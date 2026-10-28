@@ -1,13 +1,34 @@
-import { DownloadSimple } from '@phosphor-icons/react/dist/ssr';
-import { buttonVariants, Card, PageHeader } from '@agency-os/ui';
+import { DownloadSimple, LockSimple } from '@phosphor-icons/react/dist/ssr';
+import { buttonVariants, Card, EmptyState, PageHeader } from '@agency-os/ui';
+import Link from 'next/link';
 import { EXPORTS, exportCounts, type ExportKind } from '@/lib/data/export';
 
 export const metadata = { title: 'Data export · Settings · Agency OS' };
 
 export default async function ExportPage({ params }: { params: Promise<{ workspace: string }> }) {
   const { workspace } = await params;
-  const counts = exportCounts();
+  const counts = await exportCounts(workspace);
   const base = `/w/${workspace}/settings/export`;
+  if (!counts)
+    return (
+      <>
+        <PageHeader title="Data export" className="mb-0" />
+        <div className="rounded-lg border border-border bg-card">
+          <EmptyState
+            icon={LockSimple}
+            title="You don’t have access to data export"
+            action={
+              <Link href={`/w/${workspace}`} className={buttonVariants({})}>
+                Go to Today
+              </Link>
+            }
+          >
+            Your role doesn’t include it. Ask an owner or admin to export the data, or to change
+            your role.
+          </EmptyState>
+        </div>
+      </>
+    );
   return (
     <>
       <PageHeader

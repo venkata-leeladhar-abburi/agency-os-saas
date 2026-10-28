@@ -359,7 +359,19 @@ async function moreTables(tx: Tx, workspaceId: string) {
     tasks: await all('tasks'),
     comments: await all('comments'),
     daily_updates: await all('daily_updates'),
+    invoices: await all('invoices', ['public_token_hash']),
+    invoice_items: await all('invoice_items'),
+    payments: await all('payments'),
+    reminders: await all('reminders'),
   };
+}
+
+/** Whether the signed-in member may export the workspace's data (data.export). */
+export async function canExport(tx: Tx, workspaceId: string): Promise<boolean> {
+  const [row] = await tx.execute<{ ok: boolean }>(
+    sql`select has_permission(${workspaceId}::uuid, 'data.export') as ok`,
+  );
+  return Boolean(row?.ok);
 }
 
 export type WorkspaceExport = {
@@ -380,10 +392,7 @@ export async function exportWorkspace(
   workspaceId: string,
   actorId: string,
 ): Promise<WorkspaceExport> {
-  const [allowed] = await tx.execute<{ ok: boolean }>(
-    sql`select has_permission(${workspaceId}::uuid, 'data.export') as ok`,
-  );
-  if (!allowed?.ok) throw new AccountError('no_access');
+  if (!(await canExport(tx, workspaceId))) throw new AccountError('no_access');
 
   const workspace = await tx.select().from(workspaces).where(eq(workspaces.id, workspaceId));
   const members = await tx
@@ -427,7 +436,12 @@ export async function exportWorkspace(
     .from(activities)
     .where(eq(activities.workspaceId, workspaceId));
 
-  await tx.insert(auditLog).values({ workspaceId, actorId, action: 'data.exported' });
+  await tx.insert(auditLog).values({
+    workspaceId,
+    actorId,
+    action: 'data.exported',
+    changes: { subject: 'Everything (JSON)', detail: '' },
+  });
   return {
     format: 'agency-os-export',
     version: 1,

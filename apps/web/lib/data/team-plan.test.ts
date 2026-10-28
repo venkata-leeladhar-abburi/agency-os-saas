@@ -150,13 +150,13 @@ describe('audit log and export', () => {
     expect((await auditEntries({ action: 'member.invited' })).rows).toHaveLength(1);
   });
 
-  it('exports CSV with money as decimals and JSON without secrets', () => {
-    const csv = exportCsv('invoices').replace(/^\uFEFF/, '');
+  it('exports CSV with money as decimals and JSON without secrets', async () => {
+    const csv = (await exportCsv('invoices'))!.replace(/^\uFEFF/, '');
     expect(csv.split('\r\n')[0]).toBe(
       'Number,Client,Type,Currency,Taxable,CGST,SGST,IGST,Total,Paid,Due,Issued,Due date,Exchange rate,Example',
     );
     expect(csv).toContain('OSS/26-27/015,Acme Labs,tax_invoice,INR,40000.00');
-    const json = exportJson();
+    const json = (await exportJson())!;
     expect(json).not.toContain('example-northwind-7Hq2xP9');
     expect(json).not.toContain('pendingCode');
     expect(JSON.parse(json).invoices).toHaveLength(5);

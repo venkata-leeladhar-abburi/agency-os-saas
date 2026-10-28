@@ -277,6 +277,23 @@ export async function quoteDetail(ctx: WorkspaceCtx, id: string) {
   });
 }
 
+/** Every quote with the totals it was saved with, for the CSV export. */
+export async function quotesWithTotals(ctx: WorkspaceCtx) {
+  return asMember(ctx, async (tx) => {
+    const rows = await listQuotes(tx, ctx.workspaceId);
+    const out: { quote: Quote; totals: ReturnType<typeof totalsOfQuote> }[] = [];
+    for (const row of rows) {
+      const q = await dbGetQuote(tx, row.id);
+      if (q)
+        out.push({
+          quote: quoteFromDb(q, await recipientOf(tx, q)),
+          totals: totalsOfQuote(q, q.items),
+        });
+    }
+    return out;
+  });
+}
+
 /** Who a quote can be for: open leads and every client. */
 export async function recipients(ctx: WorkspaceCtx) {
   return asMember(ctx, async (tx) => {
