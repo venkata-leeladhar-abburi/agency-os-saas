@@ -1,11 +1,11 @@
 // The client portal, as the signed-in portal contact (RLS and the portal_* functions decide
 // what they see): the agency's details, project messages and their own contact details.
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { AccountError, call } from './accounts';
 import type { Tx } from './client';
 import type { NotificationEvent } from './projects';
-import { messages, projectMembers, projects } from './schema';
+import { clientContacts, messages, projectMembers, projects } from './schema';
 import type { WorkspaceSettings } from './settings';
 
 type BankDetails = {
@@ -116,11 +116,16 @@ export async function postMessage(
   return id;
 }
 
-/** The project team's notification for a client's message; jobs deliver it (service role). */
+/**
+ * Who hears about a new message: for a client's message, the project lead and team; for the
+ * team's, the client's portal contacts (by email; they see it in the portal). Jobs deliver it.
+ */
 export async function messagePostedEvent(
   tx: Tx,
   projectId: string,
   from: string,
+  messageId?: string,
+  side: 'client' | 'team' = 'client',
 ): Promise<NotificationEvent> {
   const [p] = await tx.select().from(projects).where(eq(projects.id, projectId));
   if (!p) throw new AccountError('project_not_found');
@@ -131,12 +136,34 @@ export async function messagePostedEvent(
   const userIds = [
     ...new Set([...(p.leadMemberId ? [p.leadMemberId] : []), ...team.map((m) => m.userId)]),
   ];
+  const payload = { projectId, project: p.name, name: from };
+  if (side === 'team') {
+    const contacts = await tx
+      .select({ email: clientContacts.email })
+      .from(clientContacts)
+      .where(
+        and(
+          eq(clientContacts.clientId, p.clientId),
+          isNotNull(clientContacts.portalInvitedAt),
+          isNull(clientContacts.portalRevokedAt),
+        ),
+      );
+    return {
+      kind: 'message.posted',
+      key: messageId,
+      workspaceId: p.workspaceId,
+      userIds: [],
+      contactEmails: contacts.flatMap((c) => (c.email ? [c.email] : [])),
+      payload,
+    };
+  }
   return {
     kind: 'message.posted',
+    key: messageId,
     workspaceId: p.workspaceId,
     userIds,
     contactEmails: [],
-    payload: { projectId, project: p.name, name: from },
+    payload,
   };
 }
 

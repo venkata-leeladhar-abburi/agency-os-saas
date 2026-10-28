@@ -19,16 +19,20 @@ import {
   type PortalProject,
 } from '@agency-os/db';
 import { formatDate, formatMoney } from '@agency-os/core';
+import { emailsQueued } from '../../server/jobs';
 import { asContact, type PortalCtx } from '../../server/portal';
 import { asMember, type WorkspaceCtx } from '../../server/workspace';
 import type { NeedsYou, Outcome, PortalProjectView } from '../portal';
 import type { Client, GateDecision, Invoice, Message, PaymentMethod } from '../types';
 import { invoiceState, relativeTime } from '../views';
 import { settingsFromDb } from './map';
+import { myName } from './work';
 
+/** In-app notifications now; emails into the outbox, nudged to go out straight away. */
 async function deliver(db: PortalCtx['db'], workspaceId: string, events: NotificationEvent[]) {
-  for (const event of events)
-    if (event.userIds.length) await withService(db, workspaceId, (tx) => deliverEvent(tx, event));
+  const due = events.filter((e) => e.userIds.length || e.contactEmails.length);
+  for (const event of due) await withService(db, workspaceId, (tx) => deliverEvent(tx, event));
+  if (due.length) await emailsQueued(workspaceId);
 }
 
 /** An error the database raised, in words; anything else is a real failure. */
@@ -313,8 +317,9 @@ export async function sendPortalMessageFor(
 ): Promise<Outcome> {
   if (!(await ownProjects(pc)).some((p) => p.id === projectId))
     return { ok: false, error: 'This project isn’t yours.' };
+  let messageId = '';
   const result = await refusable(async () => {
-    await asContact(pc, (tx) =>
+    messageId = await asContact(pc, (tx) =>
       postMessage(
         tx,
         { workspaceId: pc.workspaceId, projectId, body: text, contactId: pc.contactId },
@@ -324,7 +329,7 @@ export async function sendPortalMessageFor(
   });
   if (!result.ok) return result;
   const event = await withService(pc.db, pc.workspaceId, (tx) =>
-    messagePostedEvent(tx, projectId, pc.client.contact_name),
+    messagePostedEvent(tx, projectId, pc.client.contact_name, messageId),
   );
   await deliver(pc.db, pc.workspaceId, [event]);
   return result;
@@ -358,9 +363,18 @@ export async function teamMessageFor(
   projectId: string,
   text: string,
 ): Promise<Outcome> {
-  return refusable(async () => {
-    await asMember(ctx, (tx) =>
+  let messageId = '';
+  const result = await refusable(async () => {
+    messageId = await asMember(ctx, (tx) =>
       postMessage(tx, { workspaceId: ctx.workspaceId, projectId, body: text }, ctx.session.userId),
     );
   });
+  if (!result.ok) return result;
+  // The client's portal contacts hear about it by email.
+  const from = await myName(ctx);
+  const event = await withService(ctx.db, ctx.workspaceId, (tx) =>
+    messagePostedEvent(tx, projectId, from, messageId, 'team'),
+  );
+  await deliver(ctx.db, ctx.workspaceId, [event]);
+  return result;
 }

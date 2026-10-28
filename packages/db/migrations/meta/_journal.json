@@ -148,6 +148,20 @@
       "when": 1793205377736,
       "tag": "0020_portal_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793207089142,
+      "tag": "0021_email_outbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793207103384,
+      "tag": "0022_email_outbox_rls",
+      "breakpoints": true
     }
   ]
 }

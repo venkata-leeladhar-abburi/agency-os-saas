@@ -1,1 +1,1 @@
-{ "extends": "@agency-os/config/tsconfig.base.json", "include": ["src"] }
+{ "extends": "@agency-os/config/tsconfig.base.json", "include": ["src", "test"] }

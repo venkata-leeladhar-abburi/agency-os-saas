@@ -6,6 +6,7 @@ const config: NextConfig = {
     '@agency-os/core',
     '@agency-os/db',
     '@agency-os/emails',
+    '@agency-os/jobs',
     '@agency-os/tokens',
     '@agency-os/ui',
   ],

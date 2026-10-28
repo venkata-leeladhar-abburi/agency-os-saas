@@ -15,6 +15,7 @@
     "@agency-os/core": "workspace:*",
     "@agency-os/db": "workspace:*",
     "@agency-os/emails": "workspace:*",
+    "@agency-os/jobs": "workspace:*",
     "@agency-os/tokens": "workspace:*",
     "@agency-os/ui": "workspace:*",
     "@phosphor-icons/react": "2.1.10",

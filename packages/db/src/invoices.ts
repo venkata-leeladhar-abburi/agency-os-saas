@@ -16,6 +16,7 @@ import { and, asc, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { AccountError, call } from './accounts';
 import { withService, type Db, type Tx } from './client';
+import { queueEmails } from './email';
 import { checkPlanLimit, notify } from './platform';
 import {
   auditLog,
@@ -822,4 +823,73 @@ export async function invoicePlanCheck(tx: Tx, workspaceId: string, now = new Da
   return checkPlanLimit(tx, workspaceId, 'invoices_per_month', 1, {
     used: await issuedThisMonth(tx, workspaceId, ws.timeZone, now),
   });
+}
+
+// ---- Invoice emails (service role, one workspace at a time) ----
+
+/** The client's primary contact, who gets the invoice and its reminders. */
+async function primaryContact(tx: Tx, clientId: string) {
+  const [c] = await tx
+    .select({ name: clientContacts.name, email: clientContacts.email })
+    .from(clientContacts)
+    .where(and(eq(clientContacts.clientId, clientId), eq(clientContacts.isPrimary, true)));
+  return c ?? null;
+}
+
+/** "Invoice [number] from [workspace]" to the client's primary contact, once per invoice. */
+export async function queueInvoiceSent(tx: Tx, invoiceId: string) {
+  const [inv] = await tx.select().from(invoices).where(eq(invoices.id, invoiceId));
+  if (!inv?.number || inv.status === 'draft' || inv.status === 'cancelled') return 0;
+  const contact = await primaryContact(tx, inv.clientId);
+  if (!contact?.email) return 0;
+  return queueEmails(tx, inv.workspaceId, [
+    {
+      kind: 'invoice.sent',
+      toEmail: contact.email,
+      audience: 'client',
+      payload: { invoiceId: inv.id },
+      dedupeKey: `invoice.sent:${inv.id}`,
+    },
+  ]);
+}
+
+/** Today's reminders for a workspace, into the outbox (the email job marks them sent). */
+export async function queueRemindersDue(db: Db, workspaceId: string, now = new Date()) {
+  const due = await remindersDue(db, workspaceId, now);
+  return withService(db, workspaceId, (tx, ws) =>
+    queueEmails(
+      tx,
+      ws,
+      due.map((d) => ({
+        kind: 'invoice.reminder',
+        toEmail: d.email,
+        audience: 'client' as const,
+        payload: { invoiceId: d.invoiceId, reminder: { kind: d.reminder.kind, on: d.reminder.on } },
+        dedupeKey: `invoice.reminder:${d.invoiceId}:${d.reminder.on}`,
+      })),
+    ),
+  );
+}
+
+/**
+ * What an invoice email says, read when it's sent so the amount due is current. Null when
+ * there's nothing to send any more (cancelled, or paid for a reminder).
+ */
+export async function invoiceEmailFacts(tx: Tx, invoiceId: string) {
+  const [inv] = await tx.select().from(invoices).where(eq(invoices.id, invoiceId));
+  if (!inv?.number || inv.status === 'draft' || inv.status === 'cancelled') return null;
+  const ws = await workspaceOf(tx, inv.workspaceId);
+  const contact = await primaryContact(tx, inv.clientId);
+  return {
+    id: inv.id,
+    linkVersion: inv.linkVersion,
+    number: inv.number,
+    status: inv.status,
+    currency: inv.currency,
+    totalMinor: inv.totalMinor,
+    dueMinor: inv.totalMinor - inv.amountPaidMinor,
+    dueOn: inv.dueOn,
+    contactName: contact?.name ?? null,
+    agency: { name: ws.name, brandColor: ws.brandColor },
+  };
 }

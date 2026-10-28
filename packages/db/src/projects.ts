@@ -11,6 +11,7 @@ import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { AccountError, call } from './accounts';
 import type { Tx } from './client';
+import { queueEventEmails } from './email';
 import { notify } from './platform';
 import {
   activities,
@@ -20,6 +21,7 @@ import {
   gates,
   phases,
   phaseTemplates,
+  profiles,
   projectMembers,
   projects,
   proposals,
@@ -50,9 +52,11 @@ export type NotificationEvent = {
   kind: NotificationKey;
   workspaceId: string;
   userIds: string[];
-  /** Portal contacts to email (client gates). */
+  /** Portal contacts to email (client gates, the team's messages). */
   contactEmails: string[];
   payload: Record<string, unknown>;
+  /** Identifies the event, so delivering it twice sends each email once. */
+  key?: string;
 };
 
 async function templateFor(tx: Tx, key = 'seven_phases'): Promise<PhaseTemplate> {
@@ -430,6 +434,7 @@ export async function requestGateApproval(
   }
   return {
     kind: 'gate.requested',
+    key: `${g!.id}:${g!.requestedAt?.toISOString() ?? ''}`,
     workspaceId: g!.workspaceId,
     userIds: g!.approverType === 'internal' && g!.approverUserId ? [g!.approverUserId] : [],
     contactEmails,
@@ -439,6 +444,7 @@ export async function requestGateApproval(
       projectId: project.id,
       project: project.name,
       message: g!.requestMessage,
+      lead: await leadName(tx, project.leadMemberId),
     },
   };
 }
@@ -457,6 +463,7 @@ async function decided(tx: Tx, gateId: string): Promise<NotificationEvent> {
     .where(eq(clients.id, project.clientId));
   return {
     kind: 'gate.decided',
+    key: `${g!.id}:${g!.decidedAt?.toISOString() ?? ''}`,
     workspaceId: g!.workspaceId,
     userIds: project.leadMemberId ? [project.leadMemberId] : [],
     contactEmails: [],
@@ -464,6 +471,7 @@ async function decided(tx: Tx, gateId: string): Promise<NotificationEvent> {
       gateId: g!.id,
       gate: g!.title,
       projectId: project.id,
+      project: project.name,
       client: client?.name ?? null,
       outcome: g!.status,
       comment: g!.decisionComment,
@@ -496,14 +504,28 @@ export async function decideGateAsClient(
   return { gateId: row!.id, workspaceId: row!.workspace_id, kind: 'gate.decided' as const };
 }
 
-/** Jobs deliver a member's or client's event as the service role (see NotificationEvent). */
+/**
+ * Jobs deliver a member's or client's event as the service role (see NotificationEvent): the
+ * in-app notifications now, and the emails into the outbox for the email job.
+ */
 export async function deliverEvent(tx: Tx, event: NotificationEvent) {
-  return notify(tx, {
+  const result = await notify(tx, {
     workspaceId: event.workspaceId,
     userIds: event.userIds,
     kind: event.kind,
     payload: event.payload,
   });
+  await queueEventEmails(tx, event, result.email);
+  return result;
+}
+
+async function leadName(tx: Tx, userId: string | null) {
+  if (!userId) return null;
+  const [p] = await tx
+    .select({ name: profiles.fullName })
+    .from(profiles)
+    .where(eq(profiles.id, userId));
+  return p?.name ?? null;
 }
 
 export type PortalProject = {

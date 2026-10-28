@@ -222,6 +222,27 @@ run('the client portal on the database', () => {
     expect(home.latest.map((x) => `${x.who} ${x.text}`)).toContain('Kiran Rao sent you a message');
   });
 
+  it('queues the emails: the invite, the sign-off request, the invoice and both sides of the thread', async () => {
+    const rows =
+      await t.admin`select kind, to_email, payload->>'audience' as audience, status from email_outbox
+        where workspace_id = ${ctx.workspaceId} order by created_at, id`;
+    const sarahs = rows.filter((r) => r.to_email === 'sarah@northwind.example');
+    expect(sarahs.map((r) => r.kind)).toEqual([
+      'portal.invited',
+      'gate.requested',
+      'invoice.sent',
+      'message.posted',
+    ]);
+    expect(sarahs.every((r) => r.audience === 'client' && r.status === 'queued')).toBe(true);
+    // The client's message goes to the lead by email; the decision too.
+    expect(
+      rows.filter((r) => r.to_email === 'kiran@onestop.in').map((r) => [r.kind, r.audience]),
+    ).toEqual([
+      ['gate.decided', 'member'],
+      ['message.posted', 'member'],
+    ]);
+  });
+
   it('lets the contact update their own details', async () => {
     expect(
       await saveContactFor(pc, {

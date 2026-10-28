@@ -27,6 +27,7 @@ import {
   type Tx,
 } from '@agency-os/db';
 import type { ProjectInput, TaskInput } from '../../forms';
+import { emailsQueued } from '../../server/jobs';
 import { asMember, type WorkspaceCtx } from '../../server/workspace';
 import type { Activity, Client, GateDecision, GateStatus, Project, Task } from '../types';
 import { istDate, mentions } from '../views';
@@ -77,10 +78,12 @@ export async function myName(ctx: WorkspaceCtx): Promise<string> {
  * who; delivering takes the service role, as members can't write each other's notifications.
  * Emails for them go out with the job runner (Inngest) and Resend.
  */
+/** In-app notifications now; emails into the outbox, nudged to go out straight away. */
 async function deliver(ctx: WorkspaceCtx, events: NotificationEvent[]) {
-  for (const event of events)
-    if (event.userIds.length)
-      await withService(ctx.db, ctx.workspaceId, (tx) => deliverEvent(tx, event));
+  const due = events.filter((e) => e.userIds.length || e.contactEmails.length);
+  for (const event of due)
+    await withService(ctx.db, ctx.workspaceId, (tx) => deliverEvent(tx, event));
+  if (due.length) await emailsQueued(ctx.workspaceId);
 }
 
 // ---------- Projects ----------

@@ -19,10 +19,13 @@ import {
   totalsOfInvoice,
   updateBranding,
   updateWorkspaceSettings,
+  withService,
   workspaceSettings,
+  queueInvoiceSent,
 } from '@agency-os/db';
 import { formatDate, formatMoney, type LimitedResource } from '@agency-os/core';
 import type { InvoiceInput, PaymentInput, SettingsInput } from '../../forms';
+import { emailsQueued } from '../../server/jobs';
 import { asMember, linkSecret, type WorkspaceCtx } from '../../server/workspace';
 import type { InvoiceRow } from '../index';
 import { invoiceState } from '../views';
@@ -120,7 +123,7 @@ export async function clientChoices(ctx: WorkspaceCtx) {
 
 /** Saves a draft and, when asked, issues it in the same transaction. */
 export async function createInvoiceFor(ctx: WorkspaceCtx, input: InvoiceInput, now = new Date()) {
-  return asMember(ctx, async (tx) => {
+  const id = await asMember(ctx, async (tx) => {
     const id = await dbCreateInvoice(
       tx,
       ctx.workspaceId,
@@ -146,12 +149,22 @@ export async function createInvoiceFor(ctx: WorkspaceCtx, input: InvoiceInput, n
       await dbIssueInvoice(tx, id, ctx.session.userId, { secret: linkSecret(), now });
     return id;
   });
+  if (input.issue) await invoiceSent(ctx, id);
+  return id;
 }
 
 export async function issueInvoiceFor(ctx: WorkspaceCtx, id: string, now = new Date()) {
-  return asMember(ctx, (tx) =>
+  const issued = await asMember(ctx, (tx) =>
     dbIssueInvoice(tx, id, ctx.session.userId, { secret: linkSecret(), now }),
   );
+  await invoiceSent(ctx, id);
+  return issued;
+}
+
+/** "Invoice [number] from [workspace]" to the client, once it's issued. */
+async function invoiceSent(ctx: WorkspaceCtx, id: string) {
+  const queued = await withService(ctx.db, ctx.workspaceId, (tx) => queueInvoiceSent(tx, id));
+  if (queued) await emailsQueued(ctx.workspaceId);
 }
 
 export async function recordPaymentFor(ctx: WorkspaceCtx, id: string, input: PaymentInput) {

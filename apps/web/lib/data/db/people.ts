@@ -17,13 +17,16 @@ import {
   listMembers,
   listProjects,
   listStages,
+  queueEmails,
   moveLead as dbMoveLead,
   setFollowUp,
   type Lead as DbLead,
   type Stage,
   type Tx,
+  withService,
 } from '@agency-os/db';
 import type { ClientInput, LeadInput } from '../../forms';
+import { emailsQueued } from '../../server/jobs';
 import { asMember, type WorkspaceCtx } from '../../server/workspace';
 import type { Activity, ActivityKind, Lead, StageId } from '../types';
 import { clientFromDb } from './map';
@@ -340,11 +343,25 @@ export async function createClientFor(ctx: WorkspaceCtx, input: ClientInput): Pr
 
 /** Gives the primary contact portal access (the sign-in link email waits for Resend). */
 export async function inviteToPortalFor(ctx: WorkspaceCtx, id: string) {
-  return asMember(ctx, async (tx) => {
+  const invite = await asMember(ctx, async (tx) => {
     const c = await dbGetClient(tx, id);
     if (!c || c.workspaceId !== ctx.workspaceId) throw new AccountError('client_not_found');
     const contact = c.contacts[0];
     if (!contact) throw new AccountError('portal_email_required');
-    await invitePortalContact(tx, contact.id, ctx.session.userId);
+    const invited = await invitePortalContact(tx, contact.id, ctx.session.userId);
+    return { ...invited, contactId: contact.id, contactName: contact.name };
   });
+  // The invitation email: sign in with this address to see their projects.
+  await withService(ctx.db, ctx.workspaceId, (tx) =>
+    queueEmails(tx, ctx.workspaceId, [
+      {
+        kind: 'portal.invited',
+        toEmail: invite.email,
+        audience: 'client',
+        payload: { contactName: invite.contactName },
+        dedupeKey: `portal.invited:${invite.contactId}:${Date.now()}`,
+      },
+    ]),
+  );
+  await emailsQueued(ctx.workspaceId);
 }

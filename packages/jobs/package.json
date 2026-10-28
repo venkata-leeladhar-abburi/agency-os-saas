@@ -4,15 +4,26 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./next": "./src/next.ts"
   },
   "scripts": {
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@agency-os/config": "workspace:*",
     "eslint": "9.39.5",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "5.0.5",
+    "@types/node": "22.19.0"
+  },
+  "dependencies": {
+    "@agency-os/core": "workspace:*",
+    "@agency-os/db": "workspace:*",
+    "@agency-os/emails": "workspace:*",
+    "@agency-os/tokens": "workspace:*",
+    "inngest": "4.24.0"
   }
 }

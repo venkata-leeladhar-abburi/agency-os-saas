@@ -10,3 +10,10 @@ export {
   signingCodeSubject,
   type SigningCodeProps,
 } from './signing-code';
+export {
+  NotificationEmail,
+  notificationCopy,
+  renderNotificationEmail,
+  type EmailCopy,
+  type NotificationEmailProps,
+} from './notification';
