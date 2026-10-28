@@ -14,7 +14,7 @@ const SHORTCUTS = [
 
 export default async function HelpPage({ params }: { params: Promise<{ workspace: string }> }) {
   const { workspace } = await params;
-  const o = await onboarding();
+  const o = await onboarding(workspace);
   return (
     <div className="grid max-w-3xl gap-4">
       <PageHeader title="Help" subtitle="Getting set up, example data and shortcuts" />

@@ -30,8 +30,8 @@ export default async function DashboardPage({
   const { workspace } = await params;
   const ws = (p: string) => `/w/${workspace}${p}`;
   const [{ metrics, atRisk, teamLoad, unconverted, empty }, { board }, items] = await Promise.all([
-    dashboard(),
-    leads(),
+    dashboard(workspace),
+    leads(workspace),
     today(workspace),
   ]);
   return (

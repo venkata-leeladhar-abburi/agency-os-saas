@@ -26,10 +26,11 @@ import type {
 import { ctxFor } from './ctx';
 import * as dbInvoices from './db/invoices';
 import * as dbPeople from './db/people';
+import * as dbSnapshot from './db/snapshot';
 import * as dbWork from './db/work';
 import { limitInfo, needsUpgrade, type LimitInfo } from './plan';
 import { activity, EXAMPLE_USER, newId, store } from './shared';
-import type { Client, Invoice, Lead, Project, StageId, WorkspaceSettings } from './types';
+import type { Client, Invoice, Lead, Project, StageId, Task, WorkspaceSettings } from './types';
 import {
   budgetUsed,
   followUp,
@@ -39,6 +40,7 @@ import {
   leadBoard,
   leadTitle,
   stageName,
+  type InvoiceState,
 } from './views';
 
 export { exampleMode } from './ctx';
@@ -607,9 +609,55 @@ function decidedAt(l: Lead): string {
   );
 }
 
-export async function dashboard(now = new Date()) {
+/** What the dashboard and Today read, from the example store or the database. */
+export type Overview = {
+  invoices: { invoice: Invoice; client: Client; state: InvoiceState; cancelled?: boolean }[];
+  leads: Lead[];
+  quotes: number;
+  projects: { project: Project; late?: number }[];
+  clients: Client[];
+  /** Ids link to that person's tasks. */
+  members: { id: string; name: string }[];
+  tasks: Task[];
+  /** The signed-in member's name: whose tasks are "mine". */
+  me: string;
+};
+
+function exampleOverview(): Overview {
   const s = store();
-  const views = s.invoices.map(invoiceView);
+  return {
+    invoices: s.invoices.map(invoiceView),
+    leads: s.leads,
+    quotes: s.quotes.length,
+    projects: s.projects.map((project) => ({ project })),
+    clients: s.clients,
+    members: s.members,
+    tasks: s.tasks,
+    me: EXAMPLE_USER.name,
+  };
+}
+
+/** The database's snapshot as the dashboard reads it: people link by user id. */
+export function overviewOf(snap: dbSnapshot.Snapshot): Overview {
+  return {
+    ...snap,
+    quotes: snap.quotes.length,
+    members: snap.members.map((m) => ({ id: m.userId, name: m.name })),
+  };
+}
+
+async function overview(slug?: string): Promise<Overview> {
+  const ctx = await ctxFor(slug);
+  return ctx ? overviewOf(await dbSnapshot.snapshot(ctx)) : exampleOverview();
+}
+
+export async function dashboard(slug?: string, now = new Date()) {
+  return dashboardFrom(await overview(slug), now);
+}
+
+/** The dashboard's figures from what the member can see. */
+export function dashboardFrom(s: Overview, now = new Date()) {
+  const views = s.invoices.filter((v) => !v.cancelled);
   const month = istDate(now).slice(0, 7);
   const money = moneySummary(
     views.map((v) => ({
@@ -631,9 +679,9 @@ export async function dashboard(now = new Date()) {
     { now },
   );
   const atRisk = s.projects
-    .map((p) => ({ p, reasons: projectRisks(p, now) }))
+    .map(({ project: p, late }) => ({ p, reasons: projectRisks(p, now, late) }))
     .filter((x) => x.reasons.length);
-  const hasMoney = views.some((v) => v.invoice.number) || s.quotes.length > 0;
+  const hasMoney = views.some((v) => v.invoice.number) || s.quotes > 0;
   return {
     /** Nothing billed or quoted yet: the first-week empty state instead of zeros. */
     empty: !hasMoney && open.length === 0,
@@ -692,10 +740,13 @@ export type TodayItem = {
 
 /** What needs doing today: follow-ups, my tasks, approvals waiting on clients, invoices due or late. */
 export async function today(slug: string): Promise<TodayItem[]> {
-  const now = new Date();
+  return todayFrom(await overview(slug), slug);
+}
+
+export function todayFrom(s: Overview, slug: string, now = new Date()): TodayItem[] {
   const todayOn = istDate(now);
   const items: TodayItem[] = [];
-  for (const l of store().leads) {
+  for (const l of s.leads) {
     if (!l.followUpAt || istDate(l.followUpAt) > todayOn) continue;
     const f = followUp(l.followUpAt, now)!;
     items.push({
@@ -707,10 +758,9 @@ export async function today(slug: string): Promise<TodayItem[]> {
       overdue: f.overdue,
     });
   }
-  for (const t of store().tasks) {
-    if (t.assignee !== EXAMPLE_USER.name || t.status === 'done' || !t.dueOn || t.dueOn > todayOn)
-      continue;
-    const project = store().projects.find((p) => p.id === t.projectId);
+  for (const t of s.tasks) {
+    if (t.assignee !== s.me || t.status === 'done' || !t.dueOn || t.dueOn > todayOn) continue;
+    const project = s.projects.find((p) => p.project.id === t.projectId)?.project;
     items.push({
       id: `task-${t.id}`,
       group: 'Tasks',
@@ -720,9 +770,9 @@ export async function today(slug: string): Promise<TodayItem[]> {
       overdue: t.dueOn < todayOn,
     });
   }
-  for (const p of store().projects) {
+  for (const { project: p } of s.projects) {
     if (p.gate?.status !== 'waiting') continue;
-    const client = store().clients.find((c) => c.id === p.clientId);
+    const client = s.clients.find((c) => c.id === p.clientId);
     items.push({
       id: `gate-${p.id}`,
       group: 'Approvals waiting',
@@ -732,7 +782,8 @@ export async function today(slug: string): Promise<TodayItem[]> {
       overdue: false,
     });
   }
-  for (const v of store().invoices.map(invoiceView)) {
+  for (const v of s.invoices) {
+    if (v.cancelled) continue;
     if (v.state.status !== 'overdue' && !(v.state.status === 'due' && v.invoice.dueOn <= todayOn))
       continue;
     items.push({

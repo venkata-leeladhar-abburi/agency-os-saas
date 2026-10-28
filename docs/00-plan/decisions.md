@@ -371,3 +371,12 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Audit:** each download is recorded (the JSON by the database, each CSV by the app).
 - **Tests:** 3 web tests against Postgres: every list from real records (with GST totals and a part payment), the JSON with the money tables and no secrets and its audit entry, and nothing for a member.
 
+### D-057 Dashboard, Today and the setup checklist on the database
+**Status:** Accepted · **Date:** 28 Oct 2026
+- **One snapshot:** the dashboard, Today and the data export read one snapshot of the workspace as the member can see it (leads, clients, projects with their late tasks, tasks, quotes, invoices, members), built from the same functions as the screens. The figures and lists are worked out by the same code as example mode, so both modes agree.
+- **Dashboard:** money received this month, pending and overdue (cancelled invoices left out), pipeline value and the 90-day win rate, projects at risk with reasons, team load. Team load links to each person's tasks by their user id.
+- **Today:** follow-ups due, the member's own tasks due or late, sign-offs waiting on clients, invoices due today or late.
+- **Win rate:** lists don't load each lead's timeline, so a won or lost lead takes its last change as the day it was decided; before this, a long-open lead won recently could fall outside the 90 days.
+- **Setup checklist:** its five steps come from the workspace's own records; the first step needs only the services until logos can be stored. Hiding and bringing it back is saved on the workspace (owners and admins). Loading example data into a real workspace isn't offered yet: the banner and "Load example data" show in example mode only, and their actions do nothing outside it.
+- **Tests:** 3 web tests against Postgres: the dashboard figures (received, overdue, pipeline, win rate 50%, a project at risk with an overdue task, team load), Today's four groups, and the checklist with hiding and showing.
+

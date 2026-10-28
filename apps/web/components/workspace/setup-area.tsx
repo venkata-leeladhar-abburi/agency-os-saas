@@ -3,7 +3,7 @@ import { ExampleDataBanner, LoadExampleCard, SetupChecklist } from './setup';
 
 /** Top of Today and the dashboard: the example-data banner and the setup checklist. */
 export async function SetupArea({ slug }: { slug: string }) {
-  const o = await onboarding();
+  const o = await onboarding(slug);
   const leadDone = o.steps.find((s) => s.id === 'lead')!.done;
   if (!o.hasExample && !o.show) return null;
   return (

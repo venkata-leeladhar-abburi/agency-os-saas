@@ -1,5 +1,7 @@
 // Server only. The setup checklist, and example data that can be loaded and removed.
 import { exampleRecords, EXAMPLE_LISTS } from './example-store';
+import { ctxFor } from './ctx';
+import * as dbOverview from './db/onboarding';
 import { store } from './shared';
 
 export type OnboardingStep = {
@@ -8,7 +10,9 @@ export type OnboardingStep = {
 };
 
 /** The five steps (defaults-and-content.md §5), done from the workspace's own records only. */
-export async function onboarding() {
+export async function onboarding(slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbOverview.onboardingFor(ctx);
   const s = store();
   const own = <T extends { example?: boolean }>(list: T[]) => list.filter((r) => !r.example);
   const steps: OnboardingStep[] = [
@@ -37,11 +41,15 @@ export async function onboarding() {
   };
 }
 
-export async function dismissOnboarding() {
+export async function dismissOnboarding(slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbOverview.setDismissed(ctx, true);
   store().settings.onboardingDismissed = true;
 }
 
-export async function showOnboarding() {
+export async function showOnboarding(slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbOverview.setDismissed(ctx, false);
   store().settings.onboardingDismissed = false;
 }
 

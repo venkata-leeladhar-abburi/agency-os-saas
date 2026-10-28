@@ -113,8 +113,14 @@ function leadFromDb(
   l: DbLead,
   stage: StageId,
   names: Map<string, string>,
-  activities: Activity[] = [],
+  activities?: Activity[],
 ): Lead {
+  // Lists don't load the timeline; a won or lost lead still says when it was decided (its last
+  // change), which the dashboard's 90-day win rate counts from.
+  const decided: Activity[] =
+    stage === 'won' || stage === 'lost'
+      ? [{ id: `${l.id}-d`, kind: stage, who: '', text: '', at: l.updatedAt.toISOString() }]
+      : [];
   return {
     id: l.id,
     name: l.name,
@@ -130,7 +136,7 @@ function leadFromDb(
     notes: l.notes ?? '',
     lostReason: l.lostReason,
     clientId: l.convertedClientId,
-    activities,
+    activities: activities ?? decided,
     createdAt: l.createdAt.toISOString(),
     example: l.isExample || undefined,
   };

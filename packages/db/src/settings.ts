@@ -1,7 +1,7 @@
 // Workspace settings (Settings → Workspace and Branding): details printed on invoices, tax,
 // numbering, bank details and the brand. RLS lets only workspace.manage change them.
 import { parseHexColour, validateGstin, validateInvoicePrefix } from '@agency-os/core';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { AccountError, call } from './accounts';
 import type { Tx } from './client';
 import { auditLog, workspaces } from './schema';
@@ -144,4 +144,18 @@ export async function updateBranding(
     subjectId: workspaceId,
     changes,
   });
+}
+
+/** Hides or brings back the setup checklist on Today and the dashboard (owners and admins). */
+export async function setOnboardingDismissed(tx: Tx, workspaceId: string, dismissed: boolean) {
+  const [row] = await call(() =>
+    tx
+      .update(workspaces)
+      .set({
+        onboarding: sql`coalesce(${workspaces.onboarding}, '{}'::jsonb) || jsonb_build_object('dismissed', ${dismissed}::boolean)`,
+      })
+      .where(eq(workspaces.id, workspaceId))
+      .returning({ id: workspaces.id }),
+  );
+  if (!row) throw new AccountError('no_access');
 }

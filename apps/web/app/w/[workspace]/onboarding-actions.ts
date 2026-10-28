@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { exampleMode } from '@/lib/data';
 import { audit } from '@/lib/data/audit';
 import { callerIp } from '@/lib/origin';
 import {
@@ -12,16 +13,18 @@ import {
 } from '@/lib/data/onboarding';
 
 export async function dismissOnboardingAction(slug: string) {
-  await dismissOnboarding();
+  await dismissOnboarding(slug);
   revalidatePath(`/w/${slug}`, 'layout');
 }
 
 export async function showOnboardingAction(slug: string) {
-  await showOnboarding();
+  await showOnboarding(slug);
   revalidatePath(`/w/${slug}`, 'layout');
 }
 
+/** Example data lives in the example store; a real workspace doesn't offer it yet (D-057). */
 export async function removeExampleAction(slug: string): Promise<RemoveResult> {
+  if (!exampleMode()) return { removed: 0, kept: [] };
   const result = await removeExampleData();
   audit(
     'example.removed',
@@ -34,6 +37,7 @@ export async function removeExampleAction(slug: string): Promise<RemoveResult> {
 }
 
 export async function loadExampleAction(slug: string) {
+  if (!exampleMode()) return;
   await loadExampleData();
   revalidatePath(`/w/${slug}`, 'layout');
 }
