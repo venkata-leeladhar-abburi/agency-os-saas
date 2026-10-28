@@ -2,6 +2,7 @@
 // Each works through workspaces one at a time, as the service role for that workspace.
 import {
   activeWorkspaceIds,
+  notifyOverdue,
   queueRemindersDue,
   sendDueEmails,
   workspacesWithEmailDue,
@@ -46,9 +47,16 @@ export async function runEmails(
   return total;
 }
 
-/** Puts today's invoice reminders into the outbox, for every workspace. */
+/**
+ * The morning's work, for every workspace: today's invoice reminders into the outbox, and
+ * owners and finance told about invoices that went overdue.
+ */
 export async function runReminders(db: Db, now = new Date()) {
   let queued = 0;
-  for (const ws of await activeWorkspaceIds(db)) queued += await queueRemindersDue(db, ws, now);
-  return { queued };
+  let overdue = 0;
+  for (const ws of await activeWorkspaceIds(db)) {
+    queued += await queueRemindersDue(db, ws, now);
+    overdue += await notifyOverdue(db, ws, now);
+  }
+  return { queued, overdue };
 }

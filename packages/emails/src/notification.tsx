@@ -29,6 +29,8 @@ export type NotificationEmailProps = {
   button: { label: string; url: string };
   /** Whether replies reach the agency (client emails) or nobody (member emails). */
   audience: 'member' | 'client';
+  /** In place of the usual last line (the invitation, sent before they're a member). */
+  footer?: string;
 };
 
 const text = { fontSize: '15px', lineHeight: '24px', color: c.text, margin: '0 0 16px' };
@@ -94,9 +96,10 @@ export function NotificationEmail(p: NotificationEmailProps) {
           </Section>
           <Hr style={{ borderColor: c.border, margin: '24px 0 16px' }} />
           <Text style={{ ...text, color: c.muted, fontSize: '13px', margin: 0 }}>
-            {p.audience === 'client'
-              ? `Sent by Agency OS for ${p.agency.name}. Reply to this email to reach them.`
-              : `Sent by Agency OS for ${p.agency.name}. Choose which emails you get in Settings, Notifications.`}
+            {p.footer ??
+              (p.audience === 'client'
+                ? `Sent by Agency OS for ${p.agency.name}. Reply to this email to reach them.`
+                : `Sent by Agency OS for ${p.agency.name}. Choose which emails you get in Settings, Notifications.`)}
           </Text>
         </Container>
       </Body>
@@ -190,6 +193,53 @@ export const notificationCopy = {
           'Pay by UPI, card or net banking, or see the bank details and download the PDF on the invoice page.',
         ],
         button: { label: `Pay ${p.amount}`, url: p.url },
+      },
+    };
+  },
+
+  invoiceOverdue(p: Base & { number: string; client: string; amount: string; dueDate: string }) {
+    const subject = `Invoice ${p.number} is overdue`;
+    return {
+      subject,
+      props: {
+        ...p,
+        audience: 'member' as const,
+        preview: `${p.amount} from ${p.client} was due on ${p.dueDate}`,
+        lines: [`${p.amount} from ${p.client} was due on ${p.dueDate} and is still open.`],
+        button: { label: 'Open the invoice', url: p.url },
+      },
+    };
+  },
+
+  paymentReceived(p: Base & { number: string; amount: string }) {
+    const subject = `Payment received: ${p.amount} for ${p.number}`;
+    return {
+      subject,
+      props: {
+        ...p,
+        audience: 'member' as const,
+        preview: subject,
+        lines: [`${p.amount} was paid online for invoice ${p.number}.`],
+        button: { label: 'Open the invoice', url: p.url },
+      },
+    };
+  },
+
+  memberInvited(p: Base & { by: string | null; role: string; expires: string }) {
+    const by = p.by ?? `The ${p.agency.name} team`;
+    const subject = `${by} invited you to ${p.agency.name} on Agency OS`;
+    return {
+      subject,
+      props: {
+        ...p,
+        audience: 'member' as const,
+        preview: subject,
+        lines: [
+          `${by} invited you to join ${p.agency.name} on Agency OS as ${p.role}.`,
+          `The link works until ${p.expires}. Sign in with this email address to join.`,
+        ],
+        button: { label: `Join ${p.agency.name}`, url: p.url },
+        footer: `Sent by Agency OS for ${p.agency.name}. If you weren’t expecting this, you can ignore it.`,
       },
     };
   },

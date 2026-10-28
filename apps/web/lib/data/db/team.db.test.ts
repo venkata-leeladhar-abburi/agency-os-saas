@@ -8,7 +8,8 @@ import {
   type Session,
 } from '@agency-os/db';
 import { createTestDb, type TestDb } from '@agency-os/db/testing';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { randomBytes } from 'node:crypto';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { WorkspaceCtx } from '../../server/workspace';
 import {
   auditFor,
@@ -104,6 +105,27 @@ run('team, notifications and the audit log on the database', () => {
       ok: false,
       error: expect.stringMatching(/already a member/),
     });
+  });
+
+  it('emails the invite once the link secret is set, and again when sent again', async () => {
+    const outbox = () =>
+      t.admin`select kind, to_email, payload->>'invitationId' as id from email_outbox
+        where workspace_id = ${owner.workspaceId} and kind = 'member.invited' order by created_at`;
+    expect(await outbox()).toEqual([]); // the invites above had no secret: link shown once
+    vi.stubEnv('LINK_SIGNING_SECRET', randomBytes(32).toString('hex'));
+    try {
+      const first = await inviteFor(owner, 'neha@onestop.in', 'member');
+      expect(first).toMatchObject({ ok: true, id: expect.any(String) });
+      const again = (await resendFor(owner, first.ok ? first.id! : ''))!;
+      expect(again.email).toBe('neha@onestop.in');
+      const rows = await outbox();
+      expect(rows.map((r) => r.to_email)).toEqual(['neha@onestop.in', 'neha@onestop.in']);
+      expect(rows[0]!.id).toBe(first.ok ? first.id : null);
+      expect(rows[1]!.id).not.toBe(rows[0]!.id);
+      await revokeFor(owner, rows[1]!.id);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it('cancels invites, changes roles, keeps an owner and never removes yourself', async () => {

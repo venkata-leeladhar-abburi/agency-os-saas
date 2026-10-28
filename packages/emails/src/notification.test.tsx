@@ -56,6 +56,35 @@ describe('notification emails', () => {
     expect(text).toContain('Pay ₹47,200.00');
   });
 
+  it('invites a new member in the defaults’ words, without the settings line', async () => {
+    const email = copy.memberInvited({
+      ...base,
+      by: 'Kiran Rao',
+      role: 'Project lead',
+      expires: '4 Nov 2026',
+    });
+    expect(email.subject).toBe('Kiran Rao invited you to One Stop Solutions on Agency OS');
+    const { text } = await renderNotificationEmail(email);
+    expect(text).toContain('as Project lead');
+    expect(text).toContain('works until 4 Nov 2026');
+    expect(text).not.toContain('Settings, Notifications');
+  });
+
+  it('tells owners about an overdue invoice and an online payment, in the defaults’ words', () => {
+    expect(
+      copy.invoiceOverdue({
+        ...base,
+        number: 'OSS/26-27/015',
+        client: 'Acme Labs',
+        amount: '₹47,200.00',
+        dueDate: '2 Nov 2026',
+      }).subject,
+    ).toBe('Invoice OSS/26-27/015 is overdue');
+    expect(
+      copy.paymentReceived({ ...base, number: 'OSS/26-27/015', amount: '₹47,200.00' }).subject,
+    ).toBe('Payment received: ₹47,200.00 for OSS/26-27/015');
+  });
+
   it('escapes names, and has no exclamation marks', async () => {
     const all = [
       copy.portalInvited({ ...base, agency: { name: '<b>Kite & Co</b>' }, contactName: null }),

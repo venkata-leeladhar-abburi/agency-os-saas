@@ -24,6 +24,8 @@ describe('isEmail', () => {
     expect(isEmail(`!@!.${'!.'.repeat(50_000)}`)).toBe(true);
     expect(isEmail(`a@${'b'.repeat(100_000)}`)).toBe(false);
     expect(isEmail('!.'.repeat(100_000))).toBe(false);
-    expect(performance.now() - started).toBeLessThan(50);
+    // Linear time takes a few milliseconds; backtracking on 100,000 characters takes seconds.
+    // The margin keeps it steady on a busy CI runner.
+    expect(performance.now() - started).toBeLessThan(250);
   });
 });

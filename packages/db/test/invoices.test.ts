@@ -287,6 +287,10 @@ describe('payments', () => {
     expect((await as(owner, (tx) => getInvoice(tx, id, { now })))!.invoice.status).toBe('paid');
     const notes = await as(finance, (tx) => listNotifications(tx, ws));
     expect(notes.some((n) => n.kind === 'payment.received')).toBe(true);
+    // And by email to owners and finance, once, however often the webhook comes.
+    const emails =
+      await t.admin`select to_email from email_outbox where kind = 'payment.received' order by to_email`;
+    expect(emails.map((e) => e.to_email)).toEqual(['kiran@onestop.in', 'meera@onestop.in']);
   });
 });
 

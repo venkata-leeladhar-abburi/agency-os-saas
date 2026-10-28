@@ -10,7 +10,7 @@ import { v7 as uuidv7 } from 'uuid';
 import type { Tx } from './client';
 import { auditLog, invitations, memberships, profiles, workspaces } from './schema';
 import { checkPlanLimit } from './platform';
-import { hashToken, newToken } from './tokens';
+import { hashToken, linkToken, newToken } from './tokens';
 
 /** Errors the account functions raise, with the words the app shows. */
 export const ACCOUNT_ERRORS: Record<string, string> = {
@@ -185,16 +185,37 @@ export type NewInvitation = {
   invitedBy: string;
 };
 
-/** Creates an invitation and returns the token for the link (only its hash is stored). */
-export async function inviteMember(tx: Tx, input: NewInvitation) {
+/** The scope of invite links made from LINK_SIGNING_SECRET. */
+const INVITE_SCOPE = 'invite';
+
+/** An invite link's token, worked out again from the secret (for the invitation email). */
+export function inviteLinkToken(secret: string, invitationId: string) {
+  return linkToken(secret, INVITE_SCOPE, invitationId, 1);
+}
+
+/**
+ * Creates an invitation and returns the token for the link (only its hash is stored). With the
+ * link secret the token is made from it, so the email job can rebuild the link; without it the
+ * token is random and the link shows only once.
+ */
+export async function inviteMember(
+  tx: Tx,
+  input: NewInvitation,
+  { secret }: { secret?: string | null } = {},
+) {
   if (!input.email && !input.phone)
     throw new Error('An invitation needs an email or a phone number');
   if (input.role === 'owner')
     throw new Error('Owners are made from the members list, not by invitation');
   const limit = await checkPlanLimit(tx, input.workspaceId, 'members');
   if (!limit.allowed) throw new AccountError('plan_limit', limit.message);
-  const { token, hash } = newToken();
   const id = uuidv7();
+  const { token, hash } = secret
+    ? (() => {
+        const t = inviteLinkToken(secret, id);
+        return { token: t, hash: hashToken(t) };
+      })()
+    : newToken();
   await tx.insert(invitations).values({
     id,
     workspaceId: input.workspaceId,
@@ -272,7 +293,12 @@ export async function listInvitations(tx: Tx, workspaceId: string) {
 }
 
 /** Sends an invite again: the old link stops working and a new one works for 7 days. */
-export async function resendInvitation(tx: Tx, invitationId: string, actorId: string) {
+export async function resendInvitation(
+  tx: Tx,
+  invitationId: string,
+  actorId: string,
+  opts: { secret?: string | null } = {},
+) {
   const [old] = await tx
     .select()
     .from(invitations)
@@ -285,13 +311,17 @@ export async function resendInvitation(tx: Tx, invitationId: string, actorId: st
     );
   if (!old) throw new AccountError('invite_not_found');
   await revokeInvitation(tx, old.id);
-  const { id, token } = await inviteMember(tx, {
-    workspaceId: old.workspaceId,
-    email: old.email ?? undefined,
-    phone: old.phone ?? undefined,
-    role: old.role,
-    invitedBy: actorId,
-  });
+  const { id, token } = await inviteMember(
+    tx,
+    {
+      workspaceId: old.workspaceId,
+      email: old.email ?? undefined,
+      phone: old.phone ?? undefined,
+      role: old.role,
+      invitedBy: actorId,
+    },
+    opts,
+  );
   return { id, token, email: old.email ?? old.phone ?? '' };
 }
 
@@ -329,4 +359,31 @@ export async function saveWorkspaceSetup(tx: Tx, workspaceId: string, setup: Wor
     .where(eq(workspaces.id, workspaceId))
     .returning({ slug: workspaces.slug });
   return row!.slug;
+}
+
+/**
+ * What the invitation email says: who invited them, where, as what. Null once it can't be used
+ * (accepted, cancelled or expired). Service role only.
+ */
+export async function invitationEmailFacts(tx: Tx, invitationId: string, now = new Date()) {
+  const [i] = await tx.select().from(invitations).where(eq(invitations.id, invitationId));
+  if (!i || i.acceptedAt || i.revokedAt || i.expiresAt <= now) return null;
+  const [w] = await tx
+    .select({ name: workspaces.name })
+    .from(workspaces)
+    .where(eq(workspaces.id, i.workspaceId));
+  const [by] = i.invitedBy
+    ? await tx
+        .select({ name: profiles.fullName })
+        .from(profiles)
+        .where(eq(profiles.id, i.invitedBy))
+    : [];
+  return {
+    id: i.id,
+    tokenHash: i.tokenHash,
+    role: i.role,
+    expiresAt: i.expiresAt,
+    workspace: w?.name ?? '',
+    invitedBy: by?.name ?? null,
+  };
 }

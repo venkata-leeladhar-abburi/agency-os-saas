@@ -261,6 +261,8 @@ describe('parseAmount', () => {
   it('stays fast on long hostile input', () => {
     const started = performance.now();
     expect(parseAmount(`${','.repeat(50_000)}x`, 'INR')).toBeNull();
-    expect(performance.now() - started).toBeLessThan(50);
+    // Linear time takes a few milliseconds; backtracking would take seconds. The margin keeps
+    // it steady on a busy CI runner.
+    expect(performance.now() - started).toBeLessThan(250);
   });
 });

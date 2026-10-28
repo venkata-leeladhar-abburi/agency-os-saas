@@ -1,6 +1,7 @@
 // The email and reminder jobs against a real Postgres (TEST_DATABASE_URL), with a fake provider.
 import { randomBytes } from 'node:crypto';
 import {
+  acceptInvitation,
   createClient,
   createInvoice,
   createProject,
@@ -8,12 +9,14 @@ import {
   deliverEvent,
   getClient,
   getProject,
+  inviteMember,
   invitePortalContact,
   issueInvoice,
   payLinkToken,
   queueEmails,
   queueInvoiceSent,
   requestGateApproval,
+  revokeInvitation,
   withService,
   withUser,
   type Session,
@@ -161,15 +164,72 @@ run('the email jobs', () => {
     expect(outbox[0]!.html).toContain('https://app.example/sign-in?next=%2Fp%2Fone-stop');
   });
 
+  it('emails a new member a working invite link, and nothing once it’s cancelled', async () => {
+    outbox = [];
+    const invite = (email: string) =>
+      withUser(t.db, owner, (tx) =>
+        inviteMember(
+          tx,
+          { workspaceId: ws, email, role: 'project_lead', invitedBy: owner.userId },
+          { secret: SECRET },
+        ),
+      );
+    const queue = (id: string, email: string) =>
+      withService(t.db, ws, (tx) =>
+        queueEmails(tx, ws, [
+          {
+            kind: 'member.invited',
+            toEmail: email,
+            audience: 'member',
+            payload: { invitationId: id },
+            dedupeKey: `member.invited:${id}`,
+          },
+        ]),
+      );
+    const ravi = await invite('ravi@onestop.in');
+    const meera = await invite('meera@onestop.in');
+    await queue(ravi.id, 'ravi@onestop.in');
+    await queue(meera.id, 'meera@onestop.in');
+    await withUser(t.db, owner, (tx) => revokeInvitation(tx, meera.id));
+    expect(await runEmails(t.db, { send, env })).toMatchObject({ sent: 1, skipped: 1 });
+    const [email] = outbox;
+    expect(email).toMatchObject({
+      to: 'ravi@onestop.in',
+      subject: 'Kiran Rao invited you to One Stop Solutions on Agency OS',
+    });
+    expect(email!.text).toContain('as Project lead');
+    const link = /https:\/\/app\.example\/invite\/([A-Za-z0-9_-]+)/.exec(email!.html)!;
+    expect(link[1]).toBe(ravi.token);
+    const joiner: Session = {
+      userId: await t.createUser('ravi@onestop.in'),
+      email: 'ravi@onestop.in',
+    };
+    expect(await withUser(t.db, joiner, (tx) => acceptInvitation(tx, link[1]!))).toBe(ws);
+  });
+
   it('queues the morning’s reminders and sends each once', async () => {
     outbox = [];
     const day = new Date('2026-10-30T03:00:00Z');
-    expect(await runReminders(t.db, day)).toEqual({ queued: 1 });
-    expect(await runReminders(t.db, day)).toEqual({ queued: 0 });
+    expect(await runReminders(t.db, day)).toEqual({ queued: 1, overdue: 0 });
+    expect(await runReminders(t.db, day)).toEqual({ queued: 0, overdue: 0 });
     await runEmails(t.db, { send, env, now: day });
     expect(outbox.map((e) => e.subject)).toEqual([
       expect.stringMatching(/^Invoice OSS\/\d\d-\d\d\/001 is due on 2 Nov 2026$/),
     ]);
+  });
+  it('tells the owner once when an invoice goes overdue, in the app and by email', async () => {
+    outbox = [];
+    const late = new Date('2026-11-03T03:00:00Z'); // due 2 Nov
+    expect((await runReminders(t.db, late)).overdue).toBe(1);
+    expect((await runReminders(t.db, late)).overdue).toBe(0);
+    const [n] =
+      await t.admin`select kind, payload->>'client' as client from notifications where kind = 'invoice.overdue'`;
+    expect(n).toMatchObject({ client: 'Example Acme Labs' });
+    await runEmails(t.db, { send, env, now: late });
+    const overdue = outbox.find((e) => e.to === 'kiran@onestop.in')!;
+    expect(overdue.subject).toMatch(/^Invoice OSS\/\d\d-\d\d\/001 is overdue$/);
+    expect(overdue.text).toContain('₹47,200.00 from Example Acme Labs was due on 2 Nov 2026');
+    expect(overdue.html).toContain(`https://app.example/w/one-stop/invoices/${invoiceId}`);
   });
 });
 

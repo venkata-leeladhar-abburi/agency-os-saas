@@ -1,8 +1,12 @@
 // What a queued email says, worked out when it's sent: names and links from what was queued,
 // amounts from the invoice as it is now. Links go to the portal for clients, the app for members.
-import { checkBrandColour, formatDate, formatMoney } from '@agency-os/core';
+import { checkBrandColour, formatDate, formatMoney, ROLE_LABELS } from '@agency-os/core';
 import {
+  hashToken,
+  invitationEmailFacts,
+  inviteLinkToken,
   invoiceEmailFacts,
+  localDate,
   payLinkToken,
   workspaceReplyTo,
   type QueuedEmail,
@@ -97,6 +101,47 @@ export async function renderQueued(tx: Tx, row: QueuedEmail, env: JobEnv): Promi
           audience,
         }),
       );
+    case 'invoice.overdue':
+    case 'payment.received': {
+      const url = `${env.appUrl}/w/${ws.slug}/invoices/${str(p.invoiceId)}`;
+      const amount =
+        typeof p.amountMinor === 'string'
+          ? formatMoney(BigInt(p.amountMinor), str(p.currency, 'INR'))
+          : '';
+      if (row.kind === 'payment.received')
+        return done(copy.paymentReceived({ agency, url, number: str(p.number), amount }));
+      const facts = await invoiceEmailFacts(tx, str(p.invoiceId));
+      if (!facts || facts.dueMinor <= 0n || facts.status === 'paid')
+        return { skip: 'The invoice is paid or cancelled.' };
+      return done(
+        copy.invoiceOverdue({
+          agency,
+          url,
+          number: facts.number,
+          client: str(p.client, 'The client'),
+          amount: formatMoney(facts.dueMinor, facts.currency),
+          dueDate: formatDate(facts.dueOn),
+        }),
+      );
+    }
+    case 'member.invited': {
+      const invite = await invitationEmailFacts(tx, str(p.invitationId));
+      if (!invite) return { skip: 'The invite was used, cancelled or expired.' };
+      if (!env.linkSecret) throw new Error('LINK_SIGNING_SECRET is not set');
+      const token = inviteLinkToken(env.linkSecret, invite.id);
+      // A link made before the secret changed can't be rebuilt; the members page can send again.
+      if (hashToken(token) !== invite.tokenHash)
+        return { skip: 'The invite link can’t be rebuilt with the current secret.' };
+      return done(
+        copy.memberInvited({
+          agency: { name: invite.workspace || ws.name },
+          url: `${env.appUrl}/invite/${token}`,
+          by: invite.invitedBy,
+          role: ROLE_LABELS[invite.role],
+          expires: formatDate(localDate(invite.expiresAt, 'Asia/Kolkata')),
+        }),
+      );
+    }
     case 'portal.invited':
       return done(
         copy.portalInvited({

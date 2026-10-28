@@ -22,6 +22,7 @@ import {
   markRead,
   memberEmails,
   notificationSettings,
+  queueEmails,
   removeMember as dbRemoveMember,
   resendInvitation,
   revokeInvitation,
@@ -30,8 +31,10 @@ import {
   teamOverview,
   toAccountError,
   unreadCount,
+  withService,
   type Tx,
 } from '@agency-os/db';
+import { emailsQueued } from '../../server/jobs';
 import { asMember, type WorkspaceCtx } from '../../server/workspace';
 import type {
   AuditEntry,
@@ -120,12 +123,12 @@ export async function inviteFor(
   ctx: WorkspaceCtx,
   email: string,
   role: Role,
-): Promise<Outcome & { token?: string }> {
+): Promise<Outcome & { token?: string; id?: string }> {
   const address = email.trim().toLowerCase();
   if (role === 'owner')
     return { ok: false, error: 'Make someone an owner from the members list once they’ve joined.' };
   return refusable(() =>
-    asMember(ctx, async (tx): Promise<Outcome & { token?: string }> => {
+    asMember(ctx, async (tx): Promise<Outcome & { token?: string; id?: string }> => {
       const [members, open] = await Promise.all([
         membersOf(tx, ctx),
         listInvitations(tx, ctx.workspaceId),
@@ -137,23 +140,50 @@ export async function inviteFor(
           ok: false,
           error: 'They already have an invite waiting. Send it again from the list.',
         };
-      const { token } = await inviteMember(tx, {
-        workspaceId: ctx.workspaceId,
-        email: address,
-        role,
-        invitedBy: ctx.session.userId,
-      });
-      return { ok: true, token };
+      const { id, token } = await inviteMember(
+        tx,
+        { workspaceId: ctx.workspaceId, email: address, role, invitedBy: ctx.session.userId },
+        { secret: inviteSecret() },
+      );
+      return { ok: true, token, id };
     }),
+  ).then(async (r) => {
+    if (r.ok && r.id) await inviteEmail(ctx, r.id, address);
+    return r;
+  });
+}
+
+/** The link secret, when it's set: invite links made from it can be emailed. */
+function inviteSecret(): string | null {
+  const secret = process.env.LINK_SIGNING_SECRET;
+  return secret && secret.length >= 32 ? secret : null;
+}
+
+/** "[name] invited you to [workspace] on Agency OS": only for links the job can rebuild. */
+async function inviteEmail(ctx: WorkspaceCtx, invitationId: string, email: string) {
+  if (!inviteSecret()) return;
+  await withService(ctx.db, ctx.workspaceId, (tx) =>
+    queueEmails(tx, ctx.workspaceId, [
+      {
+        kind: 'member.invited',
+        toEmail: email,
+        audience: 'member',
+        payload: { invitationId },
+        dedupeKey: `member.invited:${invitationId}`,
+      },
+    ]),
   );
+  await emailsQueued(ctx.workspaceId);
 }
 
 /** A fresh link and another 7 days; the old link stops working. Null if it can't be sent. */
 export async function resendFor(ctx: WorkspaceCtx, id: string) {
   const sent = await refusable(() =>
-    asMember(ctx, (tx) => resendInvitation(tx, id, ctx.session.userId)),
+    asMember(ctx, (tx) => resendInvitation(tx, id, ctx.session.userId, { secret: inviteSecret() })),
   );
-  return 'token' in sent ? { email: sent.email, token: sent.token } : null;
+  if (!('token' in sent)) return null;
+  if (sent.email.includes('@')) await inviteEmail(ctx, sent.id, sent.email);
+  return { email: sent.email, token: sent.token };
 }
 
 export async function revokeFor(ctx: WorkspaceCtx, id: string) {
@@ -309,6 +339,19 @@ export function notificationText(
             : `${str(p.task, 'A task')} was assigned to you`,
         detail: '',
         href: `/tasks/${str(p.taskId)}`,
+      };
+    case 'invoice.overdue':
+      return {
+        title: str(p.number) ? `Invoice ${str(p.number)} is overdue` : 'An invoice is overdue',
+        detail: [
+          str(p.client),
+          typeof p.amountMinor === 'string'
+            ? `${formatMoney(BigInt(p.amountMinor), str(p.currency, 'INR'))} due`
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        href: `/invoices/${str(p.invoiceId)}`,
       };
     case 'payment.received':
       return {

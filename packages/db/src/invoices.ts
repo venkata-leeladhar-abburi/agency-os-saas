@@ -16,7 +16,7 @@ import { and, asc, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { AccountError, call } from './accounts';
 import { withService, type Db, type Tx } from './client';
-import { queueEmails } from './email';
+import { queueEmails, queueEventEmails } from './email';
 import { checkPlanLimit, notify } from './platform';
 import {
   auditLog,
@@ -678,17 +678,21 @@ export async function recordOnlinePayment(
           eq(memberships.status, 'active'),
         ),
       );
-    await notify(tx, {
+    const event = {
+      kind: 'payment.received' as const,
+      key: input.providerPaymentId,
       workspaceId: ws,
       userIds: owners.map((o) => o.userId),
-      kind: 'payment.received',
+      contactEmails: [],
       payload: {
         invoiceId: inv.id,
         number: inv.number,
         amountMinor: input.amountMinor.toString(),
         currency: inv.currency,
       },
-    });
+    };
+    const sent = await notify(tx, event);
+    await queueEventEmails(tx, event, sent.email);
     return { duplicate: false as const };
   });
 }
@@ -892,4 +896,61 @@ export async function invoiceEmailFacts(tx: Tx, invoiceId: string) {
     contactName: contact?.name ?? null,
     agency: { name: ws.name, brandColor: ws.brandColor },
   };
+}
+
+/**
+ * Tells owners and finance about invoices that went overdue in the last week, once each (in
+ * the app, and by email by their settings). The daily job runs it; a missed day catches up.
+ */
+export async function notifyOverdue(db: Db, workspaceId: string, now = new Date()) {
+  return withService(db, workspaceId, async (tx, ws) => {
+    const w = await workspaceOf(tx, ws);
+    const today = localDate(now, w.timeZone);
+    const late = await tx
+      .select({ invoice: invoices, client: clients.name })
+      .from(invoices)
+      .innerJoin(clients, eq(clients.id, invoices.clientId))
+      .where(
+        and(
+          eq(invoices.workspaceId, ws),
+          sql`${invoices.status} in ('issued', 'partially_paid')`,
+          isNull(invoices.deletedAt),
+          lt(invoices.dueOn, today),
+          sql`${invoices.dueOn} >= ${today}::date - 7`,
+          sql`not exists (select 1 from notifications n where n.workspace_id = ${ws}
+            and n.kind = 'invoice.overdue' and n.payload->>'invoiceId' = ${invoices.id}::text)`,
+        ),
+      );
+    if (!late.length) return 0;
+    const people = await tx
+      .select({ userId: memberships.userId })
+      .from(memberships)
+      .where(
+        and(
+          eq(memberships.workspaceId, ws),
+          sql`${memberships.role} in ('owner', 'finance')`,
+          eq(memberships.status, 'active'),
+        ),
+      );
+    for (const { invoice: inv, client } of late) {
+      const event = {
+        kind: 'invoice.overdue' as const,
+        key: inv.id,
+        workspaceId: ws,
+        userIds: people.map((p) => p.userId),
+        contactEmails: [],
+        payload: {
+          invoiceId: inv.id,
+          number: inv.number,
+          client,
+          amountMinor: (inv.totalMinor - inv.amountPaidMinor).toString(),
+          currency: inv.currency,
+          dueOn: inv.dueOn,
+        },
+      };
+      const sent = await notify(tx, event);
+      await queueEventEmails(tx, event, sent.email);
+    }
+    return late.length;
+  });
 }
