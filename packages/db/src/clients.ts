@@ -358,9 +358,17 @@ export type PortalClient = {
   workspace_name: string;
   logo_path: string | null;
   brand_color: string | null;
-  plan: string;
+  plan: (typeof workspaces.$inferSelect)['plan'];
+  workspace_slug: string;
   contact_id: string;
   contact_name: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  client_gstin: string | null;
+  client_state_code: string | null;
+  client_country: string;
+  client_city: string | null;
+  client_currency: string;
 };
 
 /** The clients the signed-in portal user belongs to, with only what the portal shows. */

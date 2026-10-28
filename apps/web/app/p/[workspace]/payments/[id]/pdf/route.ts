@@ -13,7 +13,7 @@ export async function GET(
   const { workspace, id } = await params;
   const session = await currentPortal(workspace);
   if (!session) return notFoundResponse();
-  const found = await portalInvoice(session.clientId, id);
+  const found = await portalInvoice(session, id);
   if (!found) return notFoundResponse();
   return pdfResponse(
     createElement(InvoicePdf, { ...found, brand: pdfBrand(found.settings) }),

@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Thread } from '@/components/portal/portal-bits';
 import { Activities } from '@/components/workspace/activity';
-import { exampleMode, getProject, projectMessages } from '@/lib/data';
+import { getProject, projectMessages } from '@/lib/data';
 import { tasks } from '@/lib/data/tasks';
 import { budgetUsed, relativeInSentence, relativeTime } from '@/lib/data/views';
 import { RequestGateForm } from './request-gate';
@@ -45,8 +45,7 @@ export default async function ProjectPage({
   const current = template.phases[project.phase];
   const used = budgetUsed(project.usedMinor, project.budgetMinor);
   const projectTasks = await tasks({ projectId: project.id }, workspace);
-  // Messages need their own table, which comes with the portal; example mode only for now.
-  const messages = exampleMode() ? await projectMessages(project.id) : null;
+  const messages = await projectMessages(project.id, workspace);
   const lastDecision = project.gateHistory[0];
 
   return (

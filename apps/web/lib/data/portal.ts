@@ -1,15 +1,35 @@
 // Server only. The client portal: what one client sees and does. Every function takes the
-// client's id and only reads that client's projects and invoices (the database version does
-// the same with the portal RLS policies).
+// portal session (or, in example mode, the client's id) and only reads that client's projects
+// and invoices. On the database the portal policies do the same (./db/portal.ts).
 import { formatDate, formatMoney } from '@agency-os/core';
+import type { PortalCtx } from '../server/portal';
+import * as db from './db/portal';
 import { notify } from './notifications';
 import { ONLINE_METHODS, type OnlineMethod } from './pay-methods';
 import { phaseNames } from './project-phases';
 import { activity, newId, store } from './shared';
-import type { Client, Invoice, Project } from './types';
+import type { Client, Invoice, Message, Project } from './types';
 import { invoiceState, invoiceTotals, istDate, relativeTime } from './views';
 
 export const EXAMPLE_PORTAL_CLIENT = 'acme';
+
+/** Who is signed in to the portal; `db` is set on the database, null on example data. */
+export type PortalSession = {
+  agency: string;
+  clientId: string;
+  company: string;
+  contact: string;
+  firstVisit: boolean;
+  db: PortalCtx | null;
+};
+
+/** The signed-in session, or a client's id for the example store (and its tests). */
+type Who = string | PortalSession;
+const idOf = (w: Who) => (typeof w === 'string' ? w : w.clientId);
+const dbOf = (w: Who) => (typeof w === 'string' ? null : w.db);
+
+/** What the project page shows of a project: never the budget or internal details. */
+export type PortalProjectView = Pick<Project, 'id' | 'name' | 'lead' | 'gate' | 'gateHistory'>;
 
 function client(clientId: string): Client | null {
   return store().clients.find((c) => c.id === clientId && c.portal !== 'not_invited') ?? null;
@@ -27,7 +47,7 @@ function ownInvoice(clientId: string, invoiceId: string): Invoice | null {
 }
 
 /** The portal's frame: the agency's name and who is signed in. Marks the first visit. */
-export async function portalSession(clientId: string) {
+export async function portalSession(clientId: string): Promise<PortalSession | null> {
   const c = client(clientId);
   if (!c) return null;
   return {
@@ -36,11 +56,46 @@ export async function portalSession(clientId: string) {
     company: c.name,
     contact: c.contactName,
     firstVisit: c.portalVisitedAt === null,
+    db: null,
   };
 }
 
-export async function markPortalVisited(clientId: string) {
-  const c = client(clientId);
+/** The same frame on the database: the first visit is the one that linked the login. */
+export function portalSessionFromDb(pc: PortalCtx): PortalSession {
+  return {
+    agency: pc.client.workspace_name,
+    clientId: pc.clientId,
+    company: pc.client.client_name,
+    contact: pc.client.contact_name,
+    firstVisit: pc.claimed > 0,
+    db: pc,
+  };
+}
+
+/** The portal's look: the agency's logo, colour and whether its plan removes our branding. */
+export async function portalBrand(w: PortalSession) {
+  if (w.db)
+    return { logoUrl: undefined, brandColour: w.db.client.brand_color, plan: w.db.client.plan };
+  const s = store().settings;
+  return { logoUrl: s.logo?.url, brandColour: s.brandColour, plan: s.plan };
+}
+
+/** The contact's own details for Account. */
+export async function portalAccount(w: PortalSession) {
+  if (w.db)
+    return {
+      name: w.db.client.contact_name,
+      email: w.db.client.contact_email,
+      phone: w.db.client.contact_phone,
+    };
+  const c = client(w.clientId);
+  return { name: c?.contactName ?? w.contact, email: c?.email ?? null, phone: c?.phone ?? null };
+}
+
+/** Example data only: on the database, linking the login marks the first visit. */
+export async function markPortalVisited(w: Who) {
+  if (dbOf(w)) return;
+  const c = client(idOf(w));
   if (c && !c.portalVisitedAt) {
     c.portalVisitedAt = new Date().toISOString();
     if (c.portal === 'invited') c.portal = 'active';
@@ -69,7 +124,10 @@ export type NeedsYou = {
   href: string;
 };
 
-export async function portalHome(clientId: string, slug: string) {
+export async function portalHome(w: Who, slug: string) {
+  const pc = dbOf(w);
+  if (pc) return db.portalHomeFor(pc, slug);
+  const clientId = idOf(w);
   const c = client(clientId);
   if (!c) return null;
   const base = `/p/${slug}`;
@@ -131,8 +189,20 @@ export async function portalHome(clientId: string, slug: string) {
   };
 }
 
-export async function portalProject(clientId: string, projectId: string) {
-  const p = ownProject(clientId, projectId);
+export async function portalProject(
+  w: Who,
+  projectId: string,
+): Promise<{
+  project: PortalProjectView;
+  phases: string[];
+  current: number;
+  percent: number;
+  phaseName: string;
+  messages: Message[];
+} | null> {
+  const pc = dbOf(w);
+  if (pc) return db.portalProjectFor(pc, projectId);
+  const p = ownProject(idOf(w), projectId);
   if (!p) return null;
   const phases = phaseNames(p.template);
   return {
@@ -149,11 +219,14 @@ export type Outcome = { ok: true } | { ok: false; error: string };
 
 /** The client approves the work waiting for them, or asks for changes with a note. */
 export async function decideGate(
-  clientId: string,
+  w: Who,
   projectId: string,
   decision: 'approved' | 'changes',
   comment: string,
 ): Promise<Outcome> {
+  const pc = dbOf(w);
+  if (pc) return db.decideGateFor(pc, projectId, decision, comment);
+  const clientId = idOf(w);
   const p = ownProject(clientId, projectId);
   const c = client(clientId);
   if (!p || !c) return { ok: false, error: 'This project isn’t yours.' };
@@ -192,7 +265,10 @@ export async function decideGate(
   return { ok: true };
 }
 
-export async function portalInvoices(clientId: string) {
+export async function portalInvoices(w: Who) {
+  const pc = dbOf(w);
+  if (pc) return db.portalInvoicesFor(pc);
+  const clientId = idOf(w);
   const c = client(clientId);
   if (!c) return null;
   return store()
@@ -201,7 +277,10 @@ export async function portalInvoices(clientId: string) {
     .sort((a, b) => (b.invoice.issuedOn ?? '').localeCompare(a.invoice.issuedOn ?? ''));
 }
 
-export async function portalInvoice(clientId: string, invoiceId: string) {
+export async function portalInvoice(w: Who, invoiceId: string) {
+  const pc = dbOf(w);
+  if (pc) return db.portalInvoiceFor(pc, invoiceId);
+  const clientId = idOf(w);
   const c = client(clientId);
   const inv = ownInvoice(clientId, invoiceId);
   if (!c || !inv) return null;
@@ -273,10 +352,20 @@ export async function sendMessage(
   return { ok: true };
 }
 
+/** The client's message from the portal; the project team is told. */
+export async function sendPortalMessage(w: Who, projectId: string, text: string) {
+  const pc = dbOf(w);
+  if (pc) return db.sendPortalMessageFor(pc, projectId, text);
+  return sendMessage(projectId, { clientId: idOf(w) }, text);
+}
+
 export async function saveContact(
-  clientId: string,
+  w: Who,
   input: { contactName: string; email: string | null; phone: string | null },
-) {
-  const c = client(clientId);
+): Promise<Outcome> {
+  const pc = dbOf(w);
+  if (pc) return db.saveContactFor(pc, input);
+  const c = client(idOf(w));
   if (c) Object.assign(c, input);
+  return { ok: true };
 }

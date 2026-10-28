@@ -21,3 +21,4 @@ export * from './projects';
 export * from './tasks';
 export * from './invoices';
 export * from './settings';
+export * from './portal';

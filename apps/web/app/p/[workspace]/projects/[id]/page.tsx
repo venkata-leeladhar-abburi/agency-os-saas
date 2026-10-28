@@ -15,7 +15,7 @@ export default async function PortalProjectPage({
 }) {
   const { workspace, id } = await params;
   const session = (await currentPortal(workspace))!;
-  const found = await portalProject(session.clientId, id);
+  const found = await portalProject(session, id);
   if (!found) notFound();
   const { project: p, phases, current, percent, phaseName, messages } = found;
   const now = new Date();

@@ -14,7 +14,7 @@ export default async function PortalPayments({
 }) {
   const { workspace } = await params;
   const session = (await currentPortal(workspace))!;
-  const list = (await portalInvoices(session.clientId))!;
+  const list = (await portalInvoices(session))!;
   return (
     <>
       <h1 className="text-title-lg">Payments</h1>

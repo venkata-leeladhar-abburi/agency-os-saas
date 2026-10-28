@@ -14,7 +14,7 @@ export default async function PortalProjects({
 }) {
   const { workspace } = await params;
   const session = (await currentPortal(workspace))!;
-  const { projects } = (await portalHome(session.clientId, workspace))!;
+  const { projects } = (await portalHome(session, workspace))!;
   if (projects.length === 1) redirect(`/p/${workspace}/projects/${projects[0]!.id}`);
   return (
     <>

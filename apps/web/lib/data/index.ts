@@ -26,9 +26,11 @@ import type {
 import { ctxFor } from './ctx';
 import * as dbInvoices from './db/invoices';
 import * as dbPeople from './db/people';
+import * as dbPortal from './db/portal';
 import * as dbSnapshot from './db/snapshot';
 import * as dbWork from './db/work';
 import { limitInfo, needsUpgrade, type LimitInfo } from './plan';
+import { sendMessage } from './portal';
 import { activity, EXAMPLE_USER, newId, store } from './shared';
 import type { Client, Invoice, Lead, Project, StageId, Task, WorkspaceSettings } from './types';
 import {
@@ -798,11 +800,20 @@ export function todayFrom(s: Overview, slug: string, now = new Date()): TodayIte
   return items;
 }
 
-/** Example mode only for now: messages need their own table, which comes with the portal. */
-export async function projectMessages(projectId: string) {
+/** A project's thread with the client, oldest first. */
+export async function projectMessages(projectId: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPortal.projectMessagesFor(ctx, projectId);
   return store()
     .messages.filter((m) => m.projectId === projectId)
     .sort((a, b) => a.at.localeCompare(b.at));
+}
+
+/** The team's reply in a project's thread; the client reads it in their portal. */
+export async function teamMessage(projectId: string, text: string, slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbPortal.teamMessageFor(ctx, projectId, text);
+  return sendMessage(projectId, { member: EXAMPLE_USER.name }, text);
 }
 
 // ---------- Example data or the database ----------

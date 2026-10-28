@@ -98,6 +98,8 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   task_not_found: 'That task doesn’t exist or you’re not on its project.',
   task_mismatch: 'Pick a phase, parent task and assignee from this project and workspace.',
   comment_required: 'Write a comment first.',
+  message_required: 'Write a message first.',
+  message_too_long: 'Keep messages under 4,000 characters.',
   comment_not_found: 'That comment doesn’t exist or isn’t yours.',
   daily_update_empty: 'Add what you did, what’s next or what’s blocking you.',
   portal_email_required: 'Add an email for this contact. The portal sign-in link goes to it.',

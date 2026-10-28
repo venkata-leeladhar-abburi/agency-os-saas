@@ -19,7 +19,7 @@ export default async function PortalInvoice({
 }) {
   const [{ workspace, id }, { payment }] = await Promise.all([params, searchParams]);
   const session = (await currentPortal(workspace))!;
-  const found = await portalInvoice(session.clientId, id);
+  const found = await portalInvoice(session, id);
   if (!found) notFound();
   const { invoice, state } = found;
   const example = exampleMode();

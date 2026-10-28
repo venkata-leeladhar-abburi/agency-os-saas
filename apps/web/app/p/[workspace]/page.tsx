@@ -10,8 +10,8 @@ export const metadata = { title: 'Your projects' };
 export default async function PortalHome({ params }: { params: Promise<{ workspace: string }> }) {
   const { workspace } = await params;
   const session = (await currentPortal(workspace))!;
-  const home = (await portalHome(session.clientId, workspace))!;
-  if (session.firstVisit) await markPortalVisited(session.clientId);
+  const home = (await portalHome(session, workspace))!;
+  if (session.firstVisit) await markPortalVisited(session);
   return (
     <>
       <div>

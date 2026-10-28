@@ -10,7 +10,7 @@ import {
   examplePayment,
   portalInvoice,
   saveContact,
-  sendMessage,
+  sendPortalMessage,
 } from '@/lib/data/portal';
 import { fields, type Errors } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
@@ -31,7 +31,7 @@ export async function decideGateAction(
 ): Promise<FormState> {
   const s = await session(slug);
   const comment = String(form.get('comment') ?? '');
-  const result = await decideGate(s.clientId, projectId, decision, comment);
+  const result = await decideGate(s, projectId, decision, comment);
   if (!result.ok)
     return decision === 'changes'
       ? { errors: { comment: result.error }, values: { comment } }
@@ -52,8 +52,7 @@ export async function payAction(
   const method = form.get('method');
   if (!isOnlineMethod(method)) return { message: 'Choose UPI, card or net banking.' };
   // Only the signed-in client's own issued invoices.
-  if (!(await portalInvoice(s.clientId, invoiceId)))
-    return { message: 'This invoice isn’t yours.' };
+  if (!(await portalInvoice(s, invoiceId))) return { message: 'This invoice isn’t yours.' };
   const result = await examplePayment(s.clientId, invoiceId, method);
   if (!result.ok) return { message: result.error };
   revalidatePath(`/p/${slug}`, 'layout');
@@ -68,7 +67,7 @@ export async function sendMessageAction(
 ): Promise<FormState> {
   const s = await session(slug);
   const text = String(form.get('text') ?? '');
-  const result = await sendMessage(projectId, { clientId: s.clientId }, text);
+  const result = await sendPortalMessage(s, projectId, text);
   if (!result.ok) return { errors: { text: result.error }, values: { text } };
   revalidatePath(`/p/${slug}`, 'layout');
   return { done: Date.now() };
@@ -93,7 +92,8 @@ export async function saveContactAction(
   if (rawPhone && !phone)
     errors.phone = 'Enter a 10-digit mobile number, or a number starting with +.';
   if (Object.keys(errors).length) return { errors, values: f };
-  await saveContact(s.clientId, { contactName: name, email, phone });
+  const saved = await saveContact(s, { contactName: name, email, phone });
+  if (!saved.ok) return { message: saved.error, values: f };
   revalidatePath(`/p/${slug}`, 'layout');
   return { done: Date.now(), values: f };
 }

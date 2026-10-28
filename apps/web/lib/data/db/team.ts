@@ -289,6 +289,12 @@ export function notificationText(
         detail: str(p.comment),
         href: `/projects/${str(p.projectId)}`,
       };
+    case 'message.posted':
+      return {
+        title: `New message from ${str(p.name, 'the client')} about ${str(p.project, 'a project')}`,
+        detail: '',
+        href: `/projects/${str(p.projectId)}`,
+      };
     case 'gate.requested':
       return {
         title: `Approve ${str(p.gate, 'a sign-off')}`,

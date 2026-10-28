@@ -14,8 +14,8 @@ export default async function PortalMessages({
 }) {
   const { workspace } = await params;
   const session = (await currentPortal(workspace))!;
-  const { projects } = (await portalHome(session.clientId, workspace))!;
-  const threads = await Promise.all(projects.map((p) => portalProject(session.clientId, p.id)));
+  const { projects } = (await portalHome(session, workspace))!;
+  const threads = await Promise.all(projects.map((p) => portalProject(session, p.id)));
   const now = new Date();
   return (
     <>

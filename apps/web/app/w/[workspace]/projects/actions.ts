@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { AccountError } from '@agency-os/db';
-import { clientOptions, createProject, EXAMPLE_USER, people, requestGate } from '@/lib/data';
-import { sendMessage } from '@/lib/data/portal';
+import { clientOptions, createProject, people, requestGate, teamMessage } from '@/lib/data';
 import { checkProject, fields } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
 
@@ -58,7 +57,7 @@ export async function teamMessageAction(
   form: FormData,
 ): Promise<FormState> {
   const text = String(form.get('text') ?? '');
-  const result = await sendMessage(id, { member: EXAMPLE_USER.name }, text);
+  const result = await teamMessage(id, text, slug);
   if (!result.ok) return { errors: { text: result.error }, values: { text } };
   revalidatePath(`/w/${slug}/projects/${id}`);
   return { done: Date.now() };

@@ -91,7 +91,18 @@ function placeOf(i: Pick<Invoice, 'placeOfSupplyCode' | 'exportCountry'>): Place
     : { kind: 'export', country: i.exportCountry ?? 'ZZ' };
 }
 
-function totalsFor(i: Invoice, items: InvoiceItemInput[]): InvoiceTotals {
+type TaxFields = Pick<
+  Invoice,
+  | 'currency'
+  | 'supplierStateCode'
+  | 'placeOfSupplyCode'
+  | 'exportCountry'
+  | 'hasLut'
+  | 'roundOff'
+  | 'exchangeRate'
+>;
+
+function totalsFor(i: TaxFields, items: InvoiceItemInput[]): InvoiceTotals {
   return calculateInvoice({
     currency: i.currency,
     supplierStateCode: i.supplierStateCode ?? undefined,
@@ -682,6 +693,66 @@ export async function recordOnlinePayment(
 }
 
 // ---- The client portal ----
+
+export type PortalInvoiceFull = TaxFields & {
+  id: string;
+  clientId: string;
+  workspaceId: string;
+  number: string;
+  status: Invoice['status'];
+  issueOn: string;
+  dueOn: string;
+  items: (InvoiceItemInput & { sacCode: string | null; discountMinor: bigint })[];
+  payments: { id: string; amountMinor: bigint; method: string; receivedOn: string }[];
+  totals: InvoiceTotals;
+};
+
+/**
+ * The signed-in contact's issued invoices in full (lines, payments and the totals they were
+ * issued with), as the portal shows and prints them.
+ */
+export async function portalInvoiceList(tx: Tx): Promise<PortalInvoiceFull[]> {
+  const [row] = await tx.execute<{ list: Record<string, unknown>[] }>(
+    sql`select portal_invoices() as list`,
+  );
+  return (row?.list ?? []).map((x) => {
+    const tax: TaxFields = {
+      currency: x.currency as string,
+      supplierStateCode: (x.supplierStateCode as string | null) ?? null,
+      placeOfSupplyCode: (x.placeOfSupplyCode as string | null) ?? null,
+      exportCountry: (x.exportCountry as string | null) ?? null,
+      hasLut: Boolean(x.hasLut),
+      roundOff: Boolean(x.roundOff),
+      exchangeRate: x.exchangeRate === null ? null : String(x.exchangeRate),
+    };
+    const items = ((x.items as Record<string, unknown>[] | null) ?? []).map((it) => ({
+      description: it.description as string,
+      sacCode: (it.sacCode as string | null) ?? null,
+      quantity: String(it.quantity),
+      rateMinor: BigInt(it.rateMinor as string),
+      discountMinor: BigInt(it.discountMinor as string),
+      taxRateBp: it.taxRateBp as number,
+    }));
+    return {
+      ...tax,
+      id: x.id as string,
+      clientId: x.clientId as string,
+      workspaceId: x.workspaceId as string,
+      number: x.number as string,
+      status: x.status as Invoice['status'],
+      issueOn: x.issueOn as string,
+      dueOn: x.dueOn as string,
+      items,
+      payments: ((x.payments as Record<string, unknown>[] | null) ?? []).map((p) => ({
+        id: p.id as string,
+        amountMinor: BigInt(p.amountMinor as string),
+        method: p.method as string,
+        receivedOn: p.receivedOn as string,
+      })),
+      totals: totalsFor(tax, items),
+    };
+  });
+}
 
 export type PortalInvoice = {
   id: string;

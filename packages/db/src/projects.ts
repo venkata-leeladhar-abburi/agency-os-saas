@@ -443,6 +443,11 @@ export async function requestGateApproval(
   };
 }
 
+/** The project lead's notification for a client's decision; jobs deliver it (service role). */
+export async function gateDecidedEvent(tx: Tx, gateId: string): Promise<NotificationEvent> {
+  return decided(tx, gateId);
+}
+
 async function decided(tx: Tx, gateId: string): Promise<NotificationEvent> {
   const [g] = await tx.select().from(gates).where(eq(gates.id, gateId));
   const project = await projectOfGate(tx, g!);
@@ -507,6 +512,7 @@ export type PortalProject = {
   clientId: string;
   status: string;
   dueOn: string | null;
+  leadName: string | null;
   progress: number;
   phases: {
     name: string;

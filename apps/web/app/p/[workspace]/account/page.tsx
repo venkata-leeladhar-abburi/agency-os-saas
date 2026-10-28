@@ -1,6 +1,6 @@
 import { Card } from '@agency-os/ui';
-import { getClient } from '@/lib/data';
 import { formatPhone } from '@/lib/auth/helpers';
+import { portalAccount } from '@/lib/data/portal';
 import { currentPortal } from '@/lib/portal-session';
 import { AccountForm } from './account-form';
 
@@ -13,7 +13,7 @@ export default async function PortalAccount({
 }) {
   const { workspace } = await params;
   const session = (await currentPortal(workspace))!;
-  const { client } = (await getClient(session.clientId))!;
+  const me = await portalAccount(session);
   return (
     <>
       <h1 className="text-title-lg">Your account</h1>
@@ -21,9 +21,9 @@ export default async function PortalAccount({
         <AccountForm
           slug={workspace}
           values={{
-            name: client.contactName,
-            email: client.email ?? '',
-            phone: client.phone ? formatPhone(client.phone) : '',
+            name: me.name,
+            email: me.email ?? '',
+            phone: me.phone ? formatPhone(me.phone) : '',
           }}
         />
       </Card>
