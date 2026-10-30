@@ -46,6 +46,12 @@ const outbox = () =>
 const reset = () => t.admin`delete from email_outbox where workspace_id = ${ws}`;
 const sent: EmailOutcome = { status: 'sent', providerId: 'em_1' };
 
+/**
+ * When to send: the queue stamps emails with the database's clock, so sending "as of" a fixed
+ * date in the past would find nothing due. Never earlier than now.
+ */
+const sendAt = (at: Date) => new Date(Math.max(at.getTime(), Date.now()) + 1000);
+
 beforeAll(async () => {
   t = await createTestDb();
   owner = { userId: await t.createUser('kiran@onestop.in'), email: 'kiran@onestop.in' };
@@ -286,7 +292,7 @@ describe('invoice emails', () => {
     expect(await queueRemindersDue(t.db, ws, day)).toBe(1);
     expect(await queueRemindersDue(t.db, ws, day)).toBe(0);
     expect((await outbox()).map((r) => r.kind)).toEqual(['invoice.sent', 'invoice.reminder']);
-    await sendDueEmails(t.db, ws, async () => sent, { now: day });
+    await sendDueEmails(t.db, ws, async () => sent, { now: sendAt(day) });
     expect((await remindersDue(t.db, ws, day)).find((r) => r.invoiceId === id)).toBeUndefined();
     const [row] = await t.admin`select provider_message_id from reminders where invoice_id = ${id}`;
     expect(row).toMatchObject({ provider_message_id: 'em_1' });

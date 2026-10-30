@@ -40,6 +40,11 @@ const send: Send = async (e) => {
   outbox.push(e);
   return { status: 'sent', providerId: `em_${outbox.length}` };
 };
+/**
+ * When to send: the queue stamps emails with the database's clock, so sending "as of" a fixed
+ * date in the past would find nothing due. Never earlier than now.
+ */
+const sendAt = (at: Date) => new Date(Math.max(at.getTime(), Date.now()) + 1000);
 const status = () =>
   t.admin`select kind, status, attempts, last_error from email_outbox order by created_at, id`;
 
@@ -212,7 +217,7 @@ run('the email jobs', () => {
     const day = new Date('2026-10-30T03:00:00Z');
     expect(await runReminders(t.db, day)).toEqual({ queued: 1, overdue: 0 });
     expect(await runReminders(t.db, day)).toEqual({ queued: 0, overdue: 0 });
-    await runEmails(t.db, { send, env, now: day });
+    await runEmails(t.db, { send, env, now: sendAt(day) });
     expect(outbox.map((e) => e.subject)).toEqual([
       expect.stringMatching(/^Invoice OSS\/\d\d-\d\d\/001 is due on 2 Nov 2026$/),
     ]);
@@ -225,7 +230,7 @@ run('the email jobs', () => {
     const [n] =
       await t.admin`select kind, payload->>'client' as client from notifications where kind = 'invoice.overdue'`;
     expect(n).toMatchObject({ client: 'Example Acme Labs' });
-    await runEmails(t.db, { send, env, now: late });
+    await runEmails(t.db, { send, env, now: sendAt(late) });
     const overdue = outbox.find((e) => e.to === 'kiran@onestop.in')!;
     expect(overdue.subject).toMatch(/^Invoice OSS\/\d\d-\d\d\/001 is overdue$/);
     expect(overdue.text).toContain('₹47,200.00 from Example Acme Labs was due on 2 Nov 2026');
