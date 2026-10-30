@@ -15,6 +15,8 @@ export type TaskRow = {
   projectId: string;
   assignee: string;
   due: string;
+  /** YYYY-MM-DD, for the calendar. */
+  dueOn: string | null;
   overdue: boolean;
   priority: 'Low' | 'Normal' | 'High';
   status: 'To do' | 'In progress' | 'In review' | 'Done';
@@ -34,6 +36,7 @@ function row(t: Task, now: Date, client?: string, comments?: number): TaskRow {
     projectId: t.projectId,
     assignee: t.assignee,
     due: due.text,
+    dueOn: t.dueOn,
     overdue: due.overdue,
     priority: TASK_PRIORITIES.find((p) => p.id === t.priority)!.name as TaskRow['priority'],
     status: TASK_STATUSES.find((s) => s.id === t.status)!.name as TaskRow['status'],

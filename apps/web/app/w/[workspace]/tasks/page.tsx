@@ -3,6 +3,8 @@ import { buttonVariants, PageHeader, TabLinks } from '@agency-os/ui';
 import Link from 'next/link';
 import { Empty } from '@/components/workspace/page-bits';
 import { TaskBoard, TasksTable } from '@/components/workspace/tables';
+import { TaskCalendar } from '@/components/workspace/task-calendar';
+import { istDate } from '@/lib/data/views';
 import { member, myName } from '@/lib/data/team';
 import { tasks } from '@/lib/data/tasks';
 
@@ -13,9 +15,12 @@ export default async function TasksPage({
   searchParams,
 }: {
   params: Promise<{ workspace: string }>;
-  searchParams: Promise<{ view?: string; who?: string }>;
+  searchParams: Promise<{ view?: string; who?: string; month?: string }>;
 }) {
-  const [{ workspace }, { view, who }] = await Promise.all([params, searchParams]);
+  const [{ workspace }, { view, who, month: monthParam }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const base = `/w/${workspace}/tasks`;
   const mine = who === 'me';
   // ?who=<member id> from the dashboard's team load: one person's tasks.
@@ -24,8 +29,12 @@ export default async function TasksPage({
   const rows = await tasks(assignee ? { assignee } : {}, workspace);
   const open = rows.filter((t) => t.status !== 'Done');
   const overdue = rows.filter((t) => t.overdue).length;
-  const q = (v: string | undefined, w: boolean) =>
-    `${base}?${new URLSearchParams({ ...(v ? { view: v } : {}), ...(w ? { who: 'me' } : {}) })}`;
+  const q = (v: string | undefined, w: boolean, month?: string) =>
+    `${base}?${new URLSearchParams({ ...(v ? { view: v } : {}), ...(w ? { who: 'me' } : {}), ...(month ? { month } : {}) })}`;
+  const today = istDate(new Date());
+  const month =
+    monthParam && /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam) ? monthParam : today.slice(0, 7);
+  const tab = view === 'table' || view === 'calendar' ? view : 'board';
   return (
     <>
       <PageHeader
@@ -42,8 +51,9 @@ export default async function TasksPage({
         <TabLinks
           label="Tasks view"
           items={[
-            { label: 'Board', href: q(undefined, mine), active: view !== 'table' },
-            { label: 'Table', href: q('table', mine), active: view === 'table' },
+            { label: 'Board', href: q(undefined, mine), active: tab === 'board' },
+            { label: 'Table', href: q('table', mine), active: tab === 'table' },
+            { label: 'Calendar', href: q('calendar', mine), active: tab === 'calendar' },
           ]}
         />
         <TabLinks
@@ -66,8 +76,16 @@ export default async function TasksPage({
           }
           text="Add tasks to a project phase to plan the work."
         />
-      ) : view === 'table' ? (
+      ) : tab === 'table' ? (
         <TasksTable rows={rows} base={base} />
+      ) : tab === 'calendar' ? (
+        <TaskCalendar
+          rows={rows}
+          base={base}
+          month={month}
+          today={today}
+          link={(m) => q('calendar', mine, m)}
+        />
       ) : (
         <TaskBoard rows={rows} base={base} />
       )}
