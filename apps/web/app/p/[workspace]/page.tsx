@@ -15,7 +15,17 @@ export default async function PortalHome({ params }: { params: Promise<{ workspa
   return (
     <>
       <div>
-        <p className="text-overline-caps text-muted-foreground">{session.company}</p>
+        <p className="text-overline-caps text-muted-foreground">
+          {session.company}
+          {session.choices.length > 1 ? (
+            <>
+              {' · '}
+              <Link href={`/p/${workspace}/account`} className="normal-case">
+                Switch company
+              </Link>
+            </>
+          ) : null}
+        </p>
         <h1 className="text-title-xl">Namaste, {session.contact.split(' ')[0]}</h1>
       </div>
       {session.firstVisit ? (

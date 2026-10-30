@@ -21,6 +21,8 @@ export type PortalSession = {
   contact: string;
   firstVisit: boolean;
   db: PortalCtx | null;
+  /** The clients they can switch between (more than one only when they're a contact for several). */
+  choices: { id: string; name: string }[];
 };
 
 /** The signed-in session, or a client's id for the example store (and its tests). */
@@ -57,6 +59,7 @@ export async function portalSession(clientId: string): Promise<PortalSession | n
     contact: c.contactName,
     firstVisit: c.portalVisitedAt === null,
     db: null,
+    choices: [],
   };
 }
 
@@ -69,6 +72,7 @@ export function portalSessionFromDb(pc: PortalCtx): PortalSession {
     contact: pc.client.contact_name,
     firstVisit: pc.claimed > 0,
     db: pc,
+    choices: pc.choices,
   };
 }
 

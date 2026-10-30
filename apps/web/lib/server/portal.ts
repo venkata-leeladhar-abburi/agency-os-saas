@@ -25,6 +25,8 @@ export type PortalCtx = {
   client: PortalClient;
   /** Logins linked on this visit: more than 0 the first time they open the portal. */
   claimed: number;
+  /** Every client of this agency they're a contact for, to switch between. */
+  choices: { id: string; name: string }[];
 };
 
 /** Which of their clients a contact looks at, when they are a contact for more than one. */
@@ -69,6 +71,7 @@ export async function portalCtxFor(
     contactId: client.contact_id,
     client,
     claimed,
+    choices: here.map((c) => ({ id: c.client_id, name: c.client_name })),
   };
 }
 
