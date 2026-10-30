@@ -22,7 +22,6 @@ Claude adds questions here and asks them in one batch. The founder answers inlin
 | 16 | **Analytics region:** PostHog US or EU cloud? | M6 | EU cloud |
 | 17 | **Pay link secret:** add `LINK_SIGNING_SECRET` (32+ random characters, `openssl rand -hex 32`) to the dev and later production environments. Changing it later breaks pay links already sent. | M13 | Issuing invoices on the database stops with a clear error until it's set; example mode doesn't need it |
 | 18 | **Sign-in email template:** in Supabase, Authentication, Email templates, change the magic link to `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email` (the app's redirect already ends in `/auth/callback?next=…`), so a link opened on another phone or laptop still signs in | M5 | The default link works only in the browser that asked for it |
-| 19 | **Test sign-in for browser checks:** may Claude create one test user (an `example.com` address) in the Supabase dev project, so the signed-in screens can be checked in a browser before G3? | M13 | Signed-in screens are tested by their data functions against Postgres, not yet in a browser |
 | 20 | **Signing code email:** the wording isn't in the content docs. Proposed (D-054): subject “482915 is your code to sign with One Stop Solutions”; body “Use this code to sign “Proposal for …”: 482915. It works for 10 minutes. If you didn’t ask to sign, you can ignore this email.” Keep, or change? | M10 | The proposed wording |
 | 21 | **Email wording:** the defaults give the subjects but not the bodies. Proposed (D-059): one or two plain sentences saying what happened and a button, for example "Ravi Kumar asked you to approve “Homepage design” for Website." with **Review and approve**. The portal invitation isn't in the defaults: subject "One Stop Solutions invited you to see your projects", body "… invited you to see your projects with them. Approve work, pay invoices and message the team in one place. Sign in with this email address. No password needed." Keep, or change? | G3 | The proposed wording |
 
@@ -30,6 +29,7 @@ Claude adds questions here and asks them in one batch. The founder answers inlin
 
 Move answered questions here with the date and the answer, and add a decision to `decisions.md` when the answer changes the plan.
 
+- **19 Test sign-in** (30 Oct 2026): yes. Claude created `claude-test@example.com` in the Supabase dev project (confirmed, no password; sign-in links are generated with the service key when a check needs one). Recorded as D-061.
 - **13 Pull requests** (25 Oct 2026): Claude merges its own PRs when CI is green; gate milestones wait for the founder. Recorded as D-021.
 - **5 Pricing and Free plan** (26 Oct 2026): the proposed limits stand (Free: 1 member, 1 client with a portal, 25 open leads, 3 quotes, proposals and invoices a month; Starter ₹1,499, Growth ₹3,499; Solo hidden until research). Recorded as D-040.
 - **17 Message notifications** (26 Oct 2026): both sides get them in the app and by email. Team: in-app and email. Client: in the portal and by email. Recorded as D-040.

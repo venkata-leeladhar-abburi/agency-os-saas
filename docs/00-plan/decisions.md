@@ -409,3 +409,8 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Online payments:** a payment through the pay link (Razorpay's webhook) now emails owners and finance "Payment received: [amount] for [number]", once per payment, as well as the in-app notification it already made.
 - **Wording:** subjects from the defaults table; bodies proposed with the others (open question 21).
 - **Tests:** 2 job tests (the emailed invite link works and a cancelled one is skipped; overdue once, in the app and by email), 1 database test (the payment email once), 2 template tests, 1 web test (the invite queued on invite and send again), 2 tests for the notification words.
+
+### D-061 A test user in the Supabase dev project
+**Status:** Accepted · **Date:** 30 Oct 2026 (open question 19, answered yes)
+- **User:** `claude-test@example.com` in the dev project, email confirmed, no password, marked in its metadata as for Claude's browser checks. Sign-in links are made with the admin API when a check needs one; none is stored. It's never created in production.
+- **Found while doing it:** the dev database has none of the app's tables yet (migrations 0000 to 0022 haven't been applied), and cloud sessions can't reach Postgres (HTTPS only). So signed-in screens can't be checked against the dev project until the founder adds `DATABASE_URL_DIRECT` as a secret of the GitHub `dev` environment and runs the "Migrate database" workflow (Actions tab, type `migrate`). Checking them from a cloud session also needs Postgres to be reachable from it; otherwise the check runs locally or in CI.
