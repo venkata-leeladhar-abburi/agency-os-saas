@@ -1,16 +1,24 @@
 // Server only. The setup checklist from the database: the same five steps as example mode,
 // done from the workspace's own records (example records don't count).
-import { setOnboardingDismissed, workspaceSettings } from '@agency-os/db';
+import { can } from '@agency-os/core';
+import {
+  hasExampleData,
+  loadExampleData,
+  removeExampleData,
+  setOnboardingDismissed,
+  workspaceSettings,
+} from '@agency-os/db';
 import { asMember, type WorkspaceCtx } from '../../server/workspace';
 import type { OnboardingStep } from '../onboarding';
 import { salesItems } from './sales';
 import { snapshot } from './snapshot';
 
 export async function onboardingFor(ctx: WorkspaceCtx) {
-  const [snap, sales, settings] = await Promise.all([
+  const [snap, sales, settings, hasExample] = await Promise.all([
     snapshot(ctx),
     salesItems(ctx),
     asMember(ctx, (tx) => workspaceSettings(tx, ctx.workspaceId)),
+    asMember(ctx, (tx) => hasExampleData(tx, ctx.workspaceId)),
   ]);
   const own = <T extends { example?: boolean }>(list: T[]) => list.filter((r) => !r.example);
   const steps: OnboardingStep[] = [
@@ -25,12 +33,21 @@ export async function onboardingFor(ctx: WorkspaceCtx) {
   return {
     steps,
     done: steps.filter((x) => x.done).length,
-    // Loading example data into a real workspace isn't offered yet (D-057).
-    allExamples: true,
+    // Examples load as one set: once there, there's nothing more to load (D-063).
+    allExamples: hasExample,
     show: !dismissed && steps.some((x) => !x.done),
     dismissed,
-    hasExample: false,
+    hasExample,
+    canManageExamples: can(ctx.role, 'workspace.manage'),
   };
+}
+
+export async function loadExamplesFor(ctx: WorkspaceCtx) {
+  return asMember(ctx, (tx) => loadExampleData(tx, ctx.workspaceId, ctx.session.userId));
+}
+
+export async function removeExamplesFor(ctx: WorkspaceCtx) {
+  return asMember(ctx, (tx) => removeExampleData(tx, ctx.workspaceId));
 }
 
 export async function setDismissed(ctx: WorkspaceCtx, dismissed: boolean) {

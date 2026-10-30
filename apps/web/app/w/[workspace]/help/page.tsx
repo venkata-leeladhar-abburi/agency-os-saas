@@ -41,8 +41,8 @@ export default async function HelpPage({ params }: { params: Promise<{ workspace
         }
       >
         <div className="grid gap-3">
-          {o.hasExample ? <RemoveExampleButton slug={workspace} /> : null}
-          {o.allExamples ? null : (
+          {o.hasExample && o.canManageExamples ? <RemoveExampleButton slug={workspace} /> : null}
+          {o.allExamples || !o.canManageExamples ? null : (
             <form action={loadExampleAction.bind(null, workspace)}>
               <Submit variant="secondary">Load example data</Submit>
             </form>

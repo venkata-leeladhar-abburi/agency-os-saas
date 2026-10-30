@@ -99,6 +99,7 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   task_mismatch: 'Pick a phase, parent task and assignee from this project and workspace.',
   comment_required: 'Write a comment first.',
   message_required: 'Write a message first.',
+  example_invoice_draft: 'Example invoices can’t be issued. Create your own invoice to send.',
   message_too_long: 'Keep messages under 4,000 characters.',
   comment_not_found: 'That comment doesn’t exist or isn’t yours.',
   daily_update_empty: 'Add what you did, what’s next or what’s blocking you.',

@@ -162,6 +162,13 @@
       "when": 1793207103384,
       "tag": "0022_email_outbox_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793354848895,
+      "tag": "0023_example_data",
+      "breakpoints": true
     }
   ]
 }

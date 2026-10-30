@@ -8,9 +8,11 @@ export async function SetupArea({ slug }: { slug: string }) {
   if (!o.hasExample && !o.show) return null;
   return (
     <div className="mb-4 grid gap-4">
-      {o.hasExample ? <ExampleDataBanner slug={slug} /> : null}
+      {o.hasExample ? <ExampleDataBanner slug={slug} canRemove={o.canManageExamples} /> : null}
       {o.show ? <SetupChecklist slug={slug} steps={o.steps} /> : null}
-      {!o.hasExample && !leadDone && o.show ? <LoadExampleCard slug={slug} /> : null}
+      {!o.hasExample && !leadDone && o.show && o.canManageExamples ? (
+        <LoadExampleCard slug={slug} />
+      ) : null}
     </div>
   );
 }

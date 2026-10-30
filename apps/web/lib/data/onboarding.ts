@@ -38,6 +38,7 @@ export async function onboarding(slug?: string) {
     show: !s.settings.onboardingDismissed && steps.some((x) => !x.done),
     dismissed: s.settings.onboardingDismissed,
     hasExample,
+    canManageExamples: true,
   };
 }
 
@@ -53,13 +54,15 @@ export async function showOnboarding(slug?: string) {
   store().settings.onboardingDismissed = false;
 }
 
-export type RemoveResult = { removed: number; kept: string[] };
+export type RemoveResult = { removed: number; kept: string[]; error?: string };
 
 /**
  * Removes example records. An example record the workspace's own records still point to (a
  * client on your invoice, say) stays, and the result names it.
  */
-export async function removeExampleData(): Promise<RemoveResult> {
+export async function removeExampleData(slug?: string): Promise<RemoveResult> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbOverview.removeExamplesFor(ctx);
   const s = store();
   const own = {
     clients: new Set<string>(),
@@ -110,7 +113,9 @@ export async function removeExampleData(): Promise<RemoveResult> {
 }
 
 /** Puts the example records back (any already there are left as they are). */
-export async function loadExampleData(): Promise<number> {
+export async function loadExampleData(slug?: string): Promise<number> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return dbOverview.loadExamplesFor(ctx);
   const s = store();
   const fresh = exampleRecords();
   let added = 0;

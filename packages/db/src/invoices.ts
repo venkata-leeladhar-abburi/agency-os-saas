@@ -59,6 +59,8 @@ export type InvoiceInput = {
   notes?: string | null;
   /** Email reminders around the due date; on unless switched off. */
   reminders?: boolean;
+  /** Example data: stays a draft, never issued (see example-data.ts). */
+  isExample?: boolean;
 };
 
 /** "Overdue" isn't stored: an issued or partly paid invoice past its due date. */
@@ -228,6 +230,7 @@ export async function createInvoice(
         dueOn: input.dueOn,
         notes: input.notes ?? null,
         remindersEnabled: input.reminders ?? true,
+        isExample: input.isExample ?? false,
         createdBy: actorId,
       })
       .returning(),
@@ -293,6 +296,7 @@ export async function issueInvoice(
   const [inv] = await tx.select().from(invoices).where(eq(invoices.id, invoiceId)).for('update');
   if (!inv) throw new AccountError('invoice_not_found');
   if (inv.status !== 'draft') throw new AccountError('invoice_locked');
+  if (inv.isExample) throw new AccountError('example_invoice_draft');
   const ws = await workspaceOf(tx, inv.workspaceId);
   const check = await checkPlanLimit(tx, inv.workspaceId, 'invoices_per_month', 1, {
     used: await issuedThisMonth(tx, inv.workspaceId, ws.timeZone, now),

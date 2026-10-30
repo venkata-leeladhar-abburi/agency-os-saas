@@ -84,10 +84,29 @@ export function SetupChecklist({ slug, steps }: { slug: string; steps: Onboardin
 }
 
 /** "You're looking at example data. Remove it" — removes only example records. */
-export function ExampleDataBanner({ slug }: { slug: string }) {
+export function ExampleDataBanner({
+  slug,
+  canRemove = true,
+}: {
+  slug: string;
+  /** Owners and admins remove it; everyone else sees the label only. */
+  canRemove?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const [result, setResult] = useState<RemoveResult | null>(null);
+  if (!canRemove)
+    return (
+      <Alert tone="brand" title="You’re looking at example data">
+        An owner or admin can remove it. Anything you add is yours.
+      </Alert>
+    );
+  if (result?.error)
+    return (
+      <Alert tone="danger" title="The example data wasn’t removed">
+        {result.error}
+      </Alert>
+    );
   if (result)
     return (
       <Alert tone="success" title={`Example data removed (${result.removed} records)`}>

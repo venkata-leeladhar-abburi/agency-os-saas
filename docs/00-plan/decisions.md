@@ -423,3 +423,12 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Email:** "Today at [workspace]", the items in their groups with what's late marked, each linking to its page, and a button to Today. Body wording proposed with the others (open question 21).
 - **Failures:** if one person's Today can't be built (for example without `LINK_SIGNING_SECRET`, which the invoice list needs), their digest is skipped and logged; the others still go.
 - **Tests:** 4 database tests (the half hour on the workspace's clock, who gets it, switching it off and on, another time zone), 1 web test against Postgres (each person's own Today once, the lead owner only their follow-ups, rendered as the email), 1 template test.
+
+### D-063 Example data in a real workspace, and switching companies in the portal
+**Status:** Accepted · **Date:** 30 Oct 2026
+- **Load:** owners and admins (`workspace.manage`) can load example data from the setup card or Help: 4 leads (Kite & Co, Lumen Foods, Mitra Clinic, Northwind), the client Acme Labs with the project "Website redesign" (seven phases) and 3 tasks, and a draft invoice. Every record is marked as an example and labelled on screen; the setup checklist still counts only the workspace's own work. Loading twice does nothing.
+- **No gaps in numbering:** no example quote is made, and an example invoice is never issued (the app refuses, and the database blocks it too), because a number taken by an example and then removed would leave a gap in the GST series.
+- **Remove:** one database function removes the example records for owners and admins, children first, with their timelines and comments. An example record your own records still use (a client on your invoice, a project with your task or daily update) stays, and the result names it, as in example mode. It's recorded in the audit log.
+- **Others:** members who can't manage the workspace see the "example data" label without the buttons.
+- **Portal companies:** a contact for more than one of an agency's clients sees "Switch company" on the portal home and their companies on Account. Choosing one is checked on the database, as the contact; a client they're not a contact for is never shown.
+- **Tests:** 4 database tests (load once and owners only, example invoices never issued, removal keeping what your records use, removing everything and the first real invoice numbered 001), 2 web tests against Postgres (labelled on every list, checklist unaffected, removed in one go), 2 web tests for switching companies.

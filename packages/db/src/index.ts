@@ -24,3 +24,4 @@ export * from './settings';
 export * from './portal';
 export * from './email';
 export * from './digest';
+export * from './example-data';

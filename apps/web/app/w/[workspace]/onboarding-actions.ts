@@ -1,5 +1,6 @@
 'use server';
 
+import { AccountError } from '@agency-os/db';
 import { revalidatePath } from 'next/cache';
 import { exampleMode } from '@/lib/data';
 import { audit } from '@/lib/data/audit';
@@ -22,22 +23,32 @@ export async function showOnboardingAction(slug: string) {
   revalidatePath(`/w/${slug}`, 'layout');
 }
 
-/** Example data lives in the example store; a real workspace doesn't offer it yet (D-057). */
+/** Removes the example records; on the database it records itself in the audit log. */
 export async function removeExampleAction(slug: string): Promise<RemoveResult> {
-  if (!exampleMode()) return { removed: 0, kept: [] };
-  const result = await removeExampleData();
-  audit(
-    'example.removed',
-    `${result.removed} records`,
-    result.kept.length ? `Kept ${result.kept.join(', ')}` : '',
-    await callerIp(),
-  );
+  let result: RemoveResult;
+  try {
+    result = await removeExampleData(slug);
+  } catch (error) {
+    if (error instanceof AccountError) return { removed: 0, kept: [], error: error.message };
+    throw error;
+  }
+  if (exampleMode())
+    audit(
+      'example.removed',
+      `${result.removed} records`,
+      result.kept.length ? `Kept ${result.kept.join(', ')}` : '',
+      await callerIp(),
+    );
   revalidatePath(`/w/${slug}`, 'layout');
   return result;
 }
 
 export async function loadExampleAction(slug: string) {
-  if (!exampleMode()) return;
-  await loadExampleData();
+  try {
+    await loadExampleData(slug);
+  } catch (error) {
+    // Only owners and admins are offered it; anyone else's attempt changes nothing.
+    if (!(error instanceof AccountError)) throw error;
+  }
   revalidatePath(`/w/${slug}`, 'layout');
 }
