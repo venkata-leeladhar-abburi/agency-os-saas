@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  checkProfile,
   checkClient,
   checkInvoice,
   checkLead,
@@ -264,5 +265,25 @@ describe('parseAmount', () => {
     // Linear time takes a few milliseconds; backtracking would take seconds. The margin keeps
     // it steady on a busy CI runner.
     expect(performance.now() - started).toBeLessThan(250);
+  });
+});
+
+describe('your profile', () => {
+  it('needs a name and takes an Indian or international phone', () => {
+    expect(checkProfile({ name: '  Arjun   Mehta ', phone: '98480 22338' })).toEqual({
+      ok: true,
+      value: { name: 'Arjun Mehta', phone: '+919848022338' },
+    });
+    expect(checkProfile({ name: 'Sarah Lee', phone: '+44 20 7946 0958' })).toMatchObject({
+      ok: true,
+      value: { phone: '+44 20 7946 0958' },
+    });
+    expect(checkProfile({ name: 'A', phone: 'call me' })).toEqual({
+      ok: false,
+      errors: {
+        name: 'Add your name. Clients and your team see it.',
+        phone: 'Enter a 10-digit mobile number, or a number starting with +.',
+      },
+    });
   });
 });

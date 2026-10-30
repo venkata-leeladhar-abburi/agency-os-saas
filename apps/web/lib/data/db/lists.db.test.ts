@@ -9,6 +9,7 @@ import type { WorkspaceCtx } from '../../server/workspace';
 import { importLeadsFor } from './lead-import';
 import { createClientFor, createLeadFor, leadList } from './people';
 import { planOverviewFor } from './plan';
+import { profileFor, saveProfileFor } from './profile';
 import { deleteViewFor, savedViewsFor, saveViewFor } from './saved-views';
 import { searchIndexFor } from './search';
 
@@ -147,5 +148,18 @@ run('search, leads CSV and the plan page on the database', () => {
     expect(await savedViewsFor(ctx, 'leads')).toEqual([
       { id: expect.any(String), name: 'Referrals', query: 'source=referral' },
     ]);
+  });
+
+  it('shows and saves your own profile', async () => {
+    expect(await profileFor(ctx)).toEqual({
+      name: 'Kiran Rao',
+      phone: null,
+      email: 'kiran@onestop.in',
+    });
+    await saveProfileFor(ctx, { name: 'Kiran Kumar Rao', phone: '+919848022338' });
+    expect(await profileFor(ctx)).toMatchObject({
+      name: 'Kiran Kumar Rao',
+      phone: '+919848022338',
+    });
   });
 });

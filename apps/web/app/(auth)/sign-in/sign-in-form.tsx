@@ -17,10 +17,12 @@ export function SignInForm({
   next,
   initialError,
   phoneEnabled,
+  signedOutEverywhere = false,
 }: {
   next: string;
   initialError?: string;
   phoneEnabled: boolean;
+  signedOutEverywhere?: boolean;
 }) {
   const [mode, setMode] = useState<'email' | 'phone'>('email');
   const [emailState, emailAction, emailPending] = useActionState(sendEmailLink, start);
@@ -87,6 +89,11 @@ export function SignInForm({
           Run your agency from lead to paid invoice.
         </p>
       </div>
+      {signedOutEverywhere ? (
+        <Alert tone="success" title="You’re signed out on every device">
+          Sign in again here when you’re ready.
+        </Alert>
+      ) : null}
       {initialError === 'expired' ? (
         <Alert tone="danger" title="This sign-in link has expired">
           Links work for 10 minutes. Send a new one below.

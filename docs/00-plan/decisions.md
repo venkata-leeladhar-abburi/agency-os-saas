@@ -466,3 +466,10 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Proposed default:** the notification row isn't in `defaults-and-content.md` §7, so its settings and subject are proposed in open question 22; the settings screen lists it as "Question about a proposal".
 - **Tests:** 2 database tests (question on the timeline, notification and email; the limits and closing once decided, with the decision email), 1 job test (the email with reply-to the client, then the decision email), 2 email tests; a browser script for the public page in example mode, axe clean on desktop light and phone dark.
 
+### D-068 Settings: your profile, and sign out of all devices
+**Status:** Accepted · **Date:** 30 Oct 2026
+- **Found:** members had no way to set their own name (it's what the team, the portal and emails show), so the PRD's "Settings: profile" was missing, as was "sign out of all devices" (E0.1).
+- **Your profile:** Settings, Your profile: your name (2 to 80 characters), an optional phone (a 10-digit Indian mobile is saved as +91…, other numbers start with +), and your sign-in email, read only. Saved as you, under RLS on your own row; people outside your workspaces can't read it. In example mode it changes the example owner's name.
+- **Sign out of all devices:** after a confirmation, ends every session you have, this one included, through Supabase's global sign-out, then shows "You're signed out on every device" on the sign-in page. Each page load checks the session with Supabase, so other devices are signed out on their next page. Not checked yet against the real Supabase project (needs the dev database and test user); example mode has no sign-in and says so.
+- **Tests:** 2 database tests (saving and the team seeing it; never someone else's), 1 web test against Postgres, 1 form test; a browser script in example mode, axe clean on desktop light and phone dark.
+

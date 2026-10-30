@@ -41,6 +41,8 @@ export type ExampleStore = {
   audit: AuditEntry[];
   /** Saved views on the leads page (example mode has one person). */
   savedViews: { id: string; name: string; query: string }[];
+  /** The signed-in person's own profile (example mode has one person). */
+  profile: { name: string; phone: string | null };
 };
 
 const OWNER = 'Kiran Rao';
@@ -759,6 +761,7 @@ function seed(): ExampleStore {
     dailyUpdates,
     audit,
     savedViews: [],
+    profile: { name: OWNER, phone: null },
   };
   for (const list of EXAMPLE_LISTS) for (const record of store[list]) record.example = true;
   return store;

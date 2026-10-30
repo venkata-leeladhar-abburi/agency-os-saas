@@ -703,6 +703,21 @@ export function checkSend(f: Fields): Checked<{ email: string; message: string }
   return { ok: true, value: { email, message: text(f, 'message') } };
 }
 
+/** Your own profile: a name your team and clients see, and an optional phone. */
+export function checkProfile(f: Fields): Checked<{ name: string; phone: string | null }> {
+  const errors: Errors = {};
+  const name = text(f, 'name').replace(/\s+/g, ' ');
+  if (name.length < 2) errors.name = 'Add your name. Clients and your team see it.';
+  else if (name.length > 80) errors.name = 'Keep your name under 80 characters.';
+  const raw = optional(f, 'phone');
+  const phone = raw
+    ? (normaliseIndianPhone(raw) ?? (/^\+\d[\d\s-]{6,18}$/.test(raw) ? raw : null))
+    : null;
+  if (raw && !phone) errors.phone = 'Enter a 10-digit mobile number, or a number starting with +.';
+  if (Object.keys(errors).length) return { ok: false, errors };
+  return { ok: true, value: { name, phone } };
+}
+
 export function checkSignName(f: Fields): Checked<{ name: string }> {
   const name = text(f, 'name');
   if (name.length < 2) return { ok: false, errors: { name: 'Type your full name to sign.' } };

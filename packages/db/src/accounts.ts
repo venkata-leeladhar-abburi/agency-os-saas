@@ -106,6 +106,9 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   question_too_long: 'Keep your question under 2,000 characters.',
   too_many_questions:
     'You’ve sent a lot of questions in the last hour. Wait a little, or contact the agency directly.',
+  profile_name_required: 'Add your name. Clients and your team see it.',
+  profile_name_too_long: 'Keep your name under 80 characters.',
+  profile_phone_too_long: 'Keep the phone number under 20 characters.',
   view_name_required: 'Give the view a name.',
   view_name_too_long: 'Keep view names under 60 characters.',
   too_many_views: 'You can keep up to 20 saved views here. Delete one to save another.',
@@ -394,4 +397,30 @@ export async function invitationEmailFacts(tx: Tx, invitationId: string, now = n
     workspace: w?.name ?? '',
     invitedBy: by?.name ?? null,
   };
+}
+
+// ---- Your own profile ----
+
+export type MyProfile = { fullName: string | null; phone: string | null };
+
+/** The signed-in person's own name and phone (RLS: only their own row is written). */
+export async function myProfile(tx: Tx, userId: string): Promise<MyProfile> {
+  const [p] = await tx
+    .select({ fullName: profiles.fullName, phone: profiles.phone })
+    .from(profiles)
+    .where(eq(profiles.id, userId));
+  return p ?? { fullName: null, phone: null };
+}
+
+/** Changes your name (shown to your team and clients) and phone. */
+export async function updateMyProfile(tx: Tx, userId: string, input: MyProfile) {
+  const fullName = input.fullName?.trim().replace(/\s+/g, ' ') ?? '';
+  if (fullName.length < 2) throw new AccountError('profile_name_required');
+  if (fullName.length > 80) throw new AccountError('profile_name_too_long');
+  const phone = input.phone?.trim() || null;
+  if (phone && phone.length > 20) throw new AccountError('profile_phone_too_long');
+  await tx
+    .insert(profiles)
+    .values({ id: userId, fullName, phone })
+    .onConflictDoUpdate({ target: profiles.id, set: { fullName, phone } });
 }

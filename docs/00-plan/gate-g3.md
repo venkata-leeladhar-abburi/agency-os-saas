@@ -8,7 +8,7 @@ G3 opens the beta to One Stop and then 5 to 10 agencies. This page collects what
 
 | Pass line (`build-plan.md`) | Where it stands |
 | --- | --- |
-| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-067). |
+| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-068). |
 | One Stop has run real work on it for 2 weeks | **Not started.** Needs a deployed environment and the keys in "Waiting on the founder". |
 | A chartered accountant has reviewed invoices | **Not started.** Blocking (open question 10). |
 | Legal documents ready | **Not started.** Blocking (open question 11): terms, privacy policy, DPA, click-to-sign. |
@@ -26,7 +26,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 | --- | --- | --- |
 | E0.1 Sign-in | Sign-up in no more than 2 screens before setup | Met (email link or Google, then setup) |
 | | Phone OTP for +91, 10-minute expiry, 5 tries | Waits: behind a flag until an SMS provider is chosen (question 12) |
-| | 30-day sessions, sign out of all devices from settings | Partly: Supabase sessions; "sign out of all devices" not built |
+| | 30-day sessions, sign out of all devices from settings | Met in code (D-068); the global sign-out is checked once the dev project is reachable |
 | | Two-factor login (authenticator app) for owners | Not built |
 | E0.2 Workspaces | India defaults INR, en-IN and IST; other countries their own; every step but the name can be skipped | Met |
 | | Invites expire in 7 days, can be resent or revoked | Met; the invitation email waits for Resend |
@@ -34,7 +34,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 | | One person in several workspaces, switching between them | Met |
 | E0.3 App shell | Command palette: leads, clients, projects, invoices; actions; under 300 ms for 10,000 records; keyboard only | Partly: on the database (D-064); not yet timed against 10,000 records |
 | | Notifications in the app and by email, per-category settings | Met in the app; emails wait for Resend and Inngest |
-| | Settings: profile, branding, members, billing, tax and invoices, notifications, export, audit log | Partly: logo upload waits for Storage; subscribing waits for Razorpay |
+| | Settings: profile, branding, members, billing, tax and invoices, notifications, export, audit log | Partly: profile added (D-068); logo upload waits for Storage; subscribing waits for Razorpay |
 | E0.4 Onboarding | Checklist shows progress, can be dismissed, comes back from Help; example data labelled and removable in one click | Met (D-057, D-063) |
 | E0.5 Platform | Audit log; data export (CSV, JSON); plans and limits | Met; paying for a plan waits for Razorpay |
 | E1.1 Leads | Drag between stages; cards show name, company, value, source, owner; column totals | Met |
@@ -81,7 +81,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 - **Beta:** the beta agencies (question 15), the product name and domain (question 2).
 - **Wording to approve:** the signing code email (question 20), the other email bodies (question 21) and the proposal question notification (question 22).
 
-**Not built yet** (no input needed; next in this order): sign out of all devices, two-factor login.
+**Not built yet:** two-factor login. It's built next, once a signed-in browser check against the Supabase dev project is possible, since it changes how every sign-in works.
 
 **Known limits:**
 - Logos, files and stored PDFs need Storage.

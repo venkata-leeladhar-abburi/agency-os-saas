@@ -8,10 +8,17 @@ export const metadata = { title: 'Sign in · Agency OS' };
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; 'signed-out'?: string }>;
 }) {
-  const { next, error } = await searchParams;
+  const { next, error, 'signed-out': signedOut } = await searchParams;
   const target = safeNext(next);
   if (await currentUser()) redirect(target);
-  return <SignInForm next={target} initialError={error} phoneEnabled={phoneOtpEnabled()} />;
+  return (
+    <SignInForm
+      next={target}
+      initialError={error}
+      phoneEnabled={phoneOtpEnabled()}
+      signedOutEverywhere={signedOut === 'everywhere'}
+    />
+  );
 }
