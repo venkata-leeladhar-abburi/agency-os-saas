@@ -4,6 +4,7 @@
 import { formatDate, formatMoney, PROPOSAL_VALIDITY_DAYS } from '@agency-os/core';
 import {
   AccountError,
+  askAboutProposal,
   createProposal as dbCreateProposal,
   createQuote as dbCreateQuote,
   declineProposal as dbDeclineProposal,
@@ -20,6 +21,7 @@ import {
   nextQuoteNumber,
   proposalByLink,
   proposalLinkToken,
+  proposalQuestions,
   proposalSignature,
   requestSigningCode,
   sendProposal as dbSendProposal,
@@ -36,6 +38,7 @@ import {
 import type { ProposalBlock } from '@agency-os/core';
 import type { QuoteInput } from '../../forms';
 import { database } from '../../server/db';
+import { emailsQueued } from '../../server/jobs';
 import { asMember, linkSecret, type WorkspaceCtx } from '../../server/workspace';
 import type { Activity, Proposal, Quote } from '../types';
 import {
@@ -88,7 +91,14 @@ const STATUS: Record<DbProposal['status'], Proposal['status']> = {
 };
 
 /** Its timeline from what the proposal row records: started, sent, viewed, decided. */
-function proposalTimeline(p: DbProposal, recipient: string, signer: string | null): Activity[] {
+type Question = Awaited<ReturnType<typeof proposalQuestions>>[number];
+
+function proposalTimeline(
+  p: DbProposal,
+  recipient: string,
+  signer: string | null,
+  questions: Question[] = [],
+): Activity[] {
   const at = (d: Date | null) => d?.toISOString() ?? '';
   const items: Activity[] = [
     {
@@ -131,7 +141,15 @@ function proposalTimeline(p: DbProposal, recipient: string, signer: string | nul
       text: p.declineReason ? `declined: ${p.declineReason}` : 'declined the proposal',
       at: at(p.decidedAt),
     });
-  return items.reverse();
+  for (const q of questions)
+    items.push({
+      id: q.id,
+      kind: 'question',
+      who: recipient,
+      text: `asked: “${q.body ?? ''}”`,
+      at: at(q.createdAt),
+    });
+  return items.sort((a, b) => b.at.localeCompare(a.at));
 }
 
 function proposalFromDb(
@@ -139,6 +157,7 @@ function proposalFromDb(
   quote: Quote,
   signature: DbSignature | null,
   secret: string | null,
+  questions: Question[] = [],
 ): Proposal {
   return {
     id: p.id,
@@ -169,7 +188,7 @@ function proposalFromDb(
       : null,
     declineReason: p.declineReason,
     pendingCode: null,
-    activities: proposalTimeline(p, quote.recipient, signature?.signerName ?? null),
+    activities: proposalTimeline(p, quote.recipient, signature?.signerName ?? null, questions),
     createdAt: p.createdAt.toISOString(),
     example: p.isExample || undefined,
   };
@@ -375,7 +394,13 @@ export async function proposalDetail(ctx: WorkspaceCtx, id: string, now = new Da
     const q = await dbGetQuote(tx, p.quoteId);
     if (!q) return null;
     const quote = quoteFromDb(q, await recipientOf(tx, p));
-    const proposal = proposalFromDb(p, quote, await proposalSignature(tx, p.id), safeSecret());
+    const proposal = proposalFromDb(
+      p,
+      quote,
+      await proposalSignature(tx, p.id),
+      safeSecret(),
+      await proposalQuestions(tx, p.id),
+    );
     return {
       proposal,
       quote,
@@ -486,8 +511,17 @@ export async function signFor(
     },
     now,
   );
+  await emailsQueued(found.proposal.workspaceId);
 }
 
 export async function declineFor(token: string, reason: string, now = new Date()) {
   await dbDeclineProposal(publicDb(), token, reason || null, now);
+  const found = await proposalByLink(publicDb(), token, now);
+  await emailsQueued(found.proposal.workspaceId);
+}
+
+/** The client's question from the link: on the proposal's timeline, and to the sender. */
+export async function askFor(token: string, question: string, now = new Date()) {
+  const { workspaceId } = await askAboutProposal(publicDb(), token, question, now);
+  await emailsQueued(workspaceId);
 }

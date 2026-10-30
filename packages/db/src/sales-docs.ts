@@ -16,6 +16,7 @@ import { v7 as uuidv7 } from 'uuid';
 import { AccountError, call } from './accounts';
 import { withService, type Db, type Tx } from './client';
 import { convertLeadToClient } from './clients';
+import { queueEventEmails } from './email';
 import { listStages, logActivity, moveLead } from './leads';
 import { workspaceSettings } from './settings';
 import { checkPlanLimit, notify } from './platform';
@@ -876,16 +877,22 @@ async function decided(
   const recipients = [
     ...new Set([...(p.sentBy ? [p.sentBy] : []), ...(await owners(tx, p.workspaceId))]),
   ];
-  await notify(tx, {
+  const event = {
     workspaceId: p.workspaceId,
     userIds: recipients,
-    kind: 'proposal.decided',
+    contactEmails: [],
+    kind: 'proposal.decided' as const,
+    key: p.id,
     payload: {
       proposalId: p.id,
       client: await clientNameOf(tx, p),
+      title: p.title,
       outcome: kind === 'proposal_signed' ? 'signed' : 'declined',
+      reason: kind === 'proposal_declined' ? ((meta.reason as string | null) ?? null) : null,
     },
-  });
+  };
+  const sent = await notify(tx, event);
+  await queueEventEmails(tx, event, sent.email);
 }
 
 export async function declineProposal(
@@ -904,6 +911,91 @@ export async function declineProposal(
       await tx.update(quotes).set({ status: 'declined' }).where(eq(quotes.id, p.quoteId));
     await decided(tx, p, 'proposal_declined', { reason: reason ?? null });
   });
+}
+
+export const MAX_QUESTION_LENGTH = 2000;
+/** Questions one proposal takes in an hour, so a link can't be used to flood the agency. */
+export const QUESTIONS_PER_HOUR = 10;
+
+/**
+ * The client asks a question from the proposal's link, while it's still open. It goes on the
+ * proposal's timeline, and the sender and owners hear in the app and by email, with the
+ * address the proposal was sent to so they can reply.
+ */
+export async function askAboutProposal(db: Db, token: string, question: string, now = new Date()) {
+  const text = question.trim();
+  if (!text) throw new AccountError('question_required');
+  if (text.length > MAX_QUESTION_LENGTH) throw new AccountError('question_too_long');
+  return withLink(db, token, now, async (tx, p) => {
+    open(p);
+    const [recent] = await tx
+      .select({ n: sql<number>`count(*)::int` })
+      .from(activities)
+      .where(
+        and(
+          eq(activities.workspaceId, p.workspaceId),
+          eq(activities.subjectType, 'proposal'),
+          eq(activities.subjectId, p.id),
+          eq(activities.kind, 'question'),
+          gte(activities.createdAt, new Date(now.getTime() - 60 * 60 * 1000)),
+        ),
+      );
+    if ((recent?.n ?? 0) >= QUESTIONS_PER_HOUR) throw new AccountError('too_many_questions');
+    const [row] = await tx
+      .insert(activities)
+      .values({
+        workspaceId: p.workspaceId,
+        subjectType: 'proposal',
+        subjectId: p.id,
+        kind: 'question',
+        body: text,
+        actorId: null,
+        meta: { from: p.sentTo },
+        isExample: p.isExample,
+        createdAt: now,
+      })
+      .returning({ id: activities.id });
+    const recipients = [
+      ...new Set([...(p.sentBy ? [p.sentBy] : []), ...(await owners(tx, p.workspaceId))]),
+    ];
+    const event = {
+      workspaceId: p.workspaceId,
+      userIds: recipients,
+      contactEmails: [],
+      kind: 'proposal.question' as const,
+      key: row!.id,
+      payload: {
+        proposalId: p.id,
+        client: await clientNameOf(tx, p),
+        title: p.title,
+        question: text,
+        from: p.sentTo,
+      },
+    };
+    const sent = await notify(tx, event);
+    await queueEventEmails(tx, event, sent.email);
+    return { id: row!.id, workspaceId: p.workspaceId };
+  });
+}
+
+/** A proposal's questions from the client, oldest first (members who can see the proposal). */
+export async function proposalQuestions(tx: Tx, proposalId: string) {
+  return tx
+    .select({
+      id: activities.id,
+      body: activities.body,
+      meta: activities.meta,
+      createdAt: activities.createdAt,
+    })
+    .from(activities)
+    .where(
+      and(
+        eq(activities.subjectType, 'proposal'),
+        eq(activities.subjectId, proposalId),
+        eq(activities.kind, 'question'),
+      ),
+    )
+    .orderBy(asc(activities.createdAt));
 }
 
 /** Daily job (per workspace, as the service role): sent proposals past their date expire. */

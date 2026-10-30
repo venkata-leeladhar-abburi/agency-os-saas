@@ -470,6 +470,34 @@ export async function declineProposal(token: string, reason: string): Promise<Ou
   return { ok: true };
 }
 
+/** The client asks a question from the proposal's link, while it's open. */
+export async function askAboutProposal(token: string, question: string): Promise<Outcome> {
+  if (!exampleMode()) {
+    try {
+      await dbSales.askFor(token, question);
+      return { ok: true };
+    } catch (error) {
+      if (!(error instanceof AccountError)) throw error;
+      return {
+        ok: false,
+        field: error.code.startsWith('question') ? 'question' : undefined,
+        error: error.message,
+      };
+    }
+  }
+  const text = question.trim();
+  if (!text) return { ok: false, field: 'question', error: 'Write your question first.' };
+  if (text.length > 2000)
+    return { ok: false, field: 'question', error: 'Keep your question under 2,000 characters.' };
+  const p = store().proposals.find((x) => x.token === token);
+  if (!signable(p)) return { ok: false, error: 'This proposal is closed to questions now.' };
+  const quote = store().quotes.find((q) => q.id === p.quoteId);
+  const who = quote?.recipient ?? 'The client';
+  p.activities.unshift(activity('question', `asked: “${text}”`, who));
+  notify('proposal_question', `${who} asked about your proposal`, text, `/sales/proposals/${p.id}`);
+  return { ok: true };
+}
+
 /** A lead's or client's quotes and proposals, newest first. */
 export async function docsFor(filter: { leadId?: string; clientId?: string }, slug: string) {
   const ctx = await ctxFor(slug);

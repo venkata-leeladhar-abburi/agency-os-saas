@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { acceptProposal, declineProposal, startSigning } from '@/lib/data/sales';
+import { acceptProposal, askAboutProposal, declineProposal, startSigning } from '@/lib/data/sales';
 import { checkCode, checkSignName, fields } from '@/lib/forms';
 import type { FormState } from '@/lib/form-state';
 import { callerIp, callerUserAgent } from '@/lib/origin';
@@ -70,5 +70,21 @@ export async function declineAction(
   const result = await declineProposal(token, reason);
   if (!result.ok) return { message: result.error };
   revalidatePath(`/proposal/${token}`);
+  return { done: Date.now() };
+}
+
+export async function askAction(
+  token: string,
+  _prev: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const question = String(form.get('question') ?? '');
+  const values = { question };
+  if (!(await allow('proposalQuestions', await callerIp()))) return { values, message: TOO_MANY };
+  const result = await askAboutProposal(token, question);
+  if (!result.ok)
+    return result.field
+      ? { values, errors: { question: result.error } }
+      : { values, message: result.error };
   return { done: Date.now() };
 }

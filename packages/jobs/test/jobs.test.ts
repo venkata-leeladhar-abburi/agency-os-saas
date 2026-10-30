@@ -2,6 +2,11 @@
 import { randomBytes } from 'node:crypto';
 import {
   acceptInvitation,
+  askAboutProposal,
+  createLead,
+  createProposal,
+  declineProposal,
+  sendProposal,
   createClient,
   createInvoice,
   createProject,
@@ -222,6 +227,42 @@ run('the email jobs', () => {
       expect.stringMatching(/^Invoice OSS\/\d\d-\d\d\/001 is due on 2 Nov 2026$/),
     ]);
   });
+  it('emails the sender a client’s question, replying to the client, and the decision', async () => {
+    outbox = [];
+    const leadId = await withUser(t.db, owner, (tx) =>
+      createLead(
+        tx,
+        ws,
+        { name: 'Example Meera', company: 'Example Kite & Co', email: 'meera@kite.example' },
+        owner.userId,
+      ),
+    );
+    const proposalId = await withUser(t.db, owner, (tx) =>
+      createProposal(tx, ws, { leadId }, owner.userId),
+    );
+    const { token } = await withUser(t.db, owner, (tx) =>
+      sendProposal(tx, proposalId, owner.userId, new Date(), { email: 'meera@kite.example' }),
+    );
+    await askAboutProposal(t.db, token, 'Can we start in December?');
+    expect(await runEmails(t.db, { send, env })).toMatchObject({ sent: 1 });
+    expect(outbox[0]).toMatchObject({
+      to: 'kiran@onestop.in',
+      subject: 'Example Kite & Co asked about your proposal',
+      replyTo: 'meera@kite.example',
+    });
+    expect(outbox[0]!.text).toContain('Can we start in December?');
+    expect(outbox[0]!.html).toContain(
+      `https://app.example/w/one-stop/sales/proposals/${proposalId}`,
+    );
+    await declineProposal(t.db, token, 'Budget moved');
+    expect(await runEmails(t.db, { send, env })).toMatchObject({ sent: 1 });
+    expect(outbox[1]).toMatchObject({
+      to: 'kiran@onestop.in',
+      subject: 'Example Kite & Co declined the proposal',
+    });
+    expect(outbox[1]!.replyTo).toBeUndefined();
+  });
+
   it('tells the owner once when an invoice goes overdue, in the app and by email', async () => {
     outbox = [];
     const late = new Date('2026-11-03T03:00:00Z'); // due 2 Nov

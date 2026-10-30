@@ -7,6 +7,7 @@ import { convertLeadToClient, createClient } from '../src/clients';
 import { createLead, getLead, leadActivities, listStages } from '../src/leads';
 import { listNotifications } from '../src/platform';
 import {
+  askAboutProposal,
   createProposal,
   createQuote,
   declineProposal,
@@ -14,6 +15,7 @@ import {
   getQuote,
   proposalByLink,
   proposalLinkToken,
+  proposalQuestions,
   proposalSignature,
   requestSigningCode,
   sendProposal,
@@ -472,6 +474,79 @@ describe('proposals', () => {
     await expect(requestSigningCode(t.db, t5, 'three@example.com', later(1))).rejects.toMatchObject(
       { code: 'signing_code_limit' },
     );
+  });
+});
+
+describe('questions from the client', () => {
+  let p7: string;
+  let t7: string;
+
+  beforeAll(async () => {
+    const lead = await as(owner, (tx) =>
+      createLead(
+        tx,
+        ws,
+        { name: 'Example Seven', company: 'Example Orbit', email: 'seven@orbit.example' },
+        owner.userId,
+      ),
+    );
+    p7 = await as(owner, (tx) => createProposal(tx, ws, { leadId: lead }, owner.userId, now));
+    ({ token: t7 } = await as(owner, (tx) =>
+      sendProposal(tx, p7, owner.userId, now, { email: 'seven@orbit.example' }),
+    ));
+  });
+
+  it('puts the question on the proposal and tells the sender in the app and by email', async () => {
+    await expect(askAboutProposal(t.db, t7, '   ', later(1))).rejects.toMatchObject({
+      code: 'question_required',
+    });
+    await expect(askAboutProposal(t.db, t7, 'x'.repeat(2001), later(1))).rejects.toMatchObject({
+      code: 'question_too_long',
+    });
+    await askAboutProposal(t.db, t7, '  Can we start in December instead? ', later(1));
+    const asked = await as(owner, (tx) => proposalQuestions(tx, p7));
+    expect(asked).toEqual([
+      {
+        id: expect.any(String),
+        body: 'Can we start in December instead?',
+        meta: { from: 'seven@orbit.example' },
+        createdAt: later(1),
+      },
+    ]);
+    // Members who can read proposals see them; other workspaces never do.
+    expect(await as(finance, (tx) => proposalQuestions(tx, p7))).toHaveLength(1);
+    expect(await as(outsider, (tx) => proposalQuestions(tx, p7))).toEqual([]);
+    const [note] = await as(owner, (tx) => listNotifications(tx, ws, { limit: 1 }));
+    expect(note).toMatchObject({
+      kind: 'proposal.question',
+      payload: {
+        proposalId: p7,
+        client: 'Example Orbit',
+        question: 'Can we start in December instead?',
+      },
+    });
+    const emails =
+      await t.admin`select to_email, kind from email_outbox where workspace_id = ${ws} and kind = 'proposal.question'`;
+    expect(emails).toEqual([{ to_email: 'kiran@onestop.in', kind: 'proposal.question' }]);
+  });
+
+  it('takes 10 questions an hour, and none once the proposal is decided', async () => {
+    for (let i = 0; i < 9; i++) await askAboutProposal(t.db, t7, `Question ${i}`, later(1));
+    await expect(askAboutProposal(t.db, t7, 'One more', later(1))).rejects.toMatchObject({
+      code: 'too_many_questions',
+    });
+    await askAboutProposal(t.db, t7, 'An hour later', new Date(later(1).getTime() + 3_600_001));
+    await declineProposal(t.db, t7, 'Went with another plan', later(2));
+    await expect(askAboutProposal(t.db, t7, 'And now?', later(2))).rejects.toMatchObject({
+      code: 'proposal_declined',
+    });
+    const [decided] =
+      await t.admin`select payload from email_outbox where workspace_id = ${ws} and kind = 'proposal.decided' and payload->>'proposalId' = ${p7}`;
+    expect(decided!.payload).toMatchObject({
+      outcome: 'declined',
+      reason: 'Went with another plan',
+      client: 'Example Orbit',
+    });
   });
 });
 

@@ -8,7 +8,7 @@ G3 opens the beta to One Stop and then 5 to 10 agencies. This page collects what
 
 | Pass line (`build-plan.md`) | Where it stands |
 | --- | --- |
-| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-066). |
+| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-067). |
 | One Stop has run real work on it for 2 weeks | **Not started.** Needs a deployed environment and the keys in "Waiting on the founder". |
 | A chartered accountant has reviewed invoices | **Not started.** Blocking (open question 10). |
 | Legal documents ready | **Not started.** Blocking (open question 11): terms, privacy policy, DPA, click-to-sign. |
@@ -45,7 +45,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 | E1.2 Quotes and proposals | Quote with lines, discount, total in the client's currency; proposal from blocks and the template | Met |
 | | Sent as a link, opens recorded | Met; the email waits for Resend; WhatsApp share works |
 | | Signing records name, email verification, time and IP; signed PDF | Partly: the record and the PDF are made; storing the PDF waits for Storage; the code email waits for Resend |
-| | The client can ask a question | Not built |
+| | The client can ask a question | Met (D-067); the notification row is proposed (question 22) |
 | | Statuses Draft, Sent, Viewed, Signed, Declined, Expired | Met |
 | E1.3 Lead to client | One click, nothing asked again; offers the project and advance invoice | Met |
 | E1.4 Clients | Record with contacts, GSTIN, address, country, currency, notes; projects, invoices, activity tabs | Partly: the files tab waits for Storage |
@@ -66,7 +66,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 
 ## Release notes (what the beta gets)
 
-- **Get found and win the work:** a leads board and table with your own stages, filters that stay and saved views, follow-ups in Today, lost reasons, CSV import and export, a public enquiry form, quotes with GST worked out by state, proposals from a template with a link the client opens, signs with an emailed code, or declines.
+- **Get found and win the work:** a leads board and table with your own stages, filters that stay and saved views, follow-ups in Today, lost reasons, CSV import and export, a public enquiry form, quotes with GST worked out by state, proposals from a template with a link the client opens, signs with an emailed code, asks a question, or declines.
 - **Deliver:** projects from the seven-phase template, sign-offs the client approves in their portal, tasks on a board, a table or a calendar, with subtasks, comments and @mentions, daily updates, and a team page.
 - **Get paid:** tax invoices, bills of supply, exports under LUT and proformas, numbered per financial year with no gaps; payments, part payments and a pay link; reminders before and after the due date; PDFs.
 - **The client portal:** projects, approvals, invoices and messages on a phone, in the agency's colours, with no password.
@@ -79,9 +79,9 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 - **Dev database:** apply the migrations to the dev database: `DATABASE_URL_DIRECT` in the GitHub `dev` environment, then the "Migrate database" workflow. Until then no signed-in screen has been checked in a browser.
 - **Reviewers:** a chartered accountant (question 10) and a lawyer (question 11).
 - **Beta:** the beta agencies (question 15), the product name and domain (question 2).
-- **Wording to approve:** the signing code email (question 20) and the other email bodies (question 21).
+- **Wording to approve:** the signing code email (question 20), the other email bodies (question 21) and the proposal question notification (question 22).
 
-**Not built yet** (no input needed; next in this order): "ask a question" on a proposal, sign out of all devices, two-factor login.
+**Not built yet** (no input needed; next in this order): sign out of all devices, two-factor login.
 
 **Known limits:**
 - Logos, files and stored PDFs need Storage.

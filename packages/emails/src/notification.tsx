@@ -215,6 +215,48 @@ export const notificationCopy = {
     };
   },
 
+  proposalDecided(
+    p: Base & { client: string; title: string; signed: boolean; reason: string | null },
+  ) {
+    const subject = `${p.client} ${p.signed ? 'signed' : 'declined'} the proposal`;
+    return {
+      subject,
+      props: {
+        ...p,
+        audience: 'member' as const,
+        preview: subject,
+        lines: [
+          p.signed
+            ? `${p.client} signed “${p.title}”. The signed copy is on the proposal page.`
+            : `${p.client} declined “${p.title}”.`,
+        ],
+        quote: p.signed ? null : p.reason,
+        button: { label: 'Open the proposal', url: p.url },
+      },
+    };
+  },
+
+  /** The question is the client's own words; replying to the email reaches them. */
+  proposalQuestion(
+    p: Base & { client: string; title: string; question: string; from: string | null },
+  ) {
+    const subject = `${p.client} asked about your proposal`;
+    return {
+      subject,
+      props: {
+        ...p,
+        audience: 'member' as const,
+        preview: p.question.slice(0, 120),
+        lines: [
+          `${p.client} asked a question about “${p.title}”.`,
+          ...(p.from ? [`Reply to this email to answer them at ${p.from}.`] : []),
+        ],
+        quote: p.question,
+        button: { label: 'Open the proposal', url: p.url },
+      },
+    };
+  },
+
   messagePosted(p: Base & { name: string; project: string; audience: 'member' | 'client' }) {
     const subject = `New message from ${p.name} about ${p.project}`;
     return {

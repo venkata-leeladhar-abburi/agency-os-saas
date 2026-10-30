@@ -456,3 +456,13 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Saved views:** you can save the current filters under a name (up to 20, names up to 60 characters; saving under a name you use replaces it) and delete them. They're yours alone: a new table, `saved_views` (migrations 0024 and 0025), with RLS so only the member who saved a view reads or changes it, and only while they're in the workspace. In example mode they're kept in the example store.
 - **Empty states:** a workspace with no leads still shows "No leads yet"; a filter that matches nothing says so and offers "Clear filters".
 - **Tests:** 6 database tests (save, replace by name, name checks, private to the member, never across workspaces, the limit and delete, gone when the member leaves), 1 web test against Postgres, 3 web tests for the filter and the filtered list; a browser script for the whole flow, axe clean on desktop light and phone dark.
+
+### D-067 Proposals: the client asks a question, and decisions are emailed
+**Status:** Accepted (the notification row is proposed, open question 22) · **Date:** 30 Oct 2026
+- **What:** the proposal's link has "Ask a question" next to Decline while the proposal is open (PRD E1.2). The question goes on the proposal's timeline in the app, and the sender and owners are told in the app and by email. The email quotes the question, and its reply-to is the address the proposal was sent to, so replying from the inbox answers the client.
+- **Limits:** up to 2,000 characters; 10 questions an hour per proposal (in the database) and per network (in the app). None once the proposal is signed, declined or expired.
+- **Stored:** as an activity on the proposal (no new table), readable by members who can read proposals and never across workspaces; example questions go with the example data.
+- **Found on the way:** "Proposal signed or declined" was in the app but never emailed, though its default is email on. It now is ("[Client] signed the proposal" or "declined the proposal", with the reason), and signing, declining and asking now send queued emails straight away.
+- **Proposed default:** the notification row isn't in `defaults-and-content.md` §7, so its settings and subject are proposed in open question 22; the settings screen lists it as "Question about a proposal".
+- **Tests:** 2 database tests (question on the timeline, notification and email; the limits and closing once decided, with the decision email), 1 job test (the email with reply-to the client, then the decision email), 2 email tests; a browser script for the public page in example mode, axe clean on desktop light and phone dark.
+

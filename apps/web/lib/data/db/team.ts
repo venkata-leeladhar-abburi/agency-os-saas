@@ -276,6 +276,7 @@ const CATEGORY_KIND: Record<NotificationCategory, NotificationKey> = {
   enquiry: 'lead.enquiry',
   proposal_viewed: 'proposal.viewed',
   proposal_decided: 'proposal.decided',
+  proposal_question: 'proposal.question',
   gate_decided: 'gate.decided',
   task_mentioned: 'task.assigned',
   payment_received: 'payment.received',
@@ -308,6 +309,12 @@ export function notificationText(
       return {
         title: `${client} ${p.outcome === 'declined' ? 'declined' : 'signed'} the proposal`,
         detail: '',
+        href: `/sales/proposals/${str(p.proposalId)}`,
+      };
+    case 'proposal.question':
+      return {
+        title: `${client} asked about your proposal`,
+        detail: str(p.question),
         href: `/sales/proposals/${str(p.proposalId)}`,
       };
     case 'gate.decided':

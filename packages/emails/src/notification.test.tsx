@@ -123,6 +123,40 @@ describe('notification emails', () => {
     );
   });
 
+  it('tells the sender about a question, with the client’s words and how to reply', async () => {
+    const email = copy.proposalQuestion({
+      ...base,
+      client: 'Kite & Co',
+      title: 'Website redesign',
+      question: 'Can we start in December?',
+      from: 'meera@kite.example',
+    });
+    expect(email.subject).toBe('Kite & Co asked about your proposal');
+    const { text } = await renderNotificationEmail(email);
+    expect(text).toContain('Can we start in December?');
+    expect(text).toContain('Reply to this email to answer them at meera@kite.example.');
+  });
+
+  it('tells the sender a proposal was signed or declined, in the defaults’ subject', async () => {
+    const signed = copy.proposalDecided({
+      ...base,
+      client: 'Kite & Co',
+      title: 'Website redesign',
+      signed: true,
+      reason: null,
+    });
+    expect(signed.subject).toBe('Kite & Co signed the proposal');
+    const declined = copy.proposalDecided({
+      ...base,
+      client: 'Kite & Co',
+      title: 'Website redesign',
+      signed: false,
+      reason: 'Budget moved to next year',
+    });
+    expect(declined.subject).toBe('Kite & Co declined the proposal');
+    expect((await renderNotificationEmail(declined)).text).toContain('Budget moved to next year');
+  });
+
   it('escapes names, and has no exclamation marks', async () => {
     const all = [
       copy.portalInvited({ ...base, agency: { name: '<b>Kite & Co</b>' }, contactName: null }),

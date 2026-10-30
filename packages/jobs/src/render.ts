@@ -101,6 +101,32 @@ export async function renderQueued(tx: Tx, row: QueuedEmail, env: JobEnv): Promi
           audience,
         }),
       );
+    case 'proposal.decided':
+      return done(
+        copy.proposalDecided({
+          agency,
+          url: `${env.appUrl}/w/${ws.slug}/sales/proposals/${str(p.proposalId)}`,
+          client: str(p.client, 'The client'),
+          title: str(p.title, 'your proposal'),
+          signed: p.outcome === 'signed',
+          reason: str(p.reason) || null,
+        }),
+      );
+    case 'proposal.question': {
+      const r = await renderNotificationEmail(
+        copy.proposalQuestion({
+          agency,
+          url: `${env.appUrl}/w/${ws.slug}/sales/proposals/${str(p.proposalId)}`,
+          client: str(p.client, 'Your client'),
+          title: str(p.title, 'your proposal'),
+          question: str(p.question),
+          from: str(p.from) || null,
+        }),
+      );
+      // Replying reaches the client who asked.
+      const from = str(p.from);
+      return { email: { to: row.toEmail, ...r, ...(from ? { replyTo: from } : {}) } };
+    }
     case 'lead.enquiry':
       return done(
         copy.newEnquiry({

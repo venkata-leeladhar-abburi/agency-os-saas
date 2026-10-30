@@ -10,7 +10,7 @@ import { exampleMode } from '@/lib/data';
 import { proposalByToken } from '@/lib/data/sales';
 import { findByLink } from '@/lib/link-guard';
 import { callerIp, callerUserAgent } from '@/lib/origin';
-import { DeclineButton, SignPanel } from './sign-panel';
+import { AskButton, DeclineButton, SignPanel } from './sign-panel';
 
 // Proposal links are private: keep them out of search engines.
 export const metadata: Metadata = { title: 'Proposal', robots: { index: false, follow: false } };
@@ -88,7 +88,8 @@ export default async function PublicProposalPage({
           />
         </article>
         {open && preview !== '1' ? (
-          <div className="flex justify-center">
+          <div className="flex flex-wrap justify-center gap-3">
+            <AskButton token={token} />
             <DeclineButton token={token} />
           </div>
         ) : null}

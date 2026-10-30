@@ -32,7 +32,8 @@ export type ActivityKind =
   | 'signed'
   | 'declined'
   | 'enquiry'
-  | 'imported';
+  | 'imported'
+  | 'question';
 
 export type Activity = {
   id: string;
@@ -239,6 +240,7 @@ export type NotificationCategory =
   | 'enquiry'
   | 'proposal_viewed'
   | 'proposal_decided'
+  | 'proposal_question'
   | 'gate_decided'
   | 'task_mentioned'
   | 'payment_received'
@@ -253,6 +255,7 @@ export const NOTIFICATION_CATEGORIES: {
   { id: 'enquiry', name: 'New lead from the enquiry form', inApp: true, email: true },
   { id: 'proposal_viewed', name: 'Proposal viewed', inApp: true, email: false },
   { id: 'proposal_decided', name: 'Proposal signed or declined', inApp: true, email: true },
+  { id: 'proposal_question', name: 'Question about a proposal', inApp: true, email: true },
   { id: 'gate_decided', name: 'Client approved or asked for changes', inApp: true, email: true },
   { id: 'task_mentioned', name: 'Mentioned in a task', inApp: true, email: false },
   { id: 'payment_received', name: 'Payment received', inApp: true, email: true },

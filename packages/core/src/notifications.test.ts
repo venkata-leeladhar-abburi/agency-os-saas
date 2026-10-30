@@ -8,8 +8,9 @@ import {
 } from './notifications';
 
 describe('notification defaults', () => {
-  it('lists every event from the defaults table', () => {
-    expect(NOTIFICATION_KEYS).toHaveLength(14);
+  it('lists every event from the defaults table, and the proposed question kind', () => {
+    expect(NOTIFICATION_KEYS).toHaveLength(15);
+    expect(channelsFor('proposal.question')).toEqual({ inApp: true, email: 'on' });
     expect(isNotificationKey('payment.received')).toBe(true);
     expect(isNotificationKey('toString')).toBe(false);
   });

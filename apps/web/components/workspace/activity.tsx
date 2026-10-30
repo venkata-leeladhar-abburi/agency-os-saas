@@ -5,6 +5,7 @@ import {
   Eye,
   PaperPlaneTilt,
   Plus,
+  Question,
   Receipt,
   SealCheck,
   Signature,
@@ -30,6 +31,7 @@ const KIND: Record<Activity['kind'], Pick<ActivityItem, 'icon' | 'tone'>> = {
   declined: { icon: XCircle, tone: 'warning' },
   enquiry: { icon: Tray, tone: 'brand' },
   imported: { icon: UploadSimple },
+  question: { icon: Question, tone: 'brand' },
 };
 
 /** A record's history, newest first. */

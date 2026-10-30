@@ -4,7 +4,13 @@ import { Alert, Button, Dialog, DialogContent, Input, Textarea } from '@agency-o
 import { useActionState, useState } from 'react';
 import { FormMessage, Submit } from '@/components/workspace/form-bits';
 import { EMPTY_FORM } from '@/lib/form-state';
-import { acceptAction, declineAction, startSigningAction, type SignState } from './actions';
+import {
+  acceptAction,
+  askAction,
+  declineAction,
+  startSigningAction,
+  type SignState,
+} from './actions';
 
 /** Accept and sign: type your name, get a code by email, enter it. */
 export function SignPanel({ token, email }: { token: string; email: string }) {
@@ -90,6 +96,52 @@ export function DeclineButton({ token }: { token: string }) {
             <div className="flex justify-end gap-2">
               <Button onClick={() => setOpen(false)}>Keep it open</Button>
               <Submit variant="destructive">Decline proposal</Submit>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/** A question for the agency before deciding: it reaches whoever sent the proposal. */
+export function AskButton({ token }: { token: string }) {
+  const [open, setOpen] = useState(false);
+  const [state, action] = useActionState(askAction.bind(null, token), EMPTY_FORM);
+  const [sentAt, setSentAt] = useState<number | undefined>();
+  if (state.done && state.done !== sentAt && open) {
+    setSentAt(state.done);
+    setOpen(false);
+  }
+  return (
+    <>
+      <Button variant="secondary" size="xl" onClick={() => setOpen(true)}>
+        Ask a question
+      </Button>
+      {sentAt ? (
+        <p role="status" className="basis-full text-center text-body text-muted-foreground">
+          Your question was sent. The agency will reply by email.
+        </p>
+      ) : null}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent
+          title="Ask a question"
+          description="It goes to the person who sent you this proposal. They’ll reply by email."
+        >
+          <form action={action} className="grid gap-4" noValidate>
+            <FormMessage state={state.errors ? {} : state} title="Not sent" />
+            <Textarea
+              label="Your question"
+              name="question"
+              rows={4}
+              maxLength={2000}
+              required
+              defaultValue={state.values?.question}
+              error={state.errors?.question}
+            />
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => setOpen(false)}>Cancel</Button>
+              <Submit>Send question</Submit>
             </div>
           </form>
         </DialogContent>
