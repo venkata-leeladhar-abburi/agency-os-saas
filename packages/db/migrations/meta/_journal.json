@@ -169,6 +169,20 @@
       "when": 1793354848895,
       "tag": "0023_example_data",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793357288990,
+      "tag": "0024_saved_views",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793357290292,
+      "tag": "0025_saved_views_rls",
+      "breakpoints": true
     }
   ]
 }

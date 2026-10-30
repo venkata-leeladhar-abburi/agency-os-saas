@@ -442,3 +442,17 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Leads CSV:** import uses the same row checks as example mode (shared), adds leads as the member into the workspace's own stages, skips duplicates by email or phone and open leads beyond the plan's room, and skips Lost rows (a lost lead needs its reason). Export lists the member's leads, and the route now checks membership itself.
 - **Plan page:** the plan and what it has used come from the same counts the database checks before each "add". Changing plans still needs Razorpay.
 - **Tests:** 2 web tests for the pay link, 2 for the enquiry form, 4 for search, CSV and the plan page, all against Postgres; 1 template test.
+
+### D-065 Tasks: the calendar view
+**Status:** Accepted · **Date:** 30 Oct 2026
+- **What:** Tasks has a third view, Calendar, next to Board and Table (PRD E1.7). It shows the tasks with a due date by day for one month: a month grid on wider screens, a list of days on phones. Each day shows up to three tasks and "N more", which opens the table. Late tasks are marked, done ones struck through, and a line says how many tasks have no due date.
+- **Link:** `?view=calendar&month=2026-11`, with links to the months either side and "This month"; "Mine" and "Everyone" keep the view. Today is the date in IST, as everywhere else.
+- **Why no new data:** it reads the same task list as the board and table, so it works in example mode and on the database alike.
+
+### D-066 Leads: filters that stay, and saved views
+**Status:** Accepted · **Date:** 30 Oct 2026
+- **What:** The leads board and table filter by source, owner and follow-ups due (PRD E1.1, "filters persist; saved views"). Filters live in the page's link, so a refresh, the Board/Table switch or a shared link keeps them. The form is a plain form, so it works before the page's script loads.
+- **Remembered:** the page remembers your last filters in a cookie for that workspace's leads page (180 days, not sent anywhere else) and goes back to them when you open Leads without filters. "Clear filters" shows everything and forgets them. Anything in the link or the cookie that isn't a real source or a sensible owner name is ignored.
+- **Saved views:** you can save the current filters under a name (up to 20, names up to 60 characters; saving under a name you use replaces it) and delete them. They're yours alone: a new table, `saved_views` (migrations 0024 and 0025), with RLS so only the member who saved a view reads or changes it, and only while they're in the workspace. In example mode they're kept in the example store.
+- **Empty states:** a workspace with no leads still shows "No leads yet"; a filter that matches nothing says so and offers "Clear filters".
+- **Tests:** 6 database tests (save, replace by name, name checks, private to the member, never across workspaces, the limit and delete, gone when the member leaves), 1 web test against Postgres, 3 web tests for the filter and the filtered list; a browser script for the whole flow, axe clean on desktop light and phone dark.

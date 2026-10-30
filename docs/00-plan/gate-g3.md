@@ -8,7 +8,7 @@ G3 opens the beta to One Stop and then 5 to 10 agencies. This page collects what
 
 | Pass line (`build-plan.md`) | Where it stands |
 | --- | --- |
-| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063, D-064). |
+| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-066). |
 | One Stop has run real work on it for 2 weeks | **Not started.** Needs a deployed environment and the keys in "Waiting on the founder". |
 | A chartered accountant has reviewed invoices | **Not started.** Blocking (open question 10). |
 | Legal documents ready | **Not started.** Blocking (open question 11): terms, privacy policy, DPA, click-to-sign. |
@@ -38,7 +38,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 | E0.4 Onboarding | Checklist shows progress, can be dismissed, comes back from Help; example data labelled and removable in one click | Met (D-057, D-063) |
 | E0.5 Platform | Audit log; data export (CSV, JSON); plans and limits | Met; paying for a plan waits for Razorpay |
 | E1.1 Leads | Drag between stages; cards show name, company, value, source, owner; column totals | Met |
-| | Filters persist; saved views | Not built |
+| | Filters persist; saved views | Met (D-066): source, owner and follow-ups due, remembered per workspace; saved views per member |
 | | Activity log, follow-ups in Today, lost reasons required | Met |
 | | CSV import with mapping, and export | Met (on the database, D-064) |
 | | Public enquiry form | Met (on the database, D-064); its link needs `LINK_SIGNING_SECRET` |
@@ -54,7 +54,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 | | Home, projects, approvals, invoices, messages, branding | Met; paying online waits for Razorpay; files in messages wait for Storage |
 | E1.6 Projects | Seven-phase template or blank; gates with approver and status; request approval with message | Met; files on a request wait for Storage |
 | E1.7 Tasks | Title, description, assignee, due date, priority, phase, subtasks, comments | Met; attachments wait for Storage |
-| | Board, List, Calendar views; My tasks | Partly: Board, Table and My tasks; Calendar not built |
+| | Board, List, Calendar views; My tasks | Met (Calendar: D-065) |
 | E1.8 Invoices | Tax invoice, bill of supply, export under LUT, proforma; any currency; numbering per financial year | Met; tax logic covered by unit tests (`../04-engineering/tax-test-cases.md`) |
 | | Razorpay link, partial payments, webhook marks paid | Partly: partial payments and the webhook are built and tested; the link waits for Razorpay keys |
 | | Manual payments with an optional FIRA/FIRC attachment | Partly: payments yes; the attachment waits for Storage |
@@ -66,8 +66,8 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 
 ## Release notes (what the beta gets)
 
-- **Get found and win the work:** a leads board and table with your own stages, follow-ups in Today, lost reasons, CSV import and export, a public enquiry form, quotes with GST worked out by state, proposals from a template with a link the client opens, signs with an emailed code, or declines.
-- **Deliver:** projects from the seven-phase template, sign-offs the client approves in their portal, tasks with subtasks, comments and @mentions, daily updates, and a team page.
+- **Get found and win the work:** a leads board and table with your own stages, filters that stay and saved views, follow-ups in Today, lost reasons, CSV import and export, a public enquiry form, quotes with GST worked out by state, proposals from a template with a link the client opens, signs with an emailed code, or declines.
+- **Deliver:** projects from the seven-phase template, sign-offs the client approves in their portal, tasks on a board, a table or a calendar, with subtasks, comments and @mentions, daily updates, and a team page.
 - **Get paid:** tax invoices, bills of supply, exports under LUT and proformas, numbered per financial year with no gaps; payments, part payments and a pay link; reminders before and after the due date; PDFs.
 - **The client portal:** projects, approvals, invoices and messages on a phone, in the agency's colours, with no password.
 - **Running the agency:** a dashboard with money, pipeline, win rate, projects at risk and team load; Today; notifications in the app and by email; a daily digest; members and roles; plans and limits; the audit log; data export.
@@ -81,7 +81,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 - **Beta:** the beta agencies (question 15), the product name and domain (question 2).
 - **Wording to approve:** the signing code email (question 20) and the other email bodies (question 21).
 
-**Not built yet** (no input needed; next in this order): the tasks Calendar view, saved views and remembered filters on leads, "ask a question" on a proposal, sign out of all devices, two-factor login.
+**Not built yet** (no input needed; next in this order): "ask a question" on a proposal, sign out of all devices, two-factor login.
 
 **Known limits:**
 - Logos, files and stored PDFs need Storage.

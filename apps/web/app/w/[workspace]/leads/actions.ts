@@ -13,6 +13,8 @@ import {
   setLeadFollowUp,
   winLead,
 } from '@/lib/data';
+import { hasLeadFilter, leadFilterFromQuery, leadFilterQuery } from '@/lib/data/lead-filter';
+import { deleteView, saveView } from '@/lib/data/saved-views';
 import type { StageId } from '@/lib/data/types';
 import { STAGES } from '@/lib/data/types';
 import { checkLead, checkLostReason, checkNote, fields } from '@/lib/forms';
@@ -116,4 +118,25 @@ export async function setFollowUpAction(
   await setLeadFollowUp(id, on || null, slug);
   revalidatePath(`/w/${slug}`, 'layout');
   return { done: Date.now() };
+}
+
+/** Saves the leads page's current filters as one of your views. */
+export async function saveLeadViewAction(
+  slug: string,
+  query: string,
+  _prev: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const name = String(form.get('name') ?? '');
+  const filter = leadFilterFromQuery(query);
+  if (!hasLeadFilter(filter)) return { message: 'Choose some filters first, then save them.' };
+  const { error } = await saveView('leads', name, leadFilterQuery(filter), slug);
+  if (error) return { errors: { name: error }, values: { name } };
+  revalidatePath(leadsPath(slug));
+  return { done: Date.now() };
+}
+
+export async function deleteLeadViewAction(slug: string, id: string) {
+  await deleteView(id, slug);
+  revalidatePath(leadsPath(slug));
 }

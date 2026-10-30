@@ -39,6 +39,8 @@ export type ExampleStore = {
   invitations: Invitation[];
   dailyUpdates: DailyUpdate[];
   audit: AuditEntry[];
+  /** Saved views on the leads page (example mode has one person). */
+  savedViews: { id: string; name: string; query: string }[];
 };
 
 const OWNER = 'Kiran Rao';
@@ -756,6 +758,7 @@ function seed(): ExampleStore {
     invitations,
     dailyUpdates,
     audit,
+    savedViews: [],
   };
   for (const list of EXAMPLE_LISTS) for (const record of store[list]) record.example = true;
   return store;

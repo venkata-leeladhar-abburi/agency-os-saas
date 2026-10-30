@@ -33,6 +33,7 @@ import { limitInfo, needsUpgrade, type LimitInfo } from './plan';
 import { sendMessage } from './portal';
 import { activity, EXAMPLE_USER, newId, store } from './shared';
 import type { Client, Invoice, Lead, Project, StageId, Task, WorkspaceSettings } from './types';
+import type { LeadFilter } from './lead-filter';
 import {
   budgetUsed,
   followUp,
@@ -83,10 +84,22 @@ export type LeadRow = {
   overdue?: boolean;
 };
 
-export async function leads(slug?: string) {
+export async function leads(slug?: string, filter: LeadFilter = {}) {
   const now = new Date();
   const ctx = await ctxFor(slug);
-  const all = ctx ? await dbPeople.leadList(ctx) : store().leads;
+  const today = istDate(now);
+  const everyLead = ctx ? await dbPeople.leadList(ctx) : store().leads;
+  const due = (l: Lead) =>
+    l.followUpAt !== null &&
+    istDate(l.followUpAt) <= today &&
+    l.stage !== 'won' &&
+    l.stage !== 'lost';
+  const all = everyLead.filter(
+    (l) =>
+      (!filter.source || l.source === filter.source) &&
+      (!filter.owner || l.owner === filter.owner) &&
+      (!filter.due || due(l)),
+  );
   const rows: LeadRow[] = all.map((l) => {
     const f = followUp(l.followUpAt, now);
     return {
@@ -101,7 +114,15 @@ export async function leads(slug?: string) {
       overdue: f?.overdue,
     };
   });
-  return { rows, board: leadBoard(all, now) };
+  return {
+    rows,
+    board: leadBoard(all, now),
+    /** Every lead's count, before filters: an empty filtered list isn't an empty workspace. */
+    total: everyLead.length,
+    owners: [...new Set(everyLead.map((l) => l.owner).filter(Boolean))].sort(),
+    sources: [...new Set(everyLead.map((l) => l.source))],
+    dueCount: everyLead.filter(due).length,
+  };
 }
 
 export async function getLead(id: string, slug?: string): Promise<Lead | null> {

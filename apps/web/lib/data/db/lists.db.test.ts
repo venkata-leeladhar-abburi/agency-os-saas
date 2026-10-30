@@ -9,6 +9,7 @@ import type { WorkspaceCtx } from '../../server/workspace';
 import { importLeadsFor } from './lead-import';
 import { createClientFor, createLeadFor, leadList } from './people';
 import { planOverviewFor } from './plan';
+import { deleteViewFor, savedViewsFor, saveViewFor } from './saved-views';
 import { searchIndexFor } from './search';
 
 const run = describe.skipIf(!process.env.TEST_DATABASE_URL);
@@ -135,5 +136,16 @@ run('search, leads CSV and the plan page on the database', () => {
       limit: 25,
     });
     expect(o.rows.find((r) => r.resource === 'members')).toMatchObject({ used: 1, limit: 1 });
+  });
+
+  it('keeps your saved views on the leads page', async () => {
+    await saveViewFor(ctx, 'leads', 'Referrals', 'source=referral');
+    await saveViewFor(ctx, 'leads', 'Due', 'due=1');
+    const views = await savedViewsFor(ctx, 'leads');
+    expect(views.map((v) => v.name)).toEqual(['Due', 'Referrals']);
+    expect(await deleteViewFor(ctx, views[0]!.id)).toBe(true);
+    expect(await savedViewsFor(ctx, 'leads')).toEqual([
+      { id: expect.any(String), name: 'Referrals', query: 'source=referral' },
+    ]);
   });
 });

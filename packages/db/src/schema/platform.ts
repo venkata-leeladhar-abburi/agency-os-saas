@@ -133,3 +133,23 @@ export const emailOutbox = pgTable(
     index('email_outbox_due_idx').on(t.workspaceId, t.status, t.nextAttemptAt),
   ],
 );
+
+/**
+ * A member's own named filters for a list (the leads page for now). Only the member sees theirs.
+ * `query` is the list's link parameters, such as `source=referral&due=1`.
+ */
+export const savedViews = pgTable(
+  'saved_views',
+  {
+    id: id(),
+    workspaceId: workspaceId(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
+    area: text('area').notNull(),
+    name: text('name').notNull(),
+    query: text('query').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('saved_views_name').on(t.workspaceId, t.userId, t.area, t.name)],
+);

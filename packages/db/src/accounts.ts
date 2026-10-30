@@ -102,6 +102,13 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   example_invoice_draft: 'Example invoices can’t be issued. Create your own invoice to send.',
   message_too_long: 'Keep messages under 4,000 characters.',
   comment_not_found: 'That comment doesn’t exist or isn’t yours.',
+  question_required: 'Write your question first.',
+  question_too_long: 'Keep your question under 2,000 characters.',
+  too_many_questions:
+    'You’ve sent a lot of questions in the last hour. Wait a little, or contact the agency directly.',
+  view_name_required: 'Give the view a name.',
+  view_name_too_long: 'Keep view names under 60 characters.',
+  too_many_views: 'You can keep up to 20 saved views here. Delete one to save another.',
   daily_update_empty: 'Add what you did, what’s next or what’s blocking you.',
   portal_email_required: 'Add an email for this contact. The portal sign-in link goes to it.',
   portal_user_locked:
