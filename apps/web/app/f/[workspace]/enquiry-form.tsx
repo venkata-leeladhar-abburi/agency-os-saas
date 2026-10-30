@@ -9,8 +9,8 @@ import { EMPTY_FORM } from '@/lib/form-state';
 import { BUDGET_RANGES } from '@/lib/forms';
 import { enquiryAction } from './actions';
 
-export function EnquiryForm({ workspace }: { workspace: string }) {
-  const [state, action] = useActionState(enquiryAction, EMPTY_FORM);
+export function EnquiryForm({ workspace, formKey }: { workspace: string; formKey: string }) {
+  const [state, action] = useActionState(enquiryAction.bind(null, formKey), EMPTY_FORM);
   const v = state.values ?? {};
   const e = state.errors ?? {};
   if (state.done)

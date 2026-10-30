@@ -1,27 +1,30 @@
 import { ExampleBadge } from '@agency-os/ui';
 import { AgencyMark, BrandScope } from '@/components/brand/brand';
 import { notFound } from 'next/navigation';
-import { EXAMPLE_SLUG, exampleMode } from '@/lib/data';
+import { exampleMode } from '@/lib/data';
 import { enquiryWorkspace } from '@/lib/data/enquiry';
 import { EnquiryForm } from './enquiry-form';
 
-export async function generateMetadata() {
-  const { name } = await enquiryWorkspace();
-  return { title: `Enquire · ${name}` };
+type Props = { params: Promise<{ workspace: string }> };
+
+// The link's last part is the form's token on the database, the example workspace otherwise.
+export async function generateMetadata({ params }: Props) {
+  const brand = await enquiryWorkspace((await params).workspace);
+  return { title: brand ? `Enquire · ${brand.name}` : 'Enquiry form', robots: { index: false } };
 }
 
-export default async function EnquiryPage({ params }: { params: Promise<{ workspace: string }> }) {
+export default async function EnquiryPage({ params }: Props) {
   const { workspace } = await params;
-  // Until the database is wired, only the example workspace has a form.
-  if (workspace !== EXAMPLE_SLUG) notFound();
-  const { name, logoUrl, colour } = await enquiryWorkspace();
+  const brand = await enquiryWorkspace(workspace);
+  if (!brand) notFound();
+  const { name, logoUrl, colour } = brand;
   return (
     <BrandScope colour={colour}>
       <main className="mx-auto grid min-h-dvh w-full max-w-md content-center gap-4 px-4 py-10">
         {exampleMode() ? <ExampleBadge /> : null}
         <div className="grid gap-5 rounded-xl border border-border bg-card p-6 max-sm:p-4">
           <AgencyMark name={name} logoUrl={logoUrl} />
-          <EnquiryForm workspace={name} />
+          <EnquiryForm workspace={name} formKey={workspace} />
         </div>
       </main>
     </BrandScope>

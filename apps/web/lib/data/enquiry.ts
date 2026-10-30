@@ -2,9 +2,17 @@
 import { nextFollowUp } from '@agency-os/core';
 import type { EnquiryInput } from '../forms';
 import { notify } from './notifications';
+import { ctxFor, exampleMode } from './ctx';
+import { enquiryBrandFor, enquiryLinkFor, submitEnquiryFor } from './db/enquiry';
+import { EXAMPLE_SLUG } from './index';
 import { activity, brandOf, EXAMPLE_USER, newId, store } from './shared';
 
-export async function submitEnquiry(input: EnquiryInput): Promise<string> {
+/**
+ * Records an enquiry from the public form. On the database `key` is the form's token; in example
+ * mode it's the example workspace. False when the link opens nothing.
+ */
+export async function submitEnquiry(input: EnquiryInput, key = ''): Promise<boolean> {
+  if (!exampleMode()) return submitEnquiryFor(key, input);
   const id = newId('lead');
   const now = new Date();
   store().leads.unshift({
@@ -33,9 +41,18 @@ export async function submitEnquiry(input: EnquiryInput): Promise<string> {
     `Website form · ${input.service}`,
     `/leads/${id}`,
   );
-  return id;
+  return true;
 }
 
-export async function enquiryWorkspace() {
-  return brandOf();
+/** The agency behind a form link, or null when it opens nothing. */
+export async function enquiryWorkspace(key = '') {
+  if (!exampleMode()) return enquiryBrandFor(key);
+  return key === EXAMPLE_SLUG ? brandOf() : null;
+}
+
+/** What goes after /f/ in the form's link: the token on the database, the slug in example mode. */
+export async function enquiryFormKey(slug: string): Promise<string | null> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return enquiryLinkFor(ctx);
+  return slug;
 }

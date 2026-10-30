@@ -17,7 +17,9 @@ import { v7 as uuidv7 } from 'uuid';
 import { AccountError, call } from './accounts';
 import { withService, type Db, type Tx } from './client';
 import { queueEmails, queueEventEmails } from './email';
+import { getClient } from './clients';
 import { checkPlanLimit, notify } from './platform';
+import { workspaceSettings } from './settings';
 import {
   auditLog,
   clientContacts,
@@ -630,6 +632,38 @@ export async function invoiceByLink(db: Db, token: string, now = new Date()) {
       items,
       payments: paid,
     };
+  });
+}
+
+/**
+ * Everything the pay page shows for a link: the invoice as issued (lines, payments), the client
+ * with their contacts, and the agency's invoice details (address, GSTIN, bank). The token is the
+ * only key; the lookup is by its hash, then as the service role for that workspace only.
+ */
+export async function payLinkInvoice(db: Db, token: string) {
+  const workspaceId = await linkWorkspace(db, token);
+  return withService(db, workspaceId, async (tx, ws) => {
+    const [inv] = await tx
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.workspaceId, ws), eq(invoices.publicTokenHash, hashToken(token))));
+    if (!inv?.number) throw new AccountError('invoice_link_invalid');
+    const [client, settings, items, paid] = await Promise.all([
+      getClient(tx, inv.clientId),
+      workspaceSettings(tx, ws),
+      tx
+        .select()
+        .from(invoiceItems)
+        .where(eq(invoiceItems.invoiceId, inv.id))
+        .orderBy(asc(invoiceItems.position)),
+      tx
+        .select()
+        .from(payments)
+        .where(eq(payments.invoiceId, inv.id))
+        .orderBy(asc(payments.receivedOn)),
+    ]);
+    if (!client) throw new AccountError('invoice_link_invalid');
+    return { invoice: inv, client, settings, items, payments: paid };
   });
 }
 

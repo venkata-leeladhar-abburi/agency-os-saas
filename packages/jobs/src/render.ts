@@ -101,6 +101,15 @@ export async function renderQueued(tx: Tx, row: QueuedEmail, env: JobEnv): Promi
           audience,
         }),
       );
+    case 'lead.enquiry':
+      return done(
+        copy.newEnquiry({
+          agency,
+          url: `${env.appUrl}/w/${ws.slug}/leads/${str(p.leadId)}`,
+          name: str(p.name, 'Someone'),
+          company: str(p.company) || null,
+        }),
+      );
     case 'invoice.overdue':
     case 'payment.received': {
       const url = `${env.appUrl}/w/${ws.slug}/invoices/${str(p.invoiceId)}`;

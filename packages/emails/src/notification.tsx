@@ -247,6 +247,22 @@ export const notificationCopy = {
     };
   },
 
+  newEnquiry(p: Base & { name: string; company: string | null }) {
+    const subject = `New enquiry from ${p.name}`;
+    return {
+      subject,
+      props: {
+        ...p,
+        audience: 'member' as const,
+        preview: subject,
+        lines: [
+          `${p.name}${p.company ? ` from ${p.company}` : ''} sent an enquiry from your website form. It’s a new lead with source Website.`,
+        ],
+        button: { label: 'Open the lead', url: p.url },
+      },
+    };
+  },
+
   invoiceOverdue(p: Base & { number: string; client: string; amount: string; dueDate: string }) {
     const subject = `Invoice ${p.number} is overdue`;
     return {

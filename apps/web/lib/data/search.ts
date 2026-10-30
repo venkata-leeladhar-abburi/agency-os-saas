@@ -1,5 +1,7 @@
 // Server only. What the command palette searches: every record, with a line saying what it is.
 import { formatMoney, LEAD_SOURCE_LABELS } from '@agency-os/core';
+import { ctxFor } from './ctx';
+import { searchIndexFor } from './db/search';
 import { store } from './shared';
 import {
   invoiceState,
@@ -24,6 +26,8 @@ export type SearchItem = {
 };
 
 export async function searchIndex(slug: string): Promise<SearchItem[]> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return searchIndexFor(ctx, slug);
   const s = store();
   const ws = (p: string) => `/w/${slug}${p}`;
   const items: SearchItem[] = [];

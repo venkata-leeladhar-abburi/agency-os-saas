@@ -16,7 +16,8 @@ import { AccountError, call } from './accounts';
 import { withService, type Db, type Tx } from './client';
 import { checkPlanLimit, notify } from './platform';
 import { activities, enquiryForms, leads, memberships, pipelineStages, workspaces } from './schema';
-import { hashToken, newToken } from './tokens';
+import { queueEventEmails } from './email';
+import { hashToken, linkToken, newToken } from './tokens';
 
 export type Stage = typeof pipelineStages.$inferSelect;
 export type Lead = typeof leads.$inferSelect;
@@ -605,16 +606,73 @@ export async function exportLeads(tx: Tx, workspaceId: string) {
 
 // ---- Enquiry form ----
 
-/** Creates (or replaces) the workspace's public form link; returns the token for the URL. */
-export async function createEnquiryForm(tx: Tx, workspaceId: string) {
-  const { token, hash } = newToken();
+const ENQUIRY_SCOPE = 'enquiry';
+
+/**
+ * Creates (or replaces) the workspace's public form link; returns the token for the URL. With
+ * the link secret the token is made from it, so Settings can show the link again later while
+ * only its hash is stored; without it the token is random and shows once.
+ */
+export async function createEnquiryForm(
+  tx: Tx,
+  workspaceId: string,
+  { secret }: { secret?: string | null } = {},
+) {
+  const id = uuidv7();
+  const { token, hash } = secret
+    ? (() => {
+        const t = linkToken(secret, ENQUIRY_SCOPE, id, 1);
+        return { token: t, hash: hashToken(t) };
+      })()
+    : newToken();
   await tx
     .update(enquiryForms)
     .set({ isActive: false })
     .where(eq(enquiryForms.workspaceId, workspaceId));
-  const id = uuidv7();
   await call(() => tx.insert(enquiryForms).values({ id, workspaceId, publicTokenHash: hash }));
   return { id, token };
+}
+
+/**
+ * The workspace's form link for Settings, made from the link secret: the active form's, or a
+ * new form's when there is none (or its link was made without this secret).
+ */
+export async function enquiryFormLink(tx: Tx, workspaceId: string, secret: string) {
+  const [form] = await tx
+    .select()
+    .from(enquiryForms)
+    .where(and(eq(enquiryForms.workspaceId, workspaceId), eq(enquiryForms.isActive, true)))
+    .limit(1);
+  if (form) {
+    const token = linkToken(secret, ENQUIRY_SCOPE, form.id, 1);
+    if (hashToken(token) === form.publicTokenHash) return token;
+  }
+  return (await createEnquiryForm(tx, workspaceId, { secret })).token;
+}
+
+/** The agency's name and look for its public form, or null when the link is closed. */
+export async function enquiryFormBrand(db: Db, token: string) {
+  const workspaceId = await db.transaction(async (tx) => {
+    await tx.execute(sql`set local role anon`);
+    const [row] = await tx.execute<{ ws: string | null }>(
+      sql`select enquiry_form_workspace(${hashToken(token)}) as ws`,
+    );
+    return row?.ws ?? null;
+  });
+  if (!workspaceId) return null;
+  return withService(db, workspaceId, async (tx, ws) => {
+    const [w] = await tx
+      .select({
+        name: workspaces.name,
+        logoPath: workspaces.logoPath,
+        brandColor: workspaces.brandColor,
+        plan: workspaces.plan,
+        services: workspaces.services,
+      })
+      .from(workspaces)
+      .where(eq(workspaces.id, ws));
+    return w ?? null;
+  });
 }
 
 export type Enquiry = {
@@ -680,12 +738,16 @@ export async function submitEnquiry(db: Db, token: string, enquiry: Enquiry, now
           eq(memberships.status, 'active'),
         ),
       );
-    await notify(tx, {
+    const event = {
+      kind: 'lead.enquiry' as const,
+      key: leadId,
       workspaceId: ws,
       userIds: owners.map((o) => o.userId),
-      kind: 'lead.enquiry',
-      payload: { leadId, name: enquiry.name },
-    });
+      contactEmails: [],
+      payload: { leadId, name: enquiry.name, company: enquiry.company ?? null },
+    };
+    const sent = await notify(tx, event);
+    await queueEventEmails(tx, event, sent.email);
     return leadId;
   });
 }

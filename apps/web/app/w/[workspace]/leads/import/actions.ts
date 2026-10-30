@@ -36,9 +36,9 @@ export async function importLeadsAction(
     return {
       message: `This file has ${rows.length.toLocaleString('en-IN')} rows. Import up to 5,000 at a time.`,
     };
-  const { limit, used } = await checkRoom('open_leads', 0);
+  const { limit, used } = await checkRoom('open_leads', 0, slug);
   const room = limit === null ? Infinity : Math.max(0, limit - used);
-  const result = await importLeads(rows, mapping, room);
+  const result = await importLeads(rows, mapping, room, slug);
   revalidatePath(`/w/${slug}`, 'layout');
   return { result };
 }

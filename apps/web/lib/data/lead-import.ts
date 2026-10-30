@@ -8,6 +8,9 @@ import {
   type LeadImportMapping,
 } from '@agency-os/core';
 import { normaliseIndianPhone } from '../auth/helpers';
+import { ctxFor } from './ctx';
+import { importLeadsFor } from './db/lead-import';
+import { leadList } from './db/people';
 import { activity, EXAMPLE_USER, newId, store } from './shared';
 import { STAGES, type StageId } from './types';
 
@@ -20,48 +23,70 @@ export type ImportResult = {
 
 const key = (v: string | null) => v?.toLowerCase().replace(/[^\d+a-z@.]/g, '') ?? '';
 
+/** A row that passed the checks, ready to add as a lead. */
+export type ImportRow = {
+  name: string;
+  company: string | null;
+  email: string | null;
+  phone: string | null;
+  /** The stage's name as written in the file, or null for the first stage. */
+  stage: string | null;
+  open: boolean;
+  valueMinor: bigint;
+  source: keyof typeof LEAD_SOURCE_LABELS;
+  service: string;
+  notes: string;
+};
+
 /**
- * Imports checked rows; skips rows with problems, leads already in the workspace, and open
- * leads beyond `room` (what the plan has left).
+ * Checks rows the same way in example mode and on the database: rows with problems, leads already
+ * in the workspace (same email or phone) and open leads beyond `room` are skipped with a reason.
+ * `closed` names the stages that aren't open (Won, Lost); `refuse` names stages a row can't go
+ * to, with why.
  */
-export async function importLeads(
+export function checkImportRows(
   rows: string[][],
   mapping: LeadImportMapping,
-  room = Infinity,
-): Promise<ImportResult> {
-  const s = store();
+  room: number,
+  existing: { email: string | null; phone: string | null }[],
+  closed: (stage: string | null) => boolean,
+  refuse: (stage: string | null) => string | null = () => null,
+) {
   const seen = new Set(
-    s.leads.flatMap((l) => [l.email, l.phone].filter(Boolean).map((v) => key(v))),
+    existing.flatMap((l) => [l.email, l.phone].filter(Boolean).map((v) => key(v))),
   );
-  const result: ImportResult = { imported: 0, skipped: [] };
+  const accepted: { row: number; lead: ImportRow }[] = [];
+  const skipped: ImportResult['skipped'] = [];
   let openAdded = 0;
-  const now = new Date();
   rows.slice(0, MAX_IMPORT_ROWS).forEach((cells, i) => {
     if (cells.every((c) => !c.trim())) return;
     const row = i + 2; // the header is row 1
     const checked = toLeadImport(cells, mapping, 'INR');
     if (!checked.ok) {
       const name = cells[mapping.company ?? -1] || cells[mapping.name ?? -1] || '—';
-      result.skipped.push({ row, name, reasons: checked.errors });
+      skipped.push({ row, name, reasons: checked.errors });
       return;
     }
     const l = checked.lead;
     const phone = l.phone ? (normaliseIndianPhone(l.phone) ?? l.phone) : null;
     const dupe = [l.email, phone].filter(Boolean).find((v) => seen.has(key(v)));
     if (dupe) {
-      result.skipped.push({
+      skipped.push({
         row,
         name: l.company ?? l.name,
         reasons: [`Already a lead (same ${dupe === l.email ? 'email' : 'phone'}).`],
       });
       return;
     }
-    const stage =
-      STAGES.find((st) => st.name.toLowerCase() === l.stage?.trim().toLowerCase())?.id ??
-      ('new' as StageId);
-    const open = stage !== 'won' && stage !== 'lost';
+    const stage = l.stage?.trim() || null;
+    const refused = refuse(stage);
+    if (refused) {
+      skipped.push({ row, name: l.company ?? l.name, reasons: [refused] });
+      return;
+    }
+    const open = !closed(stage);
     if (open && openAdded >= room) {
-      result.skipped.push({
+      skipped.push({
         row,
         name: l.company ?? l.name,
         reasons: ['Your plan’s limit of open leads is reached. Upgrade to import the rest.'],
@@ -74,35 +99,75 @@ export async function importLeads(
       DEFAULT_SERVICES.find((sv) => sv.toLowerCase() === l.service?.trim().toLowerCase()) ??
       l.service ??
       '';
+    accepted.push({
+      row,
+      lead: {
+        name: l.name,
+        company: l.company,
+        email: l.email,
+        phone,
+        stage,
+        open,
+        valueMinor: l.valueMinor ?? 0n,
+        source: l.source,
+        service,
+        notes: l.notes ?? '',
+      },
+    });
+  });
+  return { accepted, skipped };
+}
+
+const stageOf = (name: string | null) =>
+  STAGES.find((st) => st.name.toLowerCase() === name?.toLowerCase())?.id ?? ('new' as StageId);
+
+/**
+ * Imports checked rows; skips rows with problems, leads already in the workspace, and open
+ * leads beyond `room` (what the plan has left).
+ */
+export async function importLeads(
+  rows: string[][],
+  mapping: LeadImportMapping,
+  room = Infinity,
+  slug?: string,
+): Promise<ImportResult> {
+  const ctx = await ctxFor(slug);
+  if (ctx) return importLeadsFor(ctx, rows, mapping, room);
+  const s = store();
+  const { accepted, skipped } = checkImportRows(rows, mapping, room, s.leads, (name) => {
+    const stage = stageOf(name);
+    return stage === 'won' || stage === 'lost';
+  });
+  const now = new Date();
+  for (const { lead: l } of accepted) {
+    const stage = stageOf(l.stage);
     s.leads.unshift({
       id: newId('lead'),
       name: l.name,
       company: l.company,
       email: l.email,
-      phone,
+      phone: l.phone,
       stage,
-      valueMinor: l.valueMinor ?? 0n,
+      valueMinor: l.valueMinor,
       source: l.source,
-      service,
+      service: l.service,
       owner: EXAMPLE_USER.name,
-      followUpAt:
-        stage === 'won' || stage === 'lost'
-          ? null
-          : nextFollowUp(now, 'Asia/Kolkata').toISOString(),
-      notes: l.notes ?? '',
+      followUpAt: l.open ? nextFollowUp(now, 'Asia/Kolkata').toISOString() : null,
+      notes: l.notes,
       lostReason: null,
       clientId: null,
       createdAt: now.toISOString(),
       activities: [activity('imported', 'imported the lead from a CSV')],
     });
-    result.imported += 1;
-  });
-  return result;
+  }
+  return { imported: accepted.length, skipped };
 }
 
-export async function leadsCsv(): Promise<string> {
+export async function leadsCsv(slug?: string): Promise<string> {
+  const ctx = await ctxFor(slug);
+  const list = ctx ? await leadList(ctx) : store().leads;
   return toCsv(
-    store().leads.map((l) => ({
+    list.map((l) => ({
       Name: l.name,
       Company: l.company ?? '',
       Email: l.email ?? '',

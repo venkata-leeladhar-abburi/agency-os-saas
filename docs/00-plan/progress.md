@@ -41,6 +41,8 @@ Updated by Claude at the end of every working session. The founder can read this
 
 Newest first. One short entry per session: what was done, what is next, blockers.
 
+- **30 Oct 2026 (the last screens off the example store):** A sweep found five areas still reading example data when signed in; all now use the database (D-064): the public pay link page, the public enquiry form (now with its "New enquiry" email), the command palette, leads CSV import and export, and the plan page. Checks: typecheck, lint, Prettier on the whole repo, design rules, 196 web tests, 159 database tests, 8 job tests, 15 email tests, seven browser scripts in example mode (155 steps). Next: the G3 gate pack.
+
 - **30 Oct 2026 (example data on the database, portal companies):** Owners can load and remove example data in a real workspace (D-063), with example invoices kept as drafts so the GST series never has a gap. A contact for several of an agency's clients can switch between them in the portal. Checks: typecheck, lint, Prettier on the whole repo, design rules, 188 web tests, 159 database tests, 8 job tests, 14 email tests, seven browser scripts in example mode (155 steps). Next: the G3 gate pack.
 
 - **30 Oct 2026 (daily digest):** "Today at [workspace]" now goes to owners at 08:30 on the workspace's clock, and lead owners get their follow-ups due (D-062); each person's list is their own Today, built as them. Fixed on the way: two reminder tests depended on the date. Checks: typecheck, lint, Prettier on the whole repo, design rules, 184 web tests, 155 database tests, 8 job tests, 14 email tests. Next: the portal client switcher, example data in a real workspace, the G3 gate pack.

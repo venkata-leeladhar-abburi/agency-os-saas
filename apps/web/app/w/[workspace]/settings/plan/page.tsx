@@ -18,7 +18,7 @@ const LABELS: Record<LimitedResource, string> = {
 
 export default async function PlanPage({ params }: { params: Promise<{ workspace: string }> }) {
   const { workspace } = await params;
-  const o = await planOverview();
+  const o = await planOverview(workspace);
   const example = exampleMode();
   return (
     <>

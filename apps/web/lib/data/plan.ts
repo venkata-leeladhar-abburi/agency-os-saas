@@ -10,6 +10,9 @@ import {
   type LimitedResource,
   type Plan,
 } from '@agency-os/core';
+import { ctxFor } from './ctx';
+import { planRoom } from './db/invoices';
+import { planOverviewFor } from './db/plan';
 import { store } from './shared';
 import { istDate } from './views';
 
@@ -36,12 +39,23 @@ export async function usage(now = new Date()): Promise<Record<LimitedResource, n
 }
 
 /** Before adding: is there room on the plan? Viewing and exporting are never checked. */
-export async function checkRoom(resource: LimitedResource, adding = 1): Promise<LimitCheck> {
+export async function checkRoom(
+  resource: LimitedResource,
+  adding = 1,
+  slug?: string,
+): Promise<LimitCheck> {
+  const ctx = await ctxFor(slug);
+  if (ctx) {
+    const check = await planRoom(ctx, resource);
+    return checkLimit(ctx.plan, resource, check.used, adding);
+  }
   const used = (await usage())[resource];
   return checkLimit(store().settings.plan, resource, used, adding);
 }
 
-export async function planOverview() {
+export async function planOverview(slug?: string) {
+  const ctx = await ctxFor(slug);
+  if (ctx) return planOverviewFor(ctx);
   const plan = store().settings.plan;
   const used = await usage();
   return {

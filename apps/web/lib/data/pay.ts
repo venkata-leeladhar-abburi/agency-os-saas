@@ -1,11 +1,14 @@
 // Server only. The pay link: one issued invoice, opened from an email or WhatsApp without
 // signing in. The token is the only key; drafts never have a working link.
+import { exampleMode } from './ctx';
+import { payLinkFor } from './db/pay';
 import { brandOf, store } from './shared';
 import type { OnlineMethod } from './pay-methods';
 import { examplePayment } from './portal';
 import { invoiceState, invoiceTotals } from './views';
 
 export async function invoiceByPayToken(token: string) {
+  if (!exampleMode()) return payLinkFor(token);
   const inv = store().invoices.find((i) => i.payToken === token && i.number);
   if (!inv) return null;
   const client = store().clients.find((c) => c.id === inv.clientId)!;

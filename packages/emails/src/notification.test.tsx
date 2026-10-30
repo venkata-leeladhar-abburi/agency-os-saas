@@ -115,6 +115,14 @@ describe('notification emails', () => {
     expect(html).toContain('href="https://app.example/w/one-stop/invoices/i1"');
   });
 
+  it('tells the owner about a new enquiry, in the defaults’ subject', async () => {
+    const email = copy.newEnquiry({ ...base, name: 'Meera Iyer', company: 'Kite & Co' });
+    expect(email.subject).toBe('New enquiry from Meera Iyer');
+    expect((await renderNotificationEmail(email)).text).toContain(
+      'Meera Iyer from Kite & Co sent an enquiry from your website form.',
+    );
+  });
+
   it('escapes names, and has no exclamation marks', async () => {
     const all = [
       copy.portalInvited({ ...base, agency: { name: '<b>Kite & Co</b>' }, contactName: null }),

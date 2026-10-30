@@ -432,3 +432,13 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Others:** members who can't manage the workspace see the "example data" label without the buttons.
 - **Portal companies:** a contact for more than one of an agency's clients sees "Switch company" on the portal home and their companies on Account. Choosing one is checked on the database, as the contact; a client they're not a contact for is never shown.
 - **Tests:** 4 database tests (load once and owners only, example invoices never issued, removal keeping what your records use, removing everything and the first real invoice numbered 001), 2 web tests against Postgres (labelled on every list, checklist unaffected, removed in one go), 2 web tests for switching companies.
+
+### D-064 The last screens on the example store, moved to the database
+**Status:** Accepted · **Date:** 30 Oct 2026
+- **Found:** a sweep for data functions with no database path showed five areas still reading the example store when signed in: the public pay link page, the public enquiry form, the command palette's search, the leads CSV import and export, and the plan page (with the import's limit check). All five now use the database.
+- **Pay link:** the page and its PDF read the invoice by the link's hash, then as the service role for that one workspace: the invoice as issued, its payments, the client, and the agency's GSTIN, address and bank details. Any link that opens nothing reads as not found.
+- **Enquiry form:** on the database its link is a token (only the hash is stored), made from `LINK_SIGNING_SECRET` and the form's id, so Settings can show the same link again; the workspace's slug no longer opens a form. Each enquiry becomes a Website lead, the owners are told in the app, and now by email too ("New enquiry from [name]", which was missing). Without the secret, Settings says the link isn't ready yet.
+- **Search:** the palette indexes what the member can see (leads, clients, projects, invoices, proposals, tasks), from the same snapshot as the dashboard.
+- **Leads CSV:** import uses the same row checks as example mode (shared), adds leads as the member into the workspace's own stages, skips duplicates by email or phone and open leads beyond the plan's room, and skips Lost rows (a lost lead needs its reason). Export lists the member's leads, and the route now checks membership itself.
+- **Plan page:** the plan and what it has used come from the same counts the database checks before each "add". Changing plans still needs Razorpay.
+- **Tests:** 2 web tests for the pay link, 2 for the enquiry form, 4 for search, CSV and the plan page, all against Postgres; 1 template test.
