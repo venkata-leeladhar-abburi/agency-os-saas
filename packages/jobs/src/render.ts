@@ -124,6 +124,21 @@ export async function renderQueued(tx: Tx, row: QueuedEmail, env: JobEnv): Promi
         }),
       );
     }
+    case 'digest.daily': {
+      const items =
+        (p.items as
+          | { group: string; title: string; meta: string; href: string; overdue: boolean }[]
+          | undefined) ?? [];
+      if (!items.length) return { skip: 'Nothing for today.' };
+      return done(
+        copy.dailyDigest({
+          agency,
+          url: `${env.appUrl}/w/${ws.slug}`,
+          date: formatDate(str(p.date)),
+          items: items.map((i) => ({ ...i, url: `${env.appUrl}${i.href}` })),
+        }),
+      );
+    }
     case 'member.invited': {
       const invite = await invitationEmailFacts(tx, str(p.invitationId));
       if (!invite) return { skip: 'The invite was used, cancelled or expired.' };

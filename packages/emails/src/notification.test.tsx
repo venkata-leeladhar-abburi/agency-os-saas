@@ -85,6 +85,36 @@ describe('notification emails', () => {
     ).toBe('Payment received: ₹47,200.00 for OSS/26-27/015');
   });
 
+  it('lists the day in groups, with what is late, in the defaults’ subject', async () => {
+    const email = copy.dailyDigest({
+      ...base,
+      url: 'https://app.example/w/one-stop',
+      date: '30 Oct 2026',
+      items: [
+        {
+          group: 'Follow-ups',
+          title: 'Follow up Kite & Co',
+          meta: 'Proposal · was due 28 Oct',
+          url: 'https://app.example/w/one-stop/leads/l1',
+          overdue: true,
+        },
+        {
+          group: 'Invoices',
+          title: 'OSS/26-27/015 · ₹47,200.00',
+          meta: 'Acme Labs · Due today',
+          url: 'https://app.example/w/one-stop/invoices/i1',
+          overdue: false,
+        },
+      ],
+    });
+    expect(email.subject).toBe('Today at One Stop Solutions');
+    const { html, text } = await renderNotificationEmail(email);
+    expect(text).toContain('2 things for today, 30 Oct 2026. 1 is late.');
+    expect(text).toContain('Follow-ups · 1');
+    expect(text).toContain('Late · Proposal · was due 28 Oct');
+    expect(html).toContain('href="https://app.example/w/one-stop/invoices/i1"');
+  });
+
   it('escapes names, and has no exclamation marks', async () => {
     const all = [
       copy.portalInvited({ ...base, agency: { name: '<b>Kite & Co</b>' }, contactName: null }),

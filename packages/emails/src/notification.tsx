@@ -9,6 +9,7 @@ import {
   Hr,
   Html,
   Img,
+  Link,
   Preview,
   Section,
   Text,
@@ -26,6 +27,8 @@ export type NotificationEmailProps = {
   lines: string[];
   /** Someone's own words (a comment, a request), shown as a quote. */
   quote?: string | null;
+  /** A list in groups (the daily digest), each item linking to its page. */
+  items?: DigestEmailItem[];
   button: { label: string; url: string };
   /** Whether replies reach the agency (client emails) or nobody (member emails). */
   audience: 'member' | 'client';
@@ -33,7 +36,53 @@ export type NotificationEmailProps = {
   footer?: string;
 };
 
+export type DigestEmailItem = {
+  group: string;
+  title: string;
+  meta: string;
+  url: string;
+  overdue: boolean;
+};
+
 const text = { fontSize: '15px', lineHeight: '24px', color: c.text, margin: '0 0 16px' };
+
+function Groups({ items }: { items: DigestEmailItem[] }) {
+  const groups = [...new Set(items.map((i) => i.group))];
+  return (
+    <>
+      {groups.map((group) => {
+        const list = items.filter((i) => i.group === group);
+        return (
+          <Section key={group} style={{ margin: '0 0 16px' }}>
+            <Text
+              style={{
+                ...text,
+                color: c.muted,
+                fontSize: '13px',
+                fontWeight: 600,
+                margin: '0 0 8px',
+              }}
+            >
+              {group} · {list.length}
+            </Text>
+            {list.map((i) => (
+              <Text key={i.url + i.title} style={{ ...text, margin: '0 0 8px' }}>
+                <Link href={i.url} style={{ color: c.text, fontWeight: 600 }}>
+                  {i.title}
+                </Link>
+                <br />
+                <span style={{ color: c.muted, fontSize: '14px' }}>
+                  {i.overdue ? 'Late · ' : ''}
+                  {i.meta}
+                </span>
+              </Text>
+            ))}
+          </Section>
+        );
+      })}
+    </>
+  );
+}
 
 export function NotificationEmail(p: NotificationEmailProps) {
   return (
@@ -67,6 +116,7 @@ export function NotificationEmail(p: NotificationEmailProps) {
               {line}
             </Text>
           ))}
+          {p.items?.length ? <Groups items={p.items} /> : null}
           {p.quote ? (
             <Text
               style={{
@@ -221,6 +271,24 @@ export const notificationCopy = {
         preview: subject,
         lines: [`${p.amount} was paid online for invoice ${p.number}.`],
         button: { label: 'Open the invoice', url: p.url },
+      },
+    };
+  },
+
+  dailyDigest(p: Base & { date: string; items: DigestEmailItem[] }) {
+    const late = p.items.filter((i) => i.overdue).length;
+    const subject = `Today at ${p.agency.name}`;
+    const count = `${p.items.length} ${p.items.length === 1 ? 'thing' : 'things'}`;
+    return {
+      subject,
+      props: {
+        ...p,
+        audience: 'member' as const,
+        preview: `${count} for ${p.date}${late ? `, ${late} late` : ''}`,
+        lines: [
+          `${count} for today, ${p.date}${late ? `. ${late} ${late === 1 ? 'is' : 'are'} late.` : '.'}`,
+        ],
+        button: { label: 'Open Today', url: p.url },
       },
     };
   },

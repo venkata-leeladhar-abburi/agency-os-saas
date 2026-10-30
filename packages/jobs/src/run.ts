@@ -2,11 +2,15 @@
 // Each works through workspaces one at a time, as the service role for that workspace.
 import {
   activeWorkspaceIds,
+  digestRecipients,
   notifyOverdue,
+  queueEmails,
   queueRemindersDue,
   sendDueEmails,
+  withService,
   workspacesWithEmailDue,
   type Db,
+  type DigestRecipient,
   type EmailOutcome,
 } from '@agency-os/db';
 import { renderQueued, type JobEnv, type Outgoing } from './render';
@@ -59,4 +63,73 @@ export async function runReminders(db: Db, now = new Date()) {
     overdue += await notifyOverdue(db, ws, now);
   }
   return { queued, overdue };
+}
+
+/** One line of someone's Today, as the app lists it (href is the app path). */
+export type DigestItem = {
+  group: string;
+  title: string;
+  meta: string;
+  href: string;
+  overdue: boolean;
+};
+
+/** Builds a member's Today as that member (the app supplies it, so it shows only what they may see). */
+export type DigestItemsFor = (who: {
+  db: Db;
+  workspaceId: string;
+  slug: string;
+  plan: string;
+  recipient: DigestRecipient;
+  now: Date;
+}) => Promise<DigestItem[]>;
+
+/**
+ * The daily digest, for workspaces where it's now 08:30: each recipient's Today into the outbox,
+ * once a day. Lead owners who get only their follow-ups see just those; an empty day sends nothing.
+ */
+export async function runDigests(
+  db: Db,
+  { itemsFor, now = new Date() }: { itemsFor: DigestItemsFor; now?: Date },
+) {
+  let queued = 0;
+  let failed = 0;
+  for (const ws of await activeWorkspaceIds(db)) {
+    const due = await digestRecipients(db, ws, now);
+    if (!due) continue;
+    for (const recipient of due.recipients) {
+      let all: DigestItem[];
+      try {
+        all = await itemsFor({
+          db,
+          workspaceId: ws,
+          slug: due.slug,
+          plan: due.plan,
+          recipient,
+          now,
+        });
+      } catch (error) {
+        // One person's Today failing (a missing secret, a bad row) never stops everyone else's.
+        console.error('Daily digest skipped for a member', { workspaceId: ws, error });
+        failed++;
+        continue;
+      }
+      const items =
+        recipient.reason === 'follow_ups' ? all.filter((i) => i.group === 'Follow-ups') : all;
+      if (!items.length) continue;
+      queued += await withService(db, ws, (tx) =>
+        queueEmails(tx, ws, [
+          {
+            kind: 'digest.daily',
+            toEmail: recipient.email,
+            toUserId: recipient.userId,
+            audience: 'member',
+            payload: { date: due.date, items },
+            dedupeKey: `digest.daily:${due.date}:${recipient.userId}`,
+          },
+        ]),
+      );
+    }
+  }
+  return { queued, failed };
 }

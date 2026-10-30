@@ -414,3 +414,12 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 **Status:** Accepted · **Date:** 30 Oct 2026 (open question 19, answered yes)
 - **User:** `claude-test@example.com` in the dev project, email confirmed, no password, marked in its metadata as for Claude's browser checks. Sign-in links are made with the admin API when a check needs one; none is stored. It's never created in production.
 - **Found while doing it:** the dev database has none of the app's tables yet (migrations 0000 to 0022 haven't been applied), and cloud sessions can't reach Postgres (HTTPS only). So signed-in screens can't be checked against the dev project until the founder adds `DATABASE_URL_DIRECT` as a secret of the GitHub `dev` environment and runs the "Migrate database" workflow (Actions tab, type `migrate`). Checking them from a cloud session also needs Postgres to be reachable from it; otherwise the check runs locally or in CI.
+
+### D-062 The daily digest
+**Status:** Accepted · **Date:** 30 Oct 2026
+- **When:** at 08:30 on each workspace's own clock (its time zone setting). The job runs every half hour and sends to workspaces in that half hour; one digest per person a day.
+- **Who:** owners by default (each can switch it off in Settings, Notifications); anyone else who switches it on; and lead owners with follow-ups due, whose "Follow-up due" email is set to the digest (the default), get those follow-ups.
+- **What:** each person's own Today (follow-ups, their tasks due or late, sign-offs waiting on clients, invoices due or late), built by the app as that person, by the same code as the Today page, so it never shows more than they can see. A lead owner who gets it for follow-ups sees only those. A day with nothing in it sends nothing.
+- **Email:** "Today at [workspace]", the items in their groups with what's late marked, each linking to its page, and a button to Today. Body wording proposed with the others (open question 21).
+- **Failures:** if one person's Today can't be built (for example without `LINK_SIGNING_SECRET`, which the invoice list needs), their digest is skipped and logged; the others still go.
+- **Tests:** 4 database tests (the half hour on the workspace's clock, who gets it, switching it off and on, another time zone), 1 web test against Postgres (each person's own Today once, the lead owner only their follow-ups, rendered as the email), 1 template test.

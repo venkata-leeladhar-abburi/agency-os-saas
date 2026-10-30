@@ -14,6 +14,7 @@ export {
   NotificationEmail,
   notificationCopy,
   renderNotificationEmail,
+  type DigestEmailItem,
   type EmailCopy,
   type NotificationEmailProps,
 } from './notification';

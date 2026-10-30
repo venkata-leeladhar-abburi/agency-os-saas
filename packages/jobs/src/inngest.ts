@@ -5,14 +5,19 @@ import type { Db } from '@agency-os/db';
 import { Inngest } from 'inngest';
 import type { JobEnv } from './render';
 import { resendSender } from './resend';
-import { runEmails, runReminders } from './run';
+import { runDigests, runEmails, runReminders, type DigestItemsFor } from './run';
 
 export const inngest = new Inngest({ id: 'agency-os' });
 
 /** Sent after an action queues emails, so they go out without waiting for the schedule. */
 export const EMAIL_QUEUED = 'agency-os/email.queued';
 
-export function jobFunctions(deps: { db: () => Db; env: () => JobEnv }) {
+export function jobFunctions(deps: {
+  db: () => Db;
+  env: () => JobEnv;
+  /** Each member's Today, built by the app as that member (for the daily digest). */
+  digestItems?: DigestItemsFor;
+}) {
   const sendEmails = inngest.createFunction(
     {
       id: 'send-emails',
@@ -38,5 +43,17 @@ export function jobFunctions(deps: { db: () => Db; env: () => JobEnv }) {
     },
   );
 
-  return [sendEmails, dailyReminders];
+  // Every half hour, so each workspace gets its digest at 08:30 on its own clock.
+  const dailyDigest = inngest.createFunction(
+    { id: 'daily-digest', triggers: [{ cron: '0,30 * * * *' }] },
+    async ({ step }) => {
+      const itemsFor = deps.digestItems;
+      if (!itemsFor) return { waiting: 'The app did not supply the digest' };
+      const queued = await step.run('queue digests', () => runDigests(deps.db(), { itemsFor }));
+      if (queued.queued) await step.sendEvent('send them', { name: EMAIL_QUEUED, data: {} });
+      return queued;
+    },
+  );
+
+  return [sendEmails, dailyReminders, dailyDigest];
 }
