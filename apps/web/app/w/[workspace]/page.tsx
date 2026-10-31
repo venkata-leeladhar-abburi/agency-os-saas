@@ -1,7 +1,7 @@
 import { PageHeader } from '@agency-os/ui';
 import { SetupArea } from '@/components/workspace/setup-area';
 import { Empty } from '@/components/workspace/page-bits';
-import { TodayList } from '@/components/workspace/tables';
+import { TodayList } from '@/components/workspace/overview';
 import { EXAMPLE_USER, today, type TodayItem } from '@/lib/data';
 
 export const metadata = { title: 'Today · Agency OS' };

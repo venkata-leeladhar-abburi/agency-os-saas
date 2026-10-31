@@ -13,7 +13,8 @@ import {
   UsersThree,
   type Icon,
 } from '@phosphor-icons/react';
-import { CommandPalette, useCommandShortcut, type CommandGroup } from '@agency-os/ui';
+import { useCommandShortcut, type CommandGroup } from '@agency-os/ui';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { searchAction } from '@/app/w/[workspace]/search-action';
@@ -27,6 +28,11 @@ const KIND: Record<SearchKind, { icon: Icon; group: string }> = {
   task: { icon: CheckSquareOffset, group: 'Tasks' },
   invoice: { icon: Receipt, group: 'Invoices' },
 };
+
+// The palette (and its search library) loads once the page is idle, or on first use, so it
+// isn't part of every page's first download.
+const loadPalette = () => import('@agency-os/ui/command-palette').then((m) => m.CommandPalette);
+const CommandPalette = dynamic(loadPalette, { ssr: false });
 
 /** Wait this long after the last key before asking the server. */
 const SEARCH_DELAY_MS = 120;
@@ -56,7 +62,10 @@ export function useWorkspacePalette(slug: string) {
     return () => clearTimeout(timer);
   }, [open, query, slug]);
 
+  // Mounted from the first time it opens; until then nothing of it is on the page.
+  const [wanted, setWanted] = useState(false);
   const show = useCallback((next: boolean) => {
+    if (next) setWanted(true);
     setOpen(next);
     if (!next) {
       setQuery('');
@@ -64,6 +73,14 @@ export function useWorkspacePalette(slug: string) {
     }
   }, []);
   const toggle = useCallback(() => show(!open), [show, open]);
+  // Fetch the palette's code when the browser has nothing else to do, so the first Ctrl+K is quick.
+  useEffect(() => {
+    const idle = window.requestIdleCallback ?? ((fn: () => void) => window.setTimeout(fn, 1500));
+    const cancel = window.cancelIdleCallback ?? window.clearTimeout;
+    const handle = idle(() => void loadPalette());
+    return () => cancel(handle);
+  }, []);
+
   useCommandShortcut(toggle);
 
   const go = useCallback(
@@ -156,7 +173,7 @@ export function useWorkspacePalette(slug: string) {
     return [...records.values(), matching(actions), matching(goTo)].filter((g) => g.items.length);
   }, [slug, query, results, go]);
 
-  const palette = (
+  const palette = wanted ? (
     <CommandPalette
       open={open}
       onOpenChange={show}
@@ -171,6 +188,6 @@ export function useWorkspacePalette(slug: string) {
             : 'Searching your records…',
       }}
     />
-  );
+  ) : null;
   return { palette, openPalette: () => show(true) };
 }

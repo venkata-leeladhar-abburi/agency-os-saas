@@ -10,6 +10,8 @@ const config: NextConfig = {
     '@agency-os/tokens',
     '@agency-os/ui',
   ],
+  // Pages load only the components and icons they use, not every export of these packages.
+  experimental: { optimizePackageImports: ['@agency-os/ui', '@phosphor-icons/react'] },
   poweredByHeader: false,
   async headers() {
     return [{ source: '/:path*', headers: STATIC_SECURITY_HEADERS }];

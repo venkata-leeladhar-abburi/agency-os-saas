@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { LeadFilters } from '@/components/workspace/lead-filters';
 import { Empty } from '@/components/workspace/page-bits';
-import { LeadsBoard, LeadsTable } from '@/components/workspace/tables';
+import { LeadsBoard } from '@/components/workspace/boards';
+import { LeadsTable } from '@/components/workspace/tables';
 import { leads } from '@/lib/data';
 import {
   hasLeadFilter,

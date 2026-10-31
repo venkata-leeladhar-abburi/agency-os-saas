@@ -3,13 +3,9 @@ import { Card, PageHeader } from '@agency-os/ui';
 import { Empty, LinkButton } from '@/components/workspace/page-bits';
 import { SetupArea } from '@/components/workspace/setup-area';
 import Link from 'next/link';
-import {
-  DashboardMetrics,
-  LeadsBoard,
-  RiskTable,
-  TeamLoad,
-  TodayList,
-} from '@/components/workspace/tables';
+import { LeadsBoard } from '@/components/workspace/boards';
+import { DashboardMetrics, TeamLoad, TodayList } from '@/components/workspace/overview';
+import { RiskTable } from '@/components/workspace/tables';
 import { dashboard, leads, today } from '@/lib/data';
 
 export const metadata = { title: 'Dashboard · Agency OS' };
