@@ -39,6 +39,7 @@ Lighthouse 13.5 against `next start`, mobile.
 - With the network actually throttled, every page paints its largest element within budget. Lighthouse's simulated estimate counts all script downloads before the heading, which a local server exaggerates; measure again on the Vercel preview, where Lighthouse CI will run on each PR (`testing.md`).
 - Changes: Geist Mono is no longer preloaded (it's for numbers and IDs, rarely on first paint), and the app has an icon (best practices now 100).
 - **Finding (low):** about 280 KB of JavaScript on every page, and 450 to 570 ms of blocking time on a slowed CPU. Worth trimming before launch (the board's drag-and-drop and the command palette can load on demand).
+- **Trimmed (31 Oct 2026, D-070):** portal home 206 KB, Today 218 KB, invoices 239 KB, leads board 271 KB, pay link 135 KB. The command palette now loads on demand and drag-and-drop only on pages with a board. Blocking time is to be measured again on the Vercel preview.
 
 ### Data at scale (31 Oct 2026, D-069)
 

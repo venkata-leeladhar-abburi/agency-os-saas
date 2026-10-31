@@ -8,7 +8,7 @@ G3 opens the beta to One Stop and then 5 to 10 agencies. This page collects what
 
 | Pass line (`build-plan.md`) | Where it stands |
 | --- | --- |
-| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-069). |
+| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-070). |
 | One Stop has run real work on it for 2 weeks | **Not started.** Needs a deployed environment and the keys in "Waiting on the founder". |
 | A chartered accountant has reviewed invoices | **Not started.** Blocking (open question 10). |
 | Legal documents ready | **Not started.** Blocking (open question 11): terms, privacy policy, DPA, click-to-sign. |
@@ -86,5 +86,5 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 **Known limits:**
 - Logos, files and stored PDFs need Storage.
 - Online payment needs Razorpay.
-- About 280 KB of JavaScript per page is worth trimming before launch (`hardening-2026-10.md`).
+- JavaScript per page is down to 135 to 271 KB (D-070); React and Next are about 106 KB of that.
 - The usability round with a screen reader or magnifier user and a low-cost Android phone is still to be run with people.

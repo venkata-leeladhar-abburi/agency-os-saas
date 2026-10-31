@@ -482,3 +482,9 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **No more one-at-a-time loading:** clients, projects (with phases, checklists, gates, members) and invoices (with lines, payments, reminders) load in a fixed number of queries however many there are; subtasks are grouped once instead of searched per task.
 - **After:** palette search 30 to 72 ms (worst of 5, for words matching thousands of records, one, or none); leads 153 ms, clients 214 ms, projects 234 ms, tasks 161 ms, invoice list 233 ms; the whole snapshot 0.86 s (was 17.8 s). Measured locally; the live database adds network time.
 
+### D-070 Less JavaScript per page
+**Status:** Accepted · **Date:** 31 Oct 2026
+- **Why:** the hardening pass found about 280 KB of JavaScript (compressed) on every page (`hardening-2026-10.md`).
+- **What changed:** the UI package is marked side-effect free (its CSS aside) and Next optimises imports from it and from the icons, so a page loads only the components it uses. The command palette's code loads when the page is idle or on first Ctrl+K, not with the page; the shortcut listener stays. The workspace components are split into boards (with drag-and-drop), tables, and overview pieces that render on the server, so pages without a board don't load drag-and-drop.
+- **Measured** (production build, compressed JavaScript before the page's load event): portal home 271 → 206 KB, Today 276 → 218 KB, invoices 280 → 239 KB, dashboard 267 KB, leads board 286 → 271 KB (it needs drag-and-drop), pay link 135 KB, proposal link 197 KB, sign-in 177 KB. React and Next themselves are about 106 KB of each.
+
