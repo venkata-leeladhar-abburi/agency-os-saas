@@ -1,6 +1,7 @@
 import { FunnelSimple, House, Plus } from '@phosphor-icons/react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { calculateQuote } from '@agency-os/core';
 import { describe, expect, it, vi } from 'vitest';
 import { EXPORT_INVOICE, LUT_ARN, PIPELINE, TAX_INVOICE } from '../example/data';
 import { Checklist } from './checklist';
@@ -265,6 +266,22 @@ describe('InvoiceSummary', () => {
     expect(screen.getByText('IGST 0% (export under LUT)')).toBeInTheDocument();
     expect(screen.getByText(/1 USD = ₹84.20 · ₹1,68,400.00/)).toBeInTheDocument();
     expect(screen.getByText(/without payment of IGST/)).toBeInTheDocument();
+  });
+
+  it('shows lines before the discount, then the discount and the taxable subtotal', () => {
+    const totals = calculateQuote({
+      currency: 'INR',
+      supplierStateCode: '37',
+      placeOfSupply: { kind: 'india', stateCode: '29' },
+      lines: [{ description: 'Website', quantity: '1', rateMinor: 6_000_000n, taxRateBp: 1800 }],
+      discountMinor: 1_000_000n,
+    });
+    render(<InvoiceSummary type="Quote" totals={totals} />);
+    const line = screen.getByRole('row', { name: /Website/ });
+    expect(within(line).getAllByText('₹60,000.00')).toHaveLength(2);
+    expect(screen.getByText('−₹10,000.00')).toBeInTheDocument();
+    expect(screen.getByText('₹50,000.00')).toBeInTheDocument();
+    expect(screen.getByText('₹59,000.00')).toBeInTheDocument();
   });
 });
 

@@ -24,7 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Clock, DotsSixVertical, Plus, WarningCircle } from '@phosphor-icons/react';
-import { useId, useState, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Avatar } from '../components/avatar';
 import { Badge } from '../components/badge';
 import { cn } from '../lib/cn';
@@ -53,6 +53,8 @@ export type PipelineColumn = {
 };
 
 export type PipelineLabels = {
+  /** Names the scrollable board for screen readers. */
+  board?: string;
   addLead?: string;
   move?: (name: string) => string;
   instructions?: string;
@@ -71,6 +73,8 @@ export type PipelineBoardProps = {
   onAddLead?: (columnId: string) => void;
   size?: 'md' | 'sm';
   labels?: PipelineLabels;
+  /** The column headings' level: 2 when the board sits right under the page heading. */
+  headingLevel?: 2 | 3;
   className?: string;
 };
 
@@ -203,13 +207,16 @@ function Column({
   onOpen,
   onAddLead,
   labels,
+  headingLevel = 3,
 }: {
   column: PipelineColumn;
   cards: LeadCardData[];
   onOpen?: (id: string) => void;
   onAddLead?: (columnId: string) => void;
   labels?: PipelineLabels;
+  headingLevel?: 2 | 3;
 }) {
+  const Heading = headingLevel === 2 ? 'h2' : 'h3';
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const headingId = useId();
   return (
@@ -222,7 +229,7 @@ function Column({
       )}
     >
       <header className="flex items-center justify-between gap-2 px-1.5 pt-1 pb-0.5">
-        <h3 id={headingId} className="flex items-center gap-1.5 text-body-sm font-semibold">
+        <Heading id={headingId} className="flex items-center gap-1.5 text-body-sm font-semibold">
           {column.won ? (
             <span
               aria-hidden="true"
@@ -236,7 +243,7 @@ function Column({
               {labels?.count?.(cards.length) ?? `${cards.length} leads`}
             </span>
           </span>
-        </h3>
+        </Heading>
         {column.total ? (
           <span className="text-caption text-muted-foreground tabular-nums">{column.total}</span>
         ) : null}
@@ -280,6 +287,7 @@ export function PipelineBoard({
   onAddLead,
   size = 'md',
   labels,
+  headingLevel,
   className,
 }: PipelineBoardProps) {
   const [board, setBoard] = useState<Board>(() => toBoard(columns));
@@ -291,8 +299,16 @@ export function PipelineBoard({
     setBoard(toBoard(columns));
   }
 
-  const columnOf = (id: string) =>
-    id in board ? id : Object.keys(board).find((key) => board[key]?.some((c) => c.id === id));
+  // The keyboard sensor keeps the coordinate getter from when the drag started, so it reads
+  // the board through a ref to see where the card is now.
+  const boardRef = useRef(board);
+  useLayoutEffect(() => {
+    boardRef.current = board;
+  }, [board]);
+
+  const columnIn = (b: Board, id: string) =>
+    id in b ? id : Object.keys(b).find((key) => b[key]?.some((c) => c.id === id));
+  const columnOf = (id: string) => columnIn(board, id);
 
   // Left and right move to the neighbouring stage, next to the card at the nearest height;
   // up and down reorder within the stage.
@@ -302,10 +318,11 @@ export function PipelineBoard({
     event.preventDefault();
     const { active, collisionRect, droppableRects } = args.context;
     if (!active || !collisionRect) return undefined;
+    const current = boardRef.current;
     const order = columns.map((c) => c.id);
-    const target = order[order.indexOf(columnOf(String(active.id)) ?? '') + step];
+    const target = order[order.indexOf(columnIn(current, String(active.id)) ?? '') + step];
     if (!target) return undefined;
-    const candidates = (board[target] ?? [])
+    const candidates = (current[target] ?? [])
       .filter((c) => c.id !== active.id)
       .map((c) => droppableRects.get(c.id));
     const nearest = candidates
@@ -397,8 +414,12 @@ export function PipelineBoard({
         .find((c) => c.id === activeId)
     : undefined;
 
+  // A stable id keeps the server and browser markup the same (dnd-kit counts ids otherwise).
+  const dndId = useId();
+
   return (
     <DndContext
+      id={dndId}
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={onDragStart}
@@ -418,6 +439,10 @@ export function PipelineBoard({
       }}
     >
       <div
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region must be reachable by keyboard (WCAG 2.1.1)
+        tabIndex={0}
+        role="region"
+        aria-label={labels?.board ?? 'Pipeline'}
         className={cn(
           'grid auto-cols-[minmax(216px,1fr)] grid-flow-col gap-3 overflow-x-auto pb-2',
           size === 'sm' && 'auto-cols-[minmax(176px,1fr)]',
@@ -432,6 +457,7 @@ export function PipelineBoard({
             onOpen={onOpen}
             onAddLead={onAddLead}
             labels={labels}
+            headingLevel={headingLevel}
           />
         ))}
       </div>

@@ -117,10 +117,11 @@ export function GateCard({
           <div className="flex flex-wrap gap-2">
             {view === 'client' ? (
               <>
-                <Button onClick={onAskForChanges}>
+                {/* Clients are often on a phone: 44px targets (accessibility checklist). */}
+                <Button size="xl" onClick={onAskForChanges}>
                   {labels?.askForChanges ?? 'Ask for changes'}
                 </Button>
-                <Button variant="primary" icon={Check} onClick={onApprove}>
+                <Button size="xl" variant="primary" icon={Check} onClick={onApprove}>
                   {labels?.approve ?? 'Approve'}
                 </Button>
               </>

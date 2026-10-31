@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   inet,
+  integer,
   jsonb,
   pgEnum,
   pgSchema,
@@ -73,6 +74,11 @@ export const workspaces = pgTable(
     lutValidFrom: date('lut_valid_from'),
     lutValidTo: date('lut_valid_to'),
     invoicePrefix: text('invoice_prefix').notNull().default('INV'),
+    /** Days from issue to due on new invoices. */
+    paymentTermsDays: integer('payment_terms_days').notNull().default(7),
+    /** Printed on invoices: { accountName, accountNumber, ifsc, swift }. */
+    bank: jsonb('bank'),
+    invoiceFooter: text('invoice_footer'),
     plan: planEnum('plan').notNull().default('free'),
     services: text('services')
       .array()

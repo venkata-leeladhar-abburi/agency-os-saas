@@ -1,3 +1,5 @@
+'use client';
+
 import type { Icon } from '@phosphor-icons/react';
 import type { InputHTMLAttributes, ReactNode } from 'react';
 import { cn } from '../lib/cn';

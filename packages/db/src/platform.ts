@@ -259,11 +259,42 @@ export async function checkPlanLimit(
 
 // ---- Audit log ----
 
+/** Records an action by the signed-in member (RLS: as themselves, in their workspace). */
+export async function addAuditEntry(
+  tx: Tx,
+  entry: {
+    workspaceId: string;
+    actorId: string;
+    action: string;
+    subjectType?: string | null;
+    subjectId?: string | null;
+    changes?: Record<string, unknown>;
+    ip?: string | null;
+    userAgent?: string | null;
+  },
+) {
+  await tx.insert(auditLog).values({
+    workspaceId: entry.workspaceId,
+    actorId: entry.actorId,
+    action: entry.action,
+    subjectType: entry.subjectType ?? null,
+    subjectId: entry.subjectId ?? null,
+    changes: entry.changes ?? null,
+    ip: entry.ip ?? null,
+    userAgent: entry.userAgent ?? null,
+  });
+}
+
 /** Newest first, with the actor's name. RLS shows it only to roles with audit.read. */
 export async function listAuditLog(
   tx: Tx,
   workspaceId: string,
-  { limit = 50, before }: { limit?: number; before?: Date } = {},
+  {
+    limit = 50,
+    before,
+    action,
+    offset = 0,
+  }: { limit?: number; before?: Date; action?: string; offset?: number } = {},
 ) {
   return tx
     .select({
@@ -284,10 +315,23 @@ export async function listAuditLog(
       and(
         eq(auditLog.workspaceId, workspaceId),
         before ? lt(auditLog.createdAt, before) : undefined,
+        action ? eq(auditLog.action, action) : undefined,
       ),
     )
     .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
+}
+
+/** How many entries the audit log has, optionally of one action. */
+export async function auditCount(tx: Tx, workspaceId: string, action?: string) {
+  const [row] = await tx
+    .select({ n: count() })
+    .from(auditLog)
+    .where(
+      and(eq(auditLog.workspaceId, workspaceId), action ? eq(auditLog.action, action) : undefined),
+    );
+  return row?.n ?? 0;
 }
 
 // ---- Data export ----
@@ -315,7 +359,19 @@ async function moreTables(tx: Tx, workspaceId: string) {
     tasks: await all('tasks'),
     comments: await all('comments'),
     daily_updates: await all('daily_updates'),
+    invoices: await all('invoices', ['public_token_hash']),
+    invoice_items: await all('invoice_items'),
+    payments: await all('payments'),
+    reminders: await all('reminders'),
   };
+}
+
+/** Whether the signed-in member may export the workspace's data (data.export). */
+export async function canExport(tx: Tx, workspaceId: string): Promise<boolean> {
+  const [row] = await tx.execute<{ ok: boolean }>(
+    sql`select has_permission(${workspaceId}::uuid, 'data.export') as ok`,
+  );
+  return Boolean(row?.ok);
 }
 
 export type WorkspaceExport = {
@@ -336,10 +392,7 @@ export async function exportWorkspace(
   workspaceId: string,
   actorId: string,
 ): Promise<WorkspaceExport> {
-  const [allowed] = await tx.execute<{ ok: boolean }>(
-    sql`select has_permission(${workspaceId}::uuid, 'data.export') as ok`,
-  );
-  if (!allowed?.ok) throw new AccountError('no_access');
+  if (!(await canExport(tx, workspaceId))) throw new AccountError('no_access');
 
   const workspace = await tx.select().from(workspaces).where(eq(workspaces.id, workspaceId));
   const members = await tx
@@ -383,7 +436,12 @@ export async function exportWorkspace(
     .from(activities)
     .where(eq(activities.workspaceId, workspaceId));
 
-  await tx.insert(auditLog).values({ workspaceId, actorId, action: 'data.exported' });
+  await tx.insert(auditLog).values({
+    workspaceId,
+    actorId,
+    action: 'data.exported',
+    changes: { subject: 'Everything (JSON)', detail: '' },
+  });
   return {
     format: 'agency-os-export',
     version: 1,

@@ -191,3 +191,27 @@ export const gates = pgTable(
   },
   (t) => [uniqueIndex('gates_phase_key').on(t.phaseId)],
 );
+
+/** The portal thread per project: written by members or by the client's portal contacts. */
+export const messages = pgTable(
+  'messages',
+  {
+    id: id(),
+    workspaceId: workspaceId(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    authorId: uuid('author_id').references(() => authUsers.id, { onDelete: 'set null' }),
+    authorContactId: uuid('author_contact_id').references(() => clientContacts.id, {
+      onDelete: 'set null',
+    }),
+    body: text('body').notNull(),
+    fileIds: uuid('file_ids')
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
+    isExample: boolean('is_example').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('messages_project_idx').on(t.projectId, t.createdAt)],
+);

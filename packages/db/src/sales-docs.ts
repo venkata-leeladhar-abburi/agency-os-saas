@@ -3,6 +3,7 @@ import {
   financialYear,
   formatDate,
   formatQuoteNumber,
+  isEmail,
   PROPOSAL_VALIDITY_DAYS,
   standardProposal,
   zonedTime,
@@ -14,7 +15,10 @@ import { and, asc, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { AccountError, call } from './accounts';
 import { withService, type Db, type Tx } from './client';
-import { logActivity } from './leads';
+import { convertLeadToClient } from './clients';
+import { queueEventEmails } from './email';
+import { listStages, logActivity, moveLead } from './leads';
+import { workspaceSettings } from './settings';
 import { checkPlanLimit, notify } from './platform';
 import {
   activities,
@@ -30,7 +34,7 @@ import {
   signingCodes,
   workspaces,
 } from './schema';
-import { hashCode, hashToken, newCode, newToken, sha256Json } from './tokens';
+import { hashCode, hashToken, linkToken, newCode, newToken, sha256Json } from './tokens';
 
 export type Quote = typeof quotes.$inferSelect;
 export type QuoteItem = typeof quoteItems.$inferSelect;
@@ -164,6 +168,8 @@ export async function createQuote(
     leadId?: string;
     clientId?: string;
     title?: string;
+    /** Defaults to 14 days from now. */
+    validUntil?: string;
     items: QuoteItemInput[];
   },
   actorId: string,
@@ -219,7 +225,8 @@ export async function createQuote(
         hasLut: input.hasLut ?? lutValidOn(ws, now),
         roundOff: input.roundOff ?? false,
         discountMinor: input.discountMinor ?? 0n,
-        validUntil: dateOnly(new Date(now.getTime() + PROPOSAL_VALIDITY_DAYS * DAY)),
+        validUntil:
+          input.validUntil ?? dateOnly(new Date(now.getTime() + PROPOSAL_VALIDITY_DAYS * DAY)),
         createdBy: actorId,
       })
       .returning(),
@@ -234,6 +241,40 @@ export async function createQuote(
       meta: { quoteId: id, number: quote!.number },
     });
   return id;
+}
+
+/** The totals a quote was saved with: its own place of supply and LUT, not today's settings. */
+export function totalsOfQuote(quote: Quote, items: QuoteItem[]): InvoiceTotals {
+  return totalsFor(
+    quote,
+    items.map((i) => ({
+      description: i.description,
+      sacCode: i.sacCode,
+      quantity: i.quantity,
+      rateMinor: i.rateMinor,
+      discountMinor: i.discountMinor,
+      taxRateBp: i.taxRateBp,
+    })),
+  );
+}
+
+/** The number the next quote will get (shown on the new quote form; taken when it's saved). */
+export async function nextQuoteNumber(tx: Tx, workspaceId: string, now = new Date()) {
+  const ws = await workspaceTax(tx, workspaceId);
+  const fy = financialYear(now, ws.timeZone);
+  const [row] = await tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(quotes)
+    .where(and(eq(quotes.workspaceId, workspaceId), eq(quotes.financialYear, fy)));
+  return formatQuoteNumber(ws.invoicePrefix, now, (row?.n ?? 0) + 1);
+}
+
+/**
+ * The public link's token for a sent proposal. Made from LINK_SIGNING_SECRET and the id, so the
+ * agency can always copy the link again; only its hash is stored.
+ */
+export function proposalLinkToken(secret: string, proposalId: string): string {
+  return linkToken(secret, 'proposal', proposalId, 1);
 }
 
 /** Replaces a draft quote's items and options and recalculates. */
@@ -422,6 +463,35 @@ export async function createProposal(
   return id;
 }
 
+/** Proposals, newest first; optionally one lead's, client's or quote's. */
+export async function listProposals(
+  tx: Tx,
+  workspaceId: string,
+  filter: { leadId?: string; clientId?: string; quoteId?: string } = {},
+) {
+  return tx
+    .select()
+    .from(proposals)
+    .where(
+      and(
+        eq(proposals.workspaceId, workspaceId),
+        isNull(proposals.deletedAt),
+        filter.leadId ? eq(proposals.leadId, filter.leadId) : undefined,
+        filter.clientId ? eq(proposals.clientId, filter.clientId) : undefined,
+        filter.quoteId ? eq(proposals.quoteId, filter.quoteId) : undefined,
+      ),
+    )
+    .orderBy(sql`${proposals.createdAt} desc`);
+}
+
+export async function getProposal(tx: Tx, proposalId: string) {
+  const [p] = await tx
+    .select()
+    .from(proposals)
+    .where(and(eq(proposals.id, proposalId), isNull(proposals.deletedAt)));
+  return p ?? null;
+}
+
 export async function updateProposal(
   tx: Tx,
   proposalId: string,
@@ -470,8 +540,17 @@ async function snapshot(tx: Tx, proposal: Proposal) {
 /**
  * Sends a proposal: fixes its content (and its quote), records the hash of what was sent,
  * makes the public link (valid 14 days) and returns its token. Counts towards proposals a month.
+ * With a secret, the token can be made again later (proposalLinkToken); without, it's random.
  */
-export async function sendProposal(tx: Tx, proposalId: string, actorId: string, now = new Date()) {
+export async function sendProposal(
+  tx: Tx,
+  proposalId: string,
+  actorId: string,
+  now = new Date(),
+  { secret, email }: { secret?: string; email?: string } = {},
+) {
+  const sentTo = email?.trim().toLowerCase() || null;
+  if (sentTo && !isEmail(sentTo)) throw new AccountError('signer_email_invalid');
   const [proposal] = await tx
     .select()
     .from(proposals)
@@ -484,7 +563,8 @@ export async function sendProposal(tx: Tx, proposalId: string, actorId: string, 
       .update(quotes)
       .set({ status: 'sent', sentAt: now })
       .where(and(eq(quotes.id, proposal.quoteId), eq(quotes.status, 'draft')));
-  const { token, hash } = newToken();
+  const token = secret ? proposalLinkToken(secret, proposalId) : newToken().token;
+  const hash = hashToken(token);
   await tx
     .update(proposals)
     .set({
@@ -493,6 +573,7 @@ export async function sendProposal(tx: Tx, proposalId: string, actorId: string, 
       documentSha256: sha256Json(await snapshot(tx, proposal)),
       sentAt: now,
       sentBy: actorId,
+      sentTo,
       expiresAt: new Date(now.getTime() + PROPOSAL_VALIDITY_DAYS * DAY),
     })
     .where(eq(proposals.id, proposalId));
@@ -558,6 +639,25 @@ async function owners(tx: Tx, workspaceId: string) {
       ),
     );
   return rows.map((r) => r.userId);
+}
+
+/**
+ * The proposal behind a public link, as stored, with its quote and the agency's details: for
+ * pages that show it in the agency's own layout. Doesn't count a view (viewProposal does).
+ */
+export async function proposalByLink(db: Db, token: string, now = new Date()) {
+  return withLink(db, token, now, async (tx, p) => {
+    const [ws] = await tx.select().from(workspaces).where(eq(workspaces.id, p.workspaceId));
+    const signature = await proposalSignature(tx, p.id);
+    return {
+      proposal: p,
+      quote: p.quoteId ? await getQuote(tx, p.quoteId) : null,
+      workspace: ws!,
+      settings: await workspaceSettings(tx, p.workspaceId),
+      clientName: await clientNameOf(tx, p),
+      signature,
+    };
+  });
 }
 
 /** Opens the proposal for the client and records the view (the first one tells the sender). */
@@ -640,8 +740,7 @@ function open(p: Proposal) {
  */
 export async function requestSigningCode(db: Db, token: string, email: string, now = new Date()) {
   const destination = email.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destination))
-    throw new AccountError('signer_email_invalid');
+  if (!isEmail(destination)) throw new AccountError('signer_email_invalid');
   return withLink(db, token, now, async (tx, p) => {
     open(p);
     const [recent] = await tx
@@ -731,11 +830,26 @@ export async function signProposal(db: Db, token: string, signing: Signing, now 
     if (p.quoteId)
       await tx.update(quotes).set({ status: 'accepted' }).where(eq(quotes.id, p.quoteId));
     await decided(tx, p, 'proposal_signed', { signer: name, email });
+    await winSignedLead(tx, p);
     return { signed: true as const };
   }).then((result) => {
     // A wrong code is counted (committed) before it is reported.
     if (!result.signed) throw result.error;
   });
+}
+
+/**
+ * A signed proposal wins its lead: the lead moves to Won and becomes a client (on behalf of
+ * whoever sent the proposal), so the agency can start the project straight away.
+ */
+async function winSignedLead(tx: Tx, p: Proposal) {
+  const actorId = p.sentBy ?? p.createdBy;
+  if (!p.leadId || !actorId) return;
+  const won = (await listStages(tx, p.workspaceId)).find((s) => s.kind === 'won');
+  if (won) await moveLead(tx, { leadId: p.leadId, stageId: won.id, actorId });
+  const { clientId } = await convertLeadToClient(tx, p.leadId, actorId);
+  await tx.update(proposals).set({ clientId }).where(eq(proposals.id, p.id));
+  if (p.quoteId) await tx.update(quotes).set({ clientId }).where(eq(quotes.id, p.quoteId));
 }
 
 async function decided(
@@ -763,16 +877,22 @@ async function decided(
   const recipients = [
     ...new Set([...(p.sentBy ? [p.sentBy] : []), ...(await owners(tx, p.workspaceId))]),
   ];
-  await notify(tx, {
+  const event = {
     workspaceId: p.workspaceId,
     userIds: recipients,
-    kind: 'proposal.decided',
+    contactEmails: [],
+    kind: 'proposal.decided' as const,
+    key: p.id,
     payload: {
       proposalId: p.id,
       client: await clientNameOf(tx, p),
+      title: p.title,
       outcome: kind === 'proposal_signed' ? 'signed' : 'declined',
+      reason: kind === 'proposal_declined' ? ((meta.reason as string | null) ?? null) : null,
     },
-  });
+  };
+  const sent = await notify(tx, event);
+  await queueEventEmails(tx, event, sent.email);
 }
 
 export async function declineProposal(
@@ -791,6 +911,91 @@ export async function declineProposal(
       await tx.update(quotes).set({ status: 'declined' }).where(eq(quotes.id, p.quoteId));
     await decided(tx, p, 'proposal_declined', { reason: reason ?? null });
   });
+}
+
+export const MAX_QUESTION_LENGTH = 2000;
+/** Questions one proposal takes in an hour, so a link can't be used to flood the agency. */
+export const QUESTIONS_PER_HOUR = 10;
+
+/**
+ * The client asks a question from the proposal's link, while it's still open. It goes on the
+ * proposal's timeline, and the sender and owners hear in the app and by email, with the
+ * address the proposal was sent to so they can reply.
+ */
+export async function askAboutProposal(db: Db, token: string, question: string, now = new Date()) {
+  const text = question.trim();
+  if (!text) throw new AccountError('question_required');
+  if (text.length > MAX_QUESTION_LENGTH) throw new AccountError('question_too_long');
+  return withLink(db, token, now, async (tx, p) => {
+    open(p);
+    const [recent] = await tx
+      .select({ n: sql<number>`count(*)::int` })
+      .from(activities)
+      .where(
+        and(
+          eq(activities.workspaceId, p.workspaceId),
+          eq(activities.subjectType, 'proposal'),
+          eq(activities.subjectId, p.id),
+          eq(activities.kind, 'question'),
+          gte(activities.createdAt, new Date(now.getTime() - 60 * 60 * 1000)),
+        ),
+      );
+    if ((recent?.n ?? 0) >= QUESTIONS_PER_HOUR) throw new AccountError('too_many_questions');
+    const [row] = await tx
+      .insert(activities)
+      .values({
+        workspaceId: p.workspaceId,
+        subjectType: 'proposal',
+        subjectId: p.id,
+        kind: 'question',
+        body: text,
+        actorId: null,
+        meta: { from: p.sentTo },
+        isExample: p.isExample,
+        createdAt: now,
+      })
+      .returning({ id: activities.id });
+    const recipients = [
+      ...new Set([...(p.sentBy ? [p.sentBy] : []), ...(await owners(tx, p.workspaceId))]),
+    ];
+    const event = {
+      workspaceId: p.workspaceId,
+      userIds: recipients,
+      contactEmails: [],
+      kind: 'proposal.question' as const,
+      key: row!.id,
+      payload: {
+        proposalId: p.id,
+        client: await clientNameOf(tx, p),
+        title: p.title,
+        question: text,
+        from: p.sentTo,
+      },
+    };
+    const sent = await notify(tx, event);
+    await queueEventEmails(tx, event, sent.email);
+    return { id: row!.id, workspaceId: p.workspaceId };
+  });
+}
+
+/** A proposal's questions from the client, oldest first (members who can see the proposal). */
+export async function proposalQuestions(tx: Tx, proposalId: string) {
+  return tx
+    .select({
+      id: activities.id,
+      body: activities.body,
+      meta: activities.meta,
+      createdAt: activities.createdAt,
+    })
+    .from(activities)
+    .where(
+      and(
+        eq(activities.subjectType, 'proposal'),
+        eq(activities.subjectId, proposalId),
+        eq(activities.kind, 'question'),
+      ),
+    )
+    .orderBy(asc(activities.createdAt));
 }
 
 /** Daily job (per workspace, as the service role): sent proposals past their date expire. */

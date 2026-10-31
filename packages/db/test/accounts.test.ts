@@ -8,9 +8,11 @@ import {
   createWorkspace,
   inviteMember,
   listMembers,
+  myProfile,
   myWorkspaces,
   removeMember,
   revokeInvitation,
+  updateMyProfile,
 } from '../src/accounts';
 import { withService, withUser, type Session } from '../src/client';
 import {
@@ -362,5 +364,44 @@ describe('invitations', () => {
 
   it('gives each error a message that says what to do', () => {
     expect(new AccountError('invite_expired').message).toContain('ask for a new one');
+  });
+});
+
+describe('your own profile', () => {
+  it('changes your name and phone, which your team then sees', async () => {
+    await expect(
+      as(arjun, (tx) => updateMyProfile(tx, arjun.userId, { fullName: ' A ', phone: null })),
+    ).rejects.toMatchObject({ code: 'profile_name_required' });
+    await expect(
+      as(arjun, (tx) =>
+        updateMyProfile(tx, arjun.userId, { fullName: 'Arjun Mehta', phone: '9'.repeat(21) }),
+      ),
+    ).rejects.toMatchObject({ code: 'profile_phone_too_long' });
+    await as(arjun, (tx) =>
+      updateMyProfile(tx, arjun.userId, {
+        fullName: '  Arjun   Mehta ',
+        phone: ' +91 98480 22338 ',
+      }),
+    );
+    expect(await as(arjun, (tx) => myProfile(tx, arjun.userId))).toEqual({
+      fullName: 'Arjun Mehta',
+      phone: '+91 98480 22338',
+    });
+    const members = await as(kiran, (tx) => listMembers(tx, wsA));
+    expect(members.find((m) => m.userId === arjun.userId)).toMatchObject({
+      name: 'Arjun Mehta',
+    });
+  });
+
+  it('never changes someone else’s', async () => {
+    await expect(
+      as(sarah, (tx) => updateMyProfile(tx, arjun.userId, { fullName: 'Not Arjun', phone: null })),
+    ).rejects.toThrow();
+    expect((await as(arjun, (tx) => myProfile(tx, arjun.userId))).fullName).toBe('Arjun Mehta');
+    // Someone outside your workspaces can't read it either.
+    expect(await as(sarah, (tx) => myProfile(tx, arjun.userId))).toEqual({
+      fullName: null,
+      phone: null,
+    });
   });
 });

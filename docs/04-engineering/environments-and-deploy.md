@@ -44,6 +44,8 @@ Listed in `.env.example` with no values. "Public" means it is safe in the browse
 | `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | all | yes | Analytics and flags |
 | `SENTRY_DSN` / `SENTRY_AUTH_TOKEN` | server, CI | no | Errors; source maps upload |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | server | no | Rate limits |
+| `LINK_SIGNING_SECRET` | server | no | Keys the pay links (HMAC), so the invoice page can show its link while only a hash is stored. At least 32 random characters, for example `openssl rand -hex 32`; changing it breaks every pay link sent so far |
+| `NEXT_PUBLIC_TWO_FACTOR` | client | no | `true` lets people set up two-factor login (authenticator app) in Settings, Your profile (D-071). Leave `false` until it has been checked against the Supabase project, where TOTP must be enabled under Authentication, Multi-factor. People who already have it are asked for their code either way |
 
 ## CI/CD (GitHub Actions)
 

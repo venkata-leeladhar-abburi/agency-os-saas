@@ -24,6 +24,12 @@ describe('lead import', () => {
   const [headers, good, bad] = parseCsv(file) as [string[], string[], string[]];
   const mapping = guessLeadMapping(headers);
 
+  it('reads the short headers people use', () => {
+    expect(
+      guessLeadMapping(['Client name', 'Org', 'Mobile', 'Mail', 'Budget', 'Where from']),
+    ).toEqual({ name: 0, company: 1, phone: 2, email: 3, value: 4, source: 5 });
+  });
+
   it('guesses the column mapping', () => {
     expect(mapping).toEqual({
       name: 0,
@@ -103,5 +109,21 @@ describe('amounts as people write them', () => {
     expect(() => parseAmountText('lots', 'INR')).toThrow();
     expect(() => parseAmountText('4 bananas', 'INR')).toThrow();
     expect(() => parseAmountText('1.234', 'INR')).toThrow('decimal places');
+  });
+});
+
+describe('parseAmountText on crafted input', () => {
+  it('stays fast and still rejects it (CodeQL js/polynomial-redos)', () => {
+    const started = performance.now();
+    expect(() => parseAmountText(`\t${'\t'.repeat(50_000)}x1`, 'INR')).toThrow(RangeError);
+    expect(() => parseAmountText(`1${' '.repeat(50_000)}!`, 'INR')).not.toThrow();
+    expect(performance.now() - started).toBeLessThan(100);
+  });
+  it('keeps reading the usual forms', () => {
+    expect(parseAmountText('₹4.86 L', 'INR')).toBe(48_600_000n);
+    expect(parseAmountText('2 Cr', 'INR')).toBe(2_000_000_000n);
+    expect(parseAmountText('50k', 'INR')).toBe(5_000_000n);
+    expect(() => parseAmountText('4 L 5', 'INR')).toThrow(RangeError);
+    expect(() => parseAmountText('L', 'INR')).toThrow(RangeError);
   });
 });

@@ -13,6 +13,10 @@ export type InvoiceSummaryLabels = {
   rate?: string;
   amount?: string;
   subtotal?: string;
+  /** Shown when lines have a discount: "Discount". */
+  discount?: string;
+  /** The amount before the discount: "Amount". */
+  gross?: string;
   roundOff?: string;
   total?: string;
   sac?: string;
@@ -63,6 +67,10 @@ export function InvoiceSummary({
   className,
 }: InvoiceSummaryProps) {
   const fmt = (m: bigint) => formatMoney(m, totals.currency);
+  // A discount is taken off each line before tax; show the lines before it and the discount
+  // as its own row, so the rate × quantity on each line still adds up.
+  const discount = totals.lines.reduce((sum, l) => sum + (l.discountMinor ?? 0n), 0n);
+  const gross = (l: (typeof totals.lines)[number]) => l.taxableMinor + (l.discountMinor ?? 0n);
   const rates = [...new Set(totals.lines.map((l) => l.taxRateBp))];
   const singleRate = rates.length === 1 ? rates[0] : undefined;
   const rows: { label: string; value: bigint }[] = [];
@@ -134,7 +142,7 @@ export function InvoiceSummary({
                   {fmt(line.rateMinor)}
                 </td>
                 <td className="py-2.5 pl-3 text-right whitespace-nowrap tabular-nums">
-                  {fmt(line.taxableMinor)}
+                  {fmt(gross(line))}
                 </td>
               </tr>
             ))}
@@ -142,6 +150,18 @@ export function InvoiceSummary({
         </table>
       </div>
       <dl className="ml-auto grid w-[min(320px,100%)] gap-1.5 text-body">
+        {discount > 0n ? (
+          <>
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted-foreground">{labels?.gross ?? 'Amount'}</dt>
+              <dd className="tabular-nums">{fmt(totals.subtotal.amountMinor + discount)}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted-foreground">{labels?.discount ?? 'Discount'}</dt>
+              <dd className="tabular-nums">−{fmt(discount)}</dd>
+            </div>
+          </>
+        ) : null}
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">{labels?.subtotal ?? 'Subtotal'}</dt>
           <dd className="tabular-nums">{fmt(totals.subtotal.amountMinor)}</dd>

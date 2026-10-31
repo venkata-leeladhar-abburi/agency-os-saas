@@ -4,14 +4,18 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { acceptInvitation, createWorkspace, inviteMember } from '../src/accounts';
 import { withService, withUser, type Session } from '../src/client';
 import { convertLeadToClient, createClient } from '../src/clients';
-import { createLead, leadActivities } from '../src/leads';
+import { createLead, getLead, leadActivities, listStages } from '../src/leads';
 import { listNotifications } from '../src/platform';
 import {
+  askAboutProposal,
   createProposal,
   createQuote,
   declineProposal,
   expireProposals,
   getQuote,
+  proposalByLink,
+  proposalLinkToken,
+  proposalQuestions,
   proposalSignature,
   requestSigningCode,
   sendProposal,
@@ -360,9 +364,9 @@ describe('proposals', () => {
     expect((await as(owner, (tx) => listNotifications(tx, ws))).map((n) => n.kind)).toContain(
       'proposal.decided',
     );
-    expect((await as(owner, (tx) => leadActivities(tx, ws, leadId)))[0]).toMatchObject({
-      kind: 'proposal_signed',
-    });
+    expect((await as(owner, (tx) => leadActivities(tx, ws, leadId))).map((a) => a.kind)).toEqual(
+      expect.arrayContaining(['proposal_signed', 'stage_change', 'converted']),
+    );
   });
 
   it('can’t be signed twice, reopened, or have its evidence changed', async () => {
@@ -388,9 +392,45 @@ describe('proposals', () => {
     );
   });
 
-  it('lets a signed proposal convert the lead even before it is moved to Won', async () => {
-    const { created } = await as(owner, (tx) => convertLeadToClient(tx, leadId, owner.userId));
-    expect(created).toBe(true);
+  it('wins the lead when signed: it moves to Won and becomes a client, once', async () => {
+    const lead = (await as(owner, (tx) => getLead(tx, leadId)))!;
+    const won = (await as(owner, (tx) => listStages(tx, ws))).find((s) => s.kind === 'won')!;
+    expect(lead.stageId).toBe(won.id);
+    expect(lead.convertedClientId).not.toBeNull();
+    const { clientId, created } = await as(owner, (tx) =>
+      convertLeadToClient(tx, leadId, owner.userId),
+    );
+    expect({ clientId, created }).toEqual({ clientId: lead.convertedClientId, created: false });
+    expect((await as(owner, (tx) => getQuote(tx, quoteId)))!.clientId).toBe(clientId);
+    const link = await proposalByLink(t.db, token, later(3));
+    expect(link).toMatchObject({
+      proposal: { status: 'signed', clientId },
+      clientName: 'Example Kite & Co',
+      signature: { signerName: 'Example Priya' },
+      workspace: { name: 'One Stop Solutions' },
+    });
+  });
+
+  it('makes a link that can be copied again, and keeps the address it was sent to', async () => {
+    const secret = 'x'.repeat(40);
+    const lead4 = await as(owner, (tx) =>
+      createLead(tx, ws, { name: 'Example Four', email: 'four@example.com' }, owner.userId),
+    );
+    const p6 = await as(owner, (tx) =>
+      createProposal(tx, ws, { leadId: lead4 }, owner.userId, now),
+    );
+    await expect(
+      as(owner, (tx) => sendProposal(tx, p6, owner.userId, now, { secret, email: 'nope' })),
+    ).rejects.toMatchObject({ code: 'signer_email_invalid' });
+    const { token: t6 } = await as(owner, (tx) =>
+      // Sent later than the others, so the expiry check below doesn't count it.
+      sendProposal(tx, p6, owner.userId, later(15), { secret, email: ' Four@Example.com ' }),
+    );
+    expect(t6).toBe(proposalLinkToken(secret, p6));
+    expect((await proposalByLink(t.db, t6, later(16))).proposal).toMatchObject({
+      sentTo: 'four@example.com',
+      viewCount: 0,
+    });
   });
 
   it('can be declined, and expires after 14 days', async () => {
@@ -434,6 +474,79 @@ describe('proposals', () => {
     await expect(requestSigningCode(t.db, t5, 'three@example.com', later(1))).rejects.toMatchObject(
       { code: 'signing_code_limit' },
     );
+  });
+});
+
+describe('questions from the client', () => {
+  let p7: string;
+  let t7: string;
+
+  beforeAll(async () => {
+    const lead = await as(owner, (tx) =>
+      createLead(
+        tx,
+        ws,
+        { name: 'Example Seven', company: 'Example Orbit', email: 'seven@orbit.example' },
+        owner.userId,
+      ),
+    );
+    p7 = await as(owner, (tx) => createProposal(tx, ws, { leadId: lead }, owner.userId, now));
+    ({ token: t7 } = await as(owner, (tx) =>
+      sendProposal(tx, p7, owner.userId, now, { email: 'seven@orbit.example' }),
+    ));
+  });
+
+  it('puts the question on the proposal and tells the sender in the app and by email', async () => {
+    await expect(askAboutProposal(t.db, t7, '   ', later(1))).rejects.toMatchObject({
+      code: 'question_required',
+    });
+    await expect(askAboutProposal(t.db, t7, 'x'.repeat(2001), later(1))).rejects.toMatchObject({
+      code: 'question_too_long',
+    });
+    await askAboutProposal(t.db, t7, '  Can we start in December instead? ', later(1));
+    const asked = await as(owner, (tx) => proposalQuestions(tx, p7));
+    expect(asked).toEqual([
+      {
+        id: expect.any(String),
+        body: 'Can we start in December instead?',
+        meta: { from: 'seven@orbit.example' },
+        createdAt: later(1),
+      },
+    ]);
+    // Members who can read proposals see them; other workspaces never do.
+    expect(await as(finance, (tx) => proposalQuestions(tx, p7))).toHaveLength(1);
+    expect(await as(outsider, (tx) => proposalQuestions(tx, p7))).toEqual([]);
+    const [note] = await as(owner, (tx) => listNotifications(tx, ws, { limit: 1 }));
+    expect(note).toMatchObject({
+      kind: 'proposal.question',
+      payload: {
+        proposalId: p7,
+        client: 'Example Orbit',
+        question: 'Can we start in December instead?',
+      },
+    });
+    const emails =
+      await t.admin`select to_email, kind from email_outbox where workspace_id = ${ws} and kind = 'proposal.question'`;
+    expect(emails).toEqual([{ to_email: 'kiran@onestop.in', kind: 'proposal.question' }]);
+  });
+
+  it('takes 10 questions an hour, and none once the proposal is decided', async () => {
+    for (let i = 0; i < 9; i++) await askAboutProposal(t.db, t7, `Question ${i}`, later(1));
+    await expect(askAboutProposal(t.db, t7, 'One more', later(1))).rejects.toMatchObject({
+      code: 'too_many_questions',
+    });
+    await askAboutProposal(t.db, t7, 'An hour later', new Date(later(1).getTime() + 3_600_001));
+    await declineProposal(t.db, t7, 'Went with another plan', later(2));
+    await expect(askAboutProposal(t.db, t7, 'And now?', later(2))).rejects.toMatchObject({
+      code: 'proposal_declined',
+    });
+    const [decided] =
+      await t.admin`select payload from email_outbox where workspace_id = ${ws} and kind = 'proposal.decided' and payload->>'proposalId' = ${p7}`;
+    expect(decided!.payload).toMatchObject({
+      outcome: 'declined',
+      reason: 'Went with another plan',
+      client: 'Example Orbit',
+    });
   });
 });
 

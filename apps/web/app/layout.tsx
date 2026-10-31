@@ -1,13 +1,15 @@
-import { GeistMono } from 'geist/font/mono';
-import { GeistSans } from 'geist/font/sans';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import type { ReactNode } from 'react';
+import { GeistMono, GeistSans } from './fonts';
 import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = { title: 'Agency OS' };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // Set by proxy.ts: the theme script runs before the page paints, so it needs the nonce.
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     <html
       lang="en-IN"
@@ -15,7 +17,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       suppressHydrationWarning
     >
       <body>
-        <Providers>{children}</Providers>
+        <Providers nonce={nonce}>{children}</Providers>
       </body>
     </html>
   );

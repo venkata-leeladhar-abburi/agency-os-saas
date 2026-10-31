@@ -102,7 +102,7 @@ export function PageHeader({
 /** Marks sample data, so nobody mistakes it for real records. */
 export function ExampleBadge({ label = 'Example data' }: { label?: string }) {
   return (
-    <span className="inline-flex h-6 items-center gap-1.5 rounded-sm border border-dashed border-border-strong px-2 font-mono text-[11px] tracking-[0.04em] text-muted-foreground uppercase">
+    <span className="inline-flex min-h-6 max-w-full items-center gap-1.5 rounded-sm border border-dashed border-border-strong px-2 py-0.5 font-mono text-[11px] tracking-[0.04em] text-muted-foreground uppercase">
       {label}
     </span>
   );
