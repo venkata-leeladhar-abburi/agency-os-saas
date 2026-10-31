@@ -228,8 +228,8 @@ export async function salesItems(ctx: WorkspaceCtx, now = new Date()): Promise<S
     const [quotes, proposals, clients, leads] = await Promise.all([
       listQuotes(tx, ctx.workspaceId),
       listProposals(tx, ctx.workspaceId),
-      listClients(tx, ctx.workspaceId, { limit: 1000 }),
-      listLeads(tx, ctx.workspaceId, { limit: 1000 }),
+      listClients(tx, ctx.workspaceId, { limit: null }),
+      listLeads(tx, ctx.workspaceId, { limit: null }),
     ]);
     const nameOf = (q: { clientId: string | null; leadId: string | null }) =>
       (q.clientId && clients.find((c) => c.id === q.clientId)?.name) ||
@@ -318,8 +318,8 @@ export async function recipients(ctx: WorkspaceCtx) {
   return asMember(ctx, async (tx) => {
     const [stages, leads, clients] = await Promise.all([
       listStages(tx, ctx.workspaceId),
-      listLeads(tx, ctx.workspaceId, { limit: 1000 }),
-      listClients(tx, ctx.workspaceId, { limit: 1000 }),
+      listLeads(tx, ctx.workspaceId, { limit: null }),
+      listClients(tx, ctx.workspaceId, { limit: null }),
     ]);
     const open = new Set(stages.filter((s) => s.kind === 'open').map((s) => s.id));
     return {

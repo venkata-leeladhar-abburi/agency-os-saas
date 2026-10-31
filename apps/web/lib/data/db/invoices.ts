@@ -3,7 +3,9 @@
 import {
   createInvoice as dbCreateInvoice,
   getClient,
+  getClients,
   getInvoice as dbGetInvoice,
+  getInvoices,
   checkPlanLimit,
   invoicePlanCheck,
   invoicesPaidIn,
@@ -102,6 +104,26 @@ export async function invoiceDetail(ctx: WorkspaceCtx, id: string, now = new Dat
       settings,
       reminders: found.reminders,
     };
+  });
+}
+
+/** Many invoices with their client, totals and state, in a few queries (dashboard, export). */
+export async function invoiceDetails(ctx: WorkspaceCtx, ids: string[], now = new Date()) {
+  return asMember(ctx, async (tx) => {
+    const found = (await getInvoices(tx, ids, { secret: linkSecret(), now })).filter(
+      (f) => f.invoice.workspaceId === ctx.workspaceId,
+    );
+    const owners = await getClients(tx, [...new Set(found.map((f) => f.invoice.clientId))]);
+    const clientOf = new Map(owners.map((c) => [c.id, clientFromDb(c)]));
+    return found.flatMap((f) => {
+      const client = clientOf.get(f.invoice.clientId);
+      if (!client) return [];
+      const totals = totalsOfInvoice(f.row, f.items);
+      const invoice = invoiceFromDb(f.invoice, f.items, f.payments, f.reminders, f.payToken);
+      return [
+        { invoice, client, totals, state: invoiceState(invoice, totals.total.amountMinor, now) },
+      ];
+    });
   });
 }
 

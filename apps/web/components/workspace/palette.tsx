@@ -15,7 +15,7 @@ import {
 } from '@phosphor-icons/react';
 import { CommandPalette, useCommandShortcut, type CommandGroup } from '@agency-os/ui';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { searchAction } from '@/app/w/[workspace]/search-action';
 import type { SearchItem, SearchKind } from '@/lib/data/search';
 
@@ -28,22 +28,41 @@ const KIND: Record<SearchKind, { icon: Icon; group: string }> = {
   invoice: { icon: Receipt, group: 'Invoices' },
 };
 
-/** Ctrl/Cmd+K: find any record or run an action. Records load when it first opens. */
+/** Wait this long after the last key before asking the server. */
+const SEARCH_DELAY_MS = 120;
+
+/**
+ * Ctrl/Cmd+K: find any record or run an action. Records are searched on the server as you type
+ * (a few of each kind), so it stays quick however many records the workspace has.
+ */
 export function useWorkspacePalette(slug: string) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [items, setItems] = useState<SearchItem[] | null>(null);
+  // The words these results are for; null while the answer for the current words is on its way.
+  const [results, setResults] = useState<{ for: string; items: SearchItem[] } | null>(null);
+  const latest = useRef('');
 
-  const show = useCallback(
-    (next: boolean) => {
-      setOpen(next);
-      if (!next) setQuery('');
-      // Fresh each time it opens, so new records are there.
-      if (next) void searchAction(slug).then(setItems);
-    },
-    [slug],
-  );
+  useEffect(() => {
+    const words = query.trim();
+    latest.current = words;
+    if (!open || !words) return;
+    const timer = setTimeout(() => {
+      void searchAction(slug, words).then((items) => {
+        // An answer for words the person has since changed is dropped.
+        if (latest.current === words) setResults({ for: words, items });
+      });
+    }, SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [open, query, slug]);
+
+  const show = useCallback((next: boolean) => {
+    setOpen(next);
+    if (!next) {
+      setQuery('');
+      setResults(null);
+    }
+  }, []);
   const toggle = useCallback(() => show(!open), [show, open]);
   useCommandShortcut(toggle);
 
@@ -112,9 +131,16 @@ export function useWorkspacePalette(slug: string) {
         },
       ],
     };
-    if (!query.trim()) return [actions, goTo];
+    const words = query.trim().toLowerCase();
+    if (!words) return [actions, goTo];
+    // Actions and places are filtered here; records come back from the server already matched.
+    const matching = (group: CommandGroup): CommandGroup => ({
+      ...group,
+      items: group.items.filter((i) => i.label.toLowerCase().includes(words)),
+    });
     const records = new Map<string, CommandGroup>();
-    for (const item of items ?? []) {
+    const items = results?.for === query.trim() ? results.items : [];
+    for (const item of items) {
       const kind = KIND[item.kind];
       const group = records.get(kind.group) ?? { label: kind.group, items: [] };
       group.items.push({
@@ -127,8 +153,8 @@ export function useWorkspacePalette(slug: string) {
       });
       records.set(kind.group, group);
     }
-    return [...records.values(), actions, goTo];
-  }, [slug, query, items, go]);
+    return [...records.values(), matching(actions), matching(goTo)].filter((g) => g.items.length);
+  }, [slug, query, results, go]);
 
   const palette = (
     <CommandPalette
@@ -137,10 +163,12 @@ export function useWorkspacePalette(slug: string) {
       groups={groups}
       query={query}
       onQueryChange={setQuery}
+      shouldFilter={false}
       labels={{
-        empty: items
-          ? `Nothing matches “${query}”. Try a name, an email, a phone number or an invoice number.`
-          : 'Loading your records…',
+        empty:
+          results?.for === query.trim()
+            ? `Nothing matches “${query}”. Try a name, an email, a phone number or an invoice number.`
+            : 'Searching your records…',
       }}
     />
   );

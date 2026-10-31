@@ -1,71 +1,84 @@
-// Server only. The command palette's index on the database: what the member can see (RLS), in
+// Server only. The command palette's search on the database: what the member can see (RLS), in
 // the same words as example mode.
-import { formatMoney, LEAD_SOURCE_LABELS } from '@agency-os/core';
-import type { WorkspaceCtx } from '../../server/workspace';
+import { formatMoney } from '@agency-os/core';
+import { searchRecords, type SearchRow } from '@agency-os/db';
+import { asMember, type WorkspaceCtx } from '../../server/workspace';
 import type { SearchItem } from '../search';
-import { leadTitle, PROPOSAL_STATUS_LABELS, stageName } from '../views';
-import { salesItems } from './sales';
-import { snapshot } from './snapshot';
 
-export async function searchIndexFor(ctx: WorkspaceCtx, slug: string): Promise<SearchItem[]> {
-  const [s, sales] = await Promise.all([snapshot(ctx), salesItems(ctx)]);
-  const ws = (p: string) => `/w/${slug}${p}`;
-  const clientName = (id: string) => s.clients.find((c) => c.id === id)?.name ?? '';
-  return [
-    ...s.leads.map((l) => ({
-      id: `lead-${l.id}`,
-      kind: 'lead' as const,
-      label: leadTitle(l),
-      meta: `Lead · ${stageName(l.stage)} · ${formatMoney(l.valueMinor, 'INR', { decimals: 0 })}`,
-      href: ws(`/leads/${l.id}`),
-      keywords: [l.name, l.email ?? '', l.phone ?? '', LEAD_SOURCE_LABELS[l.source]].filter(
-        Boolean,
-      ),
-    })),
-    ...s.clients.map((c) => ({
-      id: `client-${c.id}`,
-      kind: 'client' as const,
-      label: c.name,
-      meta: `Client · ${c.contactName}${c.city ? ` · ${c.city}` : ''}`,
-      href: ws(`/clients/${c.id}`),
-      keywords: [c.contactName, c.email ?? '', c.phone ?? '', c.gstin ?? ''].filter(Boolean),
-    })),
-    ...s.projects.map(({ project: p }) => ({
-      id: `project-${p.id}`,
-      kind: 'project' as const,
-      label: p.name,
-      meta: `Project · ${clientName(p.clientId)}`,
-      href: ws(`/projects/${p.id}`),
-      keywords: [clientName(p.clientId), p.lead],
-    })),
-    ...s.invoices.map(({ invoice: inv, client, totals, state }) => ({
-      id: `invoice-${inv.id}`,
-      kind: 'invoice' as const,
-      label: inv.number ?? `Draft invoice for ${client.name}`,
-      meta: `Invoice · ${client.name} · ${state.statusText}`,
-      href: ws(`/invoices/${inv.id}`),
-      keywords: [client.name, formatMoney(totals.total.amountMinor, inv.currency)],
-    })),
-    ...sales
-      .filter((i) => i.kind === 'Proposal')
-      .map((p) => ({
-        id: `proposal-${p.id}`,
-        kind: 'proposal' as const,
-        label: p.title,
-        meta: `Proposal · ${p.status === 'quote' ? 'Quote' : PROPOSAL_STATUS_LABELS[p.status]} · ${formatMoney(p.amountMinor, p.currency)}`,
-        href: ws(`/sales/proposals/${p.id}`),
-        keywords: [p.number, p.forName],
-      })),
-    ...s.tasks.map((t) => {
-      const project = s.projects.find((p) => p.project.id === t.projectId)?.project;
+const INVOICE_STATUS: Record<string, string> = {
+  draft: 'Draft',
+  issued: 'Issued',
+  partially_paid: 'Part paid',
+  paid: 'Paid',
+  cancelled: 'Cancelled',
+};
+const PROPOSAL_STATUS: Record<string, string> = {
+  draft: 'Draft',
+  sent: 'Sent',
+  viewed: 'Viewed',
+  signed: 'Signed',
+  declined: 'Declined',
+  expired: 'Expired',
+};
+
+function itemOf(r: SearchRow, ws: (p: string) => string): SearchItem {
+  const money = (decimals?: 0) =>
+    r.amountMinor !== null && r.currency
+      ? formatMoney(r.amountMinor, r.currency, decimals === 0 ? { decimals: 0 } : undefined)
+      : '';
+  const line = (...parts: (string | null)[]) => parts.filter(Boolean).join(' · ');
+  const base = { id: `${r.kind}-${r.id}`, kind: r.kind, keywords: [] };
+  switch (r.kind) {
+    case 'lead':
       return {
-        id: `task-${t.id}`,
-        kind: 'task' as const,
-        label: t.title,
-        meta: `Task · ${project?.name ?? ''} · ${t.assignee}`,
-        href: ws(`/tasks/${t.id}`),
-        keywords: [t.assignee, project?.name ?? ''],
+        ...base,
+        label: r.label,
+        meta: line('Lead', r.detail, money(0)),
+        href: ws(`/leads/${r.id}`),
       };
-    }),
-  ];
+    case 'client':
+      return {
+        ...base,
+        label: r.label,
+        meta: line('Client', r.detail),
+        href: ws(`/clients/${r.id}`),
+      };
+    case 'project':
+      return {
+        ...base,
+        label: r.label,
+        meta: line('Project', r.detail),
+        href: ws(`/projects/${r.id}`),
+      };
+    case 'invoice':
+      return {
+        ...base,
+        label: r.label || `Draft invoice for ${r.detail ?? 'a client'}`,
+        meta: line('Invoice', r.detail, INVOICE_STATUS[r.extra ?? ''] ?? null, money()),
+        href: ws(`/invoices/${r.id}`),
+      };
+    case 'proposal':
+      return {
+        ...base,
+        label: r.label,
+        meta: line('Proposal', PROPOSAL_STATUS[r.detail ?? ''] ?? null, money()),
+        href: ws(`/sales/proposals/${r.id}`),
+      };
+    case 'task':
+      return {
+        ...base,
+        label: r.label,
+        meta: line('Task', r.detail, r.extra),
+        href: ws(`/tasks/${r.id}`),
+      };
+  }
+}
+
+/**
+ * What matches the words typed in the palette, found by the database (PRD E0.3: quick at 10,000
+ * records). Only what the member can see.
+ */
+export async function searchFor(ctx: WorkspaceCtx, slug: string, query: string) {
+  const rows = await asMember(ctx, (tx) => searchRecords(tx, ctx.workspaceId, query));
+  return rows.map((r) => itemOf(r, (p) => `/w/${slug}${p}`));
 }

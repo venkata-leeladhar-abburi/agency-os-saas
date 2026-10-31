@@ -8,7 +8,9 @@ import {
   createProject as dbCreateProject,
   createTask as dbCreateTask,
   getClient as dbGetClient,
+  getClients,
   getProject as dbGetProject,
+  getProjects,
   getTask as dbGetTask,
   listClients,
   listComments,
@@ -167,10 +169,18 @@ export async function projectList(ctx: WorkspaceCtx, now = new Date()) {
       members(tx, ctx.workspaceId),
       lateTasks(tx, ctx.workspaceId, now),
     ]);
+    const [full, owners] = await Promise.all([
+      getProjects(
+        tx,
+        rows.map((r) => r.id),
+      ),
+      getClients(tx, [...new Set(rows.map((r) => r.clientId))]),
+    ]);
+    const clientOf = new Map(owners.map((c) => [c.id, c]));
     const out: ProjectWithClient[] = [];
-    for (const row of rows) {
-      const [p, c] = await Promise.all([dbGetProject(tx, row.id), dbGetClient(tx, row.clientId)]);
-      if (!p || !c) continue;
+    for (const p of full) {
+      const c = clientOf.get(p.clientId);
+      if (!c) continue;
       out.push({
         project: projectFromDb(p, c, people),
         client: clientFromDb(c),
@@ -255,7 +265,7 @@ export async function requestGateFor(ctx: WorkspaceCtx, id: string, title: strin
 async function projectNames(tx: Tx, workspaceId: string) {
   const [projects, clients] = await Promise.all([
     listProjects(tx, workspaceId),
-    listClients(tx, workspaceId, { limit: 1000 }),
+    listClients(tx, workspaceId, { limit: null }),
   ]);
   return new Map(
     projects.map((p) => [
@@ -293,12 +303,17 @@ export async function taskList(
         rows.map((t) => t.id),
       ),
     ]);
+    const subtasksOf = new Map<string, { id: string; title: string; done: boolean }[]>();
+    for (const s of all)
+      if (s.parentTaskId)
+        subtasksOf.set(s.parentTaskId, [
+          ...(subtasksOf.get(s.parentTaskId) ?? []),
+          { id: s.id, title: s.title, done: s.status === 'done' },
+        ]);
     return rows.map((t) => ({
       task: {
         ...taskFromDb(t, people, phases),
-        subtasks: all
-          .filter((s) => s.parentTaskId === t.id)
-          .map((s) => ({ id: s.id, title: s.title, done: s.status === 'done' })),
+        subtasks: subtasksOf.get(t.id) ?? [],
       },
       client: names.get(t.projectId)?.client ?? '',
       comments: counts.get(t.id) ?? 0,

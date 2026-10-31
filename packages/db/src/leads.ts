@@ -476,7 +476,8 @@ export type LeadSort = 'created' | 'name' | 'value' | 'follow_up';
 export async function listLeads(
   tx: Tx,
   workspaceId: string,
-  filters: LeadFilters & { sort?: LeadSort; limit?: number; offset?: number } = {},
+  /** limit: null lists every lead (for the board, export and dashboard); 100 by default. */
+  filters: LeadFilters & { sort?: LeadSort; limit?: number | null; offset?: number } = {},
 ) {
   const order = {
     created: [desc(leads.createdAt)],
@@ -484,14 +485,16 @@ export async function listLeads(
     value: [sql`${leads.valueMinor} desc nulls last`],
     follow_up: [sql`${leads.nextFollowUpAt} asc nulls last`],
   }[filters.sort ?? 'created'];
-  return tx
+  const query = tx
     .select({ lead: leads, stageName: pipelineStages.name, stageKind: pipelineStages.kind })
     .from(leads)
     .innerJoin(pipelineStages, eq(pipelineStages.id, leads.stageId))
     .where(filterWhere(workspaceId, filters))
     .orderBy(...order, asc(leads.id))
-    .limit(filters.limit ?? 100)
-    .offset(filters.offset ?? 0);
+    .$dynamic();
+  return filters.limit === null
+    ? query
+    : query.limit(filters.limit ?? 100).offset(filters.offset ?? 0);
 }
 
 /** Follow-ups due by `until` (for Today), oldest first; optionally only one owner's. */

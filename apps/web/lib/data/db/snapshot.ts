@@ -4,7 +4,7 @@ import type { InvoiceTotals } from '@agency-os/core';
 import type { WorkspaceCtx } from '../../server/workspace';
 import type { Client, Invoice, Lead, Member, Project, Quote, Task } from '../types';
 import type { InvoiceState } from '../views';
-import { invoiceDetail, invoiceRows } from './invoices';
+import { invoiceDetails, invoiceRows } from './invoices';
 import { clientList, leadList } from './people';
 import { quotesWithTotals } from './sales';
 import { teamFor } from './team';
@@ -40,18 +40,14 @@ export async function snapshot(ctx: WorkspaceCtx, now = new Date()): Promise<Sna
     teamFor(ctx, now),
     myName(ctx),
   ]);
-  const invoices: Snapshot['invoices'] = [];
-  for (const row of rows) {
-    const found = await invoiceDetail(ctx, row.id, now);
-    if (found)
-      invoices.push({
-        invoice: found.invoice,
-        client: found.client,
-        totals: found.totals,
-        state: found.state,
-        cancelled: row.statusText === 'Cancelled',
-      });
-  }
+  const cancelled = new Set(rows.filter((r) => r.statusText === 'Cancelled').map((r) => r.id));
+  const invoices: Snapshot['invoices'] = (
+    await invoiceDetails(
+      ctx,
+      rows.map((r) => r.id),
+      now,
+    )
+  ).map((found) => ({ ...found, cancelled: cancelled.has(found.invoice.id) }));
   return {
     leads,
     clients: clients.map((c) => c.client),

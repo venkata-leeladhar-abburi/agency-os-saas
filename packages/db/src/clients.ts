@@ -4,7 +4,7 @@ import {
   validateGstin,
   workspaceDefaults,
 } from '@agency-os/core';
-import { and, asc, count, eq, ilike, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { AccountError, call } from './accounts';
 import type { Tx } from './client';
@@ -176,23 +176,48 @@ export async function updateClient(tx: Tx, clientId: string, patch: Partial<Clie
 }
 
 export async function getClient(tx: Tx, clientId: string) {
-  const [client] = await tx.select().from(clients).where(eq(clients.id, clientId));
-  if (!client) return null;
+  return (await getClients(tx, [clientId]))[0] ?? null;
+}
+
+/** Clients with their contacts (main contact first), in two queries however many. */
+export async function getClients(tx: Tx, clientIds: string[]) {
+  if (clientIds.length === 0) return [];
+  const rows = await tx.select().from(clients).where(inArray(clients.id, clientIds));
+  if (rows.length === 0) return [];
   const contacts = await tx
     .select()
     .from(clientContacts)
-    .where(eq(clientContacts.clientId, clientId))
+    .where(
+      inArray(
+        clientContacts.clientId,
+        rows.map((c) => c.id),
+      ),
+    )
     .orderBy(sql`${clientContacts.isPrimary} desc`, asc(clientContacts.createdAt));
-  return { ...client, contacts };
+  const contactsOf = new Map<string, typeof contacts>();
+  for (const c of contacts) contactsOf.set(c.clientId, [...(contactsOf.get(c.clientId) ?? []), c]);
+  const order = new Map(clientIds.map((id, n) => [id, n]));
+  return rows
+    .sort((a, b) => order.get(a.id)! - order.get(b.id)!)
+    .map((client) => ({ ...client, contacts: contactsOf.get(client.id) ?? [] }));
 }
 
 export async function listClients(
   tx: Tx,
   workspaceId: string,
-  { search, limit = 100, offset = 0 }: { search?: string; limit?: number; offset?: number } = {},
+  {
+    search,
+    limit = 100,
+    offset = 0,
+  }: {
+    search?: string;
+    /** null lists every client (for the list, export and dashboard). */
+    limit?: number | null;
+    offset?: number;
+  } = {},
 ) {
   const term = search?.trim().replace(/[\\%_]/g, (c) => `\\${c}`);
-  return tx
+  const query = tx
     .select()
     .from(clients)
     .where(
@@ -209,8 +234,8 @@ export async function listClients(
       ),
     )
     .orderBy(asc(clients.name), asc(clients.id))
-    .limit(limit)
-    .offset(offset);
+    .$dynamic();
+  return limit === null ? query : query.limit(limit).offset(offset);
 }
 
 /** Soft delete; needs clients.delete. */

@@ -12,7 +12,7 @@ import {
   type PlaceOfSupply,
   type ReminderView,
 } from '@agency-os/core';
-import { and, asc, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { AccountError, call } from './accounts';
 import { withService, type Db, type Tx } from './client';
@@ -474,37 +474,72 @@ export async function listInvoices(tx: Tx, workspaceId: string, now = new Date()
 export async function getInvoice(
   tx: Tx,
   invoiceId: string,
+  opts: { secret?: string; now?: Date } = {},
+) {
+  return (await getInvoices(tx, [invoiceId], opts))[0] ?? null;
+}
+
+/**
+ * Invoices with their client, lines, payments and reminders, in six queries however many (the
+ * dashboard and export read them all). In the order asked; missing ones are left out.
+ */
+export async function getInvoices(
+  tx: Tx,
+  invoiceIds: string[],
   { secret, now = new Date() }: { secret?: string; now?: Date } = {},
 ) {
-  const [inv] = await tx.select().from(invoices).where(eq(invoices.id, invoiceId));
-  if (!inv) return null;
-  const ws = await workspaceOf(tx, inv.workspaceId);
-  const today = localDate(now, ws.timeZone);
-  const [client] = await tx.select().from(clients).where(eq(clients.id, inv.clientId));
-  const items = await tx
-    .select()
-    .from(invoiceItems)
-    .where(eq(invoiceItems.invoiceId, inv.id))
-    .orderBy(asc(invoiceItems.position));
-  const paid = await tx
-    .select()
-    .from(payments)
-    .where(eq(payments.invoiceId, inv.id))
-    .orderBy(asc(payments.receivedOn), asc(payments.createdAt));
-  const sent = await tx.select().from(reminders).where(eq(reminders.invoiceId, inv.id));
-  return {
-    invoice: view(inv, today),
-    /** The stored row, for totalsOfInvoice. */
-    row: inv,
-    client: client!,
-    items,
-    payments: paid,
-    reminders: reminderViews(inv, sent, today),
-    payToken:
-      secret && inv.publicTokenHash && inv.status !== 'cancelled'
-        ? payLinkToken(secret, inv)
-        : null,
+  if (invoiceIds.length === 0) return [];
+  const rows = await tx.select().from(invoices).where(inArray(invoices.id, invoiceIds));
+  if (rows.length === 0) return [];
+  const ids = rows.map((r) => r.id);
+  const [clientRows, items, paid, sent] = await Promise.all([
+    tx
+      .select()
+      .from(clients)
+      .where(inArray(clients.id, [...new Set(rows.map((r) => r.clientId))])),
+    tx
+      .select()
+      .from(invoiceItems)
+      .where(inArray(invoiceItems.invoiceId, ids))
+      .orderBy(asc(invoiceItems.position)),
+    tx
+      .select()
+      .from(payments)
+      .where(inArray(payments.invoiceId, ids))
+      .orderBy(asc(payments.receivedOn), asc(payments.createdAt)),
+    tx.select().from(reminders).where(inArray(reminders.invoiceId, ids)),
+  ]);
+  const zones = new Map<string, string>();
+  for (const w of new Set(rows.map((r) => r.workspaceId)))
+    zones.set(w, (await workspaceOf(tx, w)).timeZone);
+  const clientOf = new Map(clientRows.map((c) => [c.id, c]));
+  const by = <T extends { invoiceId: string }>(list: T[]) => {
+    const out = new Map<string, T[]>();
+    for (const x of list) out.set(x.invoiceId, [...(out.get(x.invoiceId) ?? []), x]);
+    return out;
   };
+  const itemsOf = by(items);
+  const paidOf = by(paid);
+  const sentOf = by(sent);
+  const order = new Map(invoiceIds.map((id, n) => [id, n]));
+  return rows
+    .sort((a, b) => order.get(a.id)! - order.get(b.id)!)
+    .map((inv) => {
+      const today = localDate(now, zones.get(inv.workspaceId)!);
+      return {
+        invoice: view(inv, today),
+        /** The stored row, for totalsOfInvoice. */
+        row: inv,
+        client: clientOf.get(inv.clientId)!,
+        items: itemsOf.get(inv.id) ?? [],
+        payments: paidOf.get(inv.id) ?? [],
+        reminders: reminderViews(inv, sentOf.get(inv.id) ?? [], today),
+        payToken:
+          secret && inv.publicTokenHash && inv.status !== 'cancelled'
+            ? payLinkToken(secret, inv)
+            : null,
+      };
+    });
 }
 
 function reminderViews(

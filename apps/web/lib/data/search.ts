@@ -1,7 +1,7 @@
 // Server only. What the command palette searches: every record, with a line saying what it is.
 import { formatMoney, LEAD_SOURCE_LABELS } from '@agency-os/core';
 import { ctxFor } from './ctx';
-import { searchIndexFor } from './db/search';
+import { searchFor } from './db/search';
 import { store } from './shared';
 import {
   invoiceState,
@@ -25,9 +25,31 @@ export type SearchItem = {
   keywords: string[];
 };
 
-export async function searchIndex(slug: string): Promise<SearchItem[]> {
+/** At most this many matches of each kind, as on the database. */
+const PER_KIND = 8;
+
+/** What matches the words typed in the command palette: the database searches when signed in. */
+export async function search(query: string, slug: string): Promise<SearchItem[]> {
+  if (!query.trim()) return [];
   const ctx = await ctxFor(slug);
-  if (ctx) return searchIndexFor(ctx, slug);
+  if (ctx) return searchFor(ctx, slug, query);
+  const words = query.trim().toLowerCase().split(/\s+/);
+  const digits = query.replace(/\D/g, '');
+  const counts = new Map<SearchKind, number>();
+  return exampleIndex(slug).filter((item) => {
+    const text = [item.label, item.meta, ...item.keywords].join(' ').toLowerCase();
+    const found =
+      words.every((w) => text.includes(w)) ||
+      (digits.length >= 4 && item.keywords.some((k) => k.replace(/\D/g, '').includes(digits)));
+    const n = counts.get(item.kind) ?? 0;
+    if (!found || n >= PER_KIND) return false;
+    counts.set(item.kind, n + 1);
+    return true;
+  });
+}
+
+/** Example mode: every record, with its line, searched in memory (the example store is small). */
+function exampleIndex(slug: string): SearchItem[] {
   const s = store();
   const ws = (p: string) => `/w/${slug}${p}`;
   const items: SearchItem[] = [];

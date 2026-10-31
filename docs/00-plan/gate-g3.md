@@ -8,7 +8,7 @@ G3 opens the beta to One Stop and then 5 to 10 agencies. This page collects what
 
 | Pass line (`build-plan.md`) | Where it stands |
 | --- | --- |
-| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-068). |
+| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-069). |
 | One Stop has run real work on it for 2 weeks | **Not started.** Needs a deployed environment and the keys in "Waiting on the founder". |
 | A chartered accountant has reviewed invoices | **Not started.** Blocking (open question 10). |
 | Legal documents ready | **Not started.** Blocking (open question 11): terms, privacy policy, DPA, click-to-sign. |
@@ -32,7 +32,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 | | Invites expire in 7 days, can be resent or revoked | Met; the invitation email waits for Resend |
 | | Plan limits enforced with a clear upgrade message | Met (members, portal clients, open leads, quotes, proposals, invoices) |
 | | One person in several workspaces, switching between them | Met |
-| E0.3 App shell | Command palette: leads, clients, projects, invoices; actions; under 300 ms for 10,000 records; keyboard only | Partly: on the database (D-064); not yet timed against 10,000 records |
+| E0.3 App shell | Command palette: leads, clients, projects, invoices; actions; under 300 ms for 10,000 records; keyboard only | Met: 30 to 72 ms at 10,000 records, searched on the database as you type (D-069) |
 | | Notifications in the app and by email, per-category settings | Met in the app; emails wait for Resend and Inngest |
 | | Settings: profile, branding, members, billing, tax and invoices, notifications, export, audit log | Partly: profile added (D-068); logo upload waits for Storage; subscribing waits for Razorpay |
 | E0.4 Onboarding | Checklist shows progress, can be dismissed, comes back from Help; example data labelled and removable in one click | Met (D-057, D-063) |
@@ -86,6 +86,5 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 **Known limits:**
 - Logos, files and stored PDFs need Storage.
 - Online payment needs Razorpay.
-- The palette hasn't been timed at 10,000 records.
 - About 280 KB of JavaScript per page is worth trimming before launch (`hardening-2026-10.md`).
 - The usability round with a screen reader or magnifier user and a low-cost Android phone is still to be run with people.

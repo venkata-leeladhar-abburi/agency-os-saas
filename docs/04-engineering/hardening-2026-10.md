@@ -40,6 +40,19 @@ Lighthouse 13.5 against `next start`, mobile.
 - Changes: Geist Mono is no longer preloaded (it's for numbers and IDs, rarely on first paint), and the app has an icon (best practices now 100).
 - **Finding (low):** about 280 KB of JavaScript on every page, and 450 to 570 ms of blocking time on a slowed CPU. Worth trimming before launch (the board's drag-and-drop and the command palette can load on demand).
 
+### Data at scale (31 Oct 2026, D-069)
+
+A workspace with 10,000 records on Postgres 16 (`BENCH=1 pnpm vitest run search.bench` in `apps/web`), times as the member, worst of 5 for search:
+
+| What | Before | After |
+| --- | --- | --- |
+| Command palette | 19.7 s to load everything when it opens | 30 to 72 ms per search as you type |
+| Leads, clients, projects, tasks lists | 0.2 to 5.8 s (leads and clients stopped at 1,000) | 153 to 234 ms, every record |
+| Dashboard, Today and export snapshot | 17.8 s | 0.86 s |
+
+- **Fixed (medium):** lists stopped at 1,000 leads or clients, so the board, dashboard and data export could leave records out.
+- **Fixed:** row-level security checked the member's role again for every row; the same rules now use a set worked out once per query (migration 0026), checked by a test that compares every role's rows with the old policies.
+
 ## Accessibility (manual items, checked by script on all 45 pages)
 
 - axe with WCAG 2.1 AA and best-practice rules: clean on every page. **Fixed:** the sidebar is now a landmark, and the leads board's column headings follow the page heading in order.

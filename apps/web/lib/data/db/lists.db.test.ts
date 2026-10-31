@@ -11,7 +11,7 @@ import { createClientFor, createLeadFor, leadList } from './people';
 import { planOverviewFor } from './plan';
 import { profileFor, saveProfileFor } from './profile';
 import { deleteViewFor, savedViewsFor, saveViewFor } from './saved-views';
-import { searchIndexFor } from './search';
+import { searchFor } from './search';
 
 const run = describe.skipIf(!process.env.TEST_DATABASE_URL);
 let t: TestDb;
@@ -118,14 +118,24 @@ run('search, leads CSV and the plan page on the database', () => {
   });
 
   it('searches the member’s own records, not the example data', async () => {
-    const index = await searchIndexFor(ctx, 'one-stop');
-    expect(index.map((i) => [i.kind, i.label]).sort()).toEqual([
+    const found = await searchFor(ctx, 'one-stop', 'example');
+    expect(found.map((i) => [i.kind, i.label]).sort()).toEqual([
       ['client', 'Example Acme Labs'],
       ['lead', 'Example Kite & Co'],
       ['lead', 'Example Lumen Foods'],
       ['lead', 'Example Orbit Fitness'],
     ]);
-    expect(index.find((i) => i.kind === 'client')!.href).toMatch(/^\/w\/one-stop\/clients\//);
+    expect(found.find((i) => i.kind === 'client')).toMatchObject({
+      href: expect.stringMatching(/^\/w\/one-stop\/clients\//),
+      meta: 'Client · Example Srinivas',
+    });
+    // By email, by a contact's name, and nothing for words that aren't there.
+    expect((await searchFor(ctx, 'one-stop', 'lakshmi@lumen')).map((i) => i.label)).toEqual([
+      'Example Lumen Foods',
+    ]);
+    expect((await searchFor(ctx, 'one-stop', 'srinivas')).map((i) => i.kind)).toEqual(['client']);
+    expect(await searchFor(ctx, 'one-stop', 'no such thing')).toEqual([]);
+    expect(await searchFor(ctx, 'one-stop', '%')).toEqual([]);
   });
 
   it('shows the plan and what it has used, from the database’s own counts', async () => {

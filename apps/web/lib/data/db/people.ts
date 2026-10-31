@@ -8,6 +8,7 @@ import {
   createClient as dbCreateClient,
   createLead as dbCreateLead,
   getClient as dbGetClient,
+  getClients,
   getLead as dbGetLead,
   invitePortalContact,
   leadActivities,
@@ -150,7 +151,7 @@ export async function leadList(ctx: WorkspaceCtx): Promise<Lead[]> {
   return asMember(ctx, async (tx) => {
     const [stages, rows, names] = await Promise.all([
       listStages(tx, ctx.workspaceId),
-      listLeads(tx, ctx.workspaceId, { limit: 1000 }),
+      listLeads(tx, ctx.workspaceId, { limit: null }),
       namesOf(tx, ctx.workspaceId),
     ]);
     return rows.map(({ lead }) =>
@@ -289,19 +290,20 @@ const NO_MONEY: Money = { billed: 0n, outstanding: 0n, drafts: 0n };
 export async function clientList(ctx: WorkspaceCtx, now = new Date()) {
   return asMember(ctx, async (tx) => {
     const [rows, invoices, projects] = await Promise.all([
-      listClients(tx, ctx.workspaceId, { limit: 1000 }),
+      listClients(tx, ctx.workspaceId, { limit: null }),
       listInvoices(tx, ctx.workspaceId, now),
       listProjects(tx, ctx.workspaceId),
     ]);
     const money = moneyByClient(invoices);
-    const full = await Promise.all(rows.map((c) => dbGetClient(tx, c.id)));
-    return full
-      .filter((c) => c !== null)
-      .map((c) => ({
-        client: clientFromDb(c),
-        money: money.get(c.id) ?? NO_MONEY,
-        projects: projects.filter((p) => p.clientId === c.id).length,
-      }));
+    const full = await getClients(
+      tx,
+      rows.map((c) => c.id),
+    );
+    return full.map((c) => ({
+      client: clientFromDb(c),
+      money: money.get(c.id) ?? NO_MONEY,
+      projects: projects.filter((p) => p.clientId === c.id).length,
+    }));
   });
 }
 

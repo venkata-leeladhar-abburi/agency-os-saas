@@ -183,6 +183,13 @@
       "when": 1793357290292,
       "tag": "0025_saved_views_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793446058002,
+      "tag": "0026_rls_speed",
+      "breakpoints": true
     }
   ]
 }
