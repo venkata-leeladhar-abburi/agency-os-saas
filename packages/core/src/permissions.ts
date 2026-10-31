@@ -47,6 +47,8 @@ export const PERMISSIONS = [
   'dashboard.money',
   'audit.read',
   'data.export',
+  'knowledge.read',
+  'knowledge.write',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -64,7 +66,14 @@ export const ROLE_PERMISSIONS: Record<Role, Partial<Record<Permission, Scope>>> 
     ...all(...PERMISSIONS.filter((p) => p !== 'billing.manage' && p !== 'invoices.delete')),
   },
   project_lead: {
-    ...all('members.read', 'leads.read', 'sales_docs.read', 'tasks.read'),
+    ...all(
+      'members.read',
+      'leads.read',
+      'sales_docs.read',
+      'tasks.read',
+      'knowledge.read',
+      'knowledge.write',
+    ),
     ...own(
       'clients.read',
       'projects.read',
@@ -80,8 +89,10 @@ export const ROLE_PERMISSIONS: Record<Role, Partial<Record<Permission, Scope>>> 
     ),
   },
   member: {
-    ...all('members.read'),
+    // Members add their own knowledge items and edit those (docs/02-product/knowledge-base.md).
+    ...all('members.read', 'knowledge.read'),
     ...own(
+      'knowledge.write',
       'clients.read',
       'projects.read',
       'tasks.read',
@@ -104,10 +115,11 @@ export const ROLE_PERMISSIONS: Record<Role, Partial<Record<Permission, Scope>>> 
       'invoices.delete',
       'files.read',
       'dashboard.money',
+      'knowledge.read',
     ),
   },
   hr: {
-    ...all('members.read'),
+    ...all('members.read', 'knowledge.read'),
   },
 };
 

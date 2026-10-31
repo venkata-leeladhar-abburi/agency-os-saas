@@ -27,3 +27,4 @@ export * from './digest';
 export * from './example-data';
 export * from './saved-views';
 export * from './search';
+export * from './knowledge';
