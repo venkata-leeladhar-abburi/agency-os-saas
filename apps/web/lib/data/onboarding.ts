@@ -109,6 +109,12 @@ export async function removeExampleData(slug?: string): Promise<RemoveResult> {
   s.proposals = sweep(s.proposals, null, () => '');
   s.notifications = sweep(s.notifications, null, () => '');
   s.messages = sweep(s.messages, null, () => '');
+  s.knowledgeItems = sweep(s.knowledgeItems, null, () => '');
+  // A folder stays while your own items or folders are in it.
+  const usedFolders = new Set<string>();
+  for (const i of s.knowledgeItems) if (i.folderId) usedFolders.add(i.folderId);
+  for (const f of s.knowledgeFolders) if (!f.example && f.parentId) usedFolders.add(f.parentId);
+  s.knowledgeFolders = sweep(s.knowledgeFolders, usedFolders, (f) => `the folder ${f.name}`);
   return { removed, kept };
 }
 

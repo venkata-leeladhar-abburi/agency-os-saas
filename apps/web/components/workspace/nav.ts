@@ -1,4 +1,5 @@
 import {
+  Books,
   CheckSquareOffset,
   FolderSimple,
   FunnelSimple,
@@ -46,6 +47,7 @@ export function ownerNav(slug: string): SidebarGroup[] {
       label: 'Agency',
       items: [
         { value: 'team', label: 'Team', icon: UserCircle, href: ws('/team') },
+        { value: 'knowledge', label: 'Knowledge base', icon: Books, href: ws('/knowledge') },
         { value: 'settings', label: 'Settings', icon: GearSix, href: ws('/settings') },
       ],
     },
@@ -66,6 +68,7 @@ export const SECTION_LABELS: Record<string, string> = {
   tasks: 'Tasks',
   invoices: 'Invoices',
   team: 'Team',
+  knowledge: 'Knowledge base',
   settings: 'Settings',
   help: 'Help',
 };

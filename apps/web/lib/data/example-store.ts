@@ -2,6 +2,7 @@
 // end to end before the database is reachable. Every name and amount is example data from the
 // design reference; the screens show the "Example data" badge. Restarting the server resets it.
 import { SEVEN_PHASES, standardProposal } from '@agency-os/core';
+import type { KnowledgeFolder, KnowledgeItem } from './knowledge-types';
 import { NOTIFICATION_CATEGORIES } from './types';
 import type {
   AuditEntry,
@@ -43,6 +44,9 @@ export type ExampleStore = {
   savedViews: { id: string; name: string; query: string }[];
   /** The signed-in person's own profile (example mode has one person). */
   profile: { name: string; phone: string | null };
+  /** The knowledge base: folders (counts are worked out) and items (authors by name). */
+  knowledgeFolders: Omit<KnowledgeFolder, 'items'>[];
+  knowledgeItems: Omit<KnowledgeItem, 'canEdit' | 'clientCount'>[];
 };
 
 const OWNER = 'Kiran Rao';
@@ -720,6 +724,217 @@ function seed(): ExampleStore {
     },
   ];
 
+  const knowledgeFolders: ExampleStore['knowledgeFolders'] = [
+    {
+      id: 'kb-onboarding',
+      parentId: null,
+      name: 'Client onboarding',
+      description: 'From signed proposal to kickoff.',
+    },
+    { id: 'kb-kickoff', parentId: 'kb-onboarding', name: 'Kickoff', description: null },
+    {
+      id: 'kb-delivery',
+      parentId: null,
+      name: 'Delivery process',
+      description: 'How we design, build, test and launch.',
+    },
+    {
+      id: 'kb-prompts',
+      parentId: null,
+      name: 'Prompts and AI',
+      description: 'Prompts that work, and how we use them.',
+    },
+    {
+      id: 'kb-design',
+      parentId: null,
+      name: 'Design system',
+      description: 'Components, tools and references.',
+    },
+    {
+      id: 'kb-guides',
+      parentId: null,
+      name: 'Client guides',
+      description: 'Shared with clients in their portal.',
+    },
+  ];
+  const kb = (
+    item: Pick<KnowledgeItem, 'id' | 'folderId' | 'kind' | 'title'> &
+      Partial<Omit<KnowledgeItem, 'canEdit' | 'clientCount'>>,
+  ): Omit<KnowledgeItem, 'canEdit' | 'clientCount'> => ({
+    summary: null,
+    body: '',
+    url: null,
+    tags: [],
+    visibility: 'team',
+    roles: [],
+    allClients: false,
+    clientIds: [],
+    status: 'published',
+    updatedAt: iso(-3),
+    updatedBy: OWNER,
+    createdBy: OWNER,
+    ...item,
+  });
+  const knowledgeItems: ExampleStore['knowledgeItems'] = [
+    kb({
+      id: 'kb-kickoff-checklist',
+      folderId: 'kb-kickoff',
+      kind: 'checklist',
+      title: 'Kickoff call checklist',
+      summary: 'Everything to cover in the first call after the proposal is signed.',
+      body: '## Before the call\n\n- [x] Send the intake questionnaire\n- [x] Share the calendar invite with the agenda\n- [ ] Set up the project from the seven-phase template\n\n## On the call\n\n1. Introduce the team and who to contact for what\n2. Walk through the phases and sign-offs\n3. Agree how feedback is given (see **How to give feedback**)\n4. Confirm the first deadline\n\n> Send the recap within 24 hours.',
+      tags: ['onboarding', 'calls'],
+      updatedAt: todayAt(10, 40),
+      updatedBy: PM,
+      createdBy: PM,
+    }),
+    kb({
+      id: 'kb-discovery',
+      folderId: 'kb-onboarding',
+      kind: 'process',
+      title: 'How we run a discovery call',
+      summary: 'Questions to ask, and what to write down, before we quote.',
+      body: "## Goal\n\nUnderstand the problem well enough to quote with confidence.\n\n## Questions\n\n- What does success look like in six months?\n- Who decides, and who signs?\n- What has been tried before?\n- What is the budget range and the deadline?\n\n## After the call\n\nWrite the recap in the lead's notes and set a follow-up.",
+      tags: ['sales', 'calls'],
+      updatedAt: iso(-6),
+    }),
+    kb({
+      id: 'kb-launch-qa',
+      folderId: 'kb-delivery',
+      kind: 'checklist',
+      title: 'Website launch QA',
+      summary: 'Run before every launch.',
+      body: '- [ ] Every page works on a phone and a laptop\n- [ ] Forms send to the right inbox\n- [ ] Page titles and descriptions are set\n- [ ] Analytics is recording\n- [ ] Redirects from the old site work\n- [ ] The client has signed off the content',
+      tags: ['qa', 'launch'],
+      roles: ['owner', 'admin', 'project_lead', 'member'],
+      updatedAt: iso(-2),
+      updatedBy: DEVELOPER,
+      createdBy: DEVELOPER,
+    }),
+    kb({
+      id: 'kb-status-update',
+      folderId: 'kb-delivery',
+      kind: 'template',
+      title: 'Weekly status update',
+      summary: 'What we send clients every Friday.',
+      body: 'Hi {client},\n\n**Done this week:** …\n\n**Next week:** …\n\n**Needs you:** …\n\nThe project is on track for {deadline}.',
+      tags: ['clients', 'writing'],
+      updatedAt: iso(-9),
+      updatedBy: PM,
+      createdBy: PM,
+    }),
+    kb({
+      id: 'kb-retro',
+      folderId: 'kb-delivery',
+      kind: 'learning',
+      title: 'Learnings from the Acme Labs redesign',
+      summary: 'Share designs earlier; agree content owners on day one.',
+      body: '## What went well\n\n- Weekly demos kept sign-offs quick\n\n## What we will change\n\n- Share rough designs in week one, not week three\n- Name one content owner on the client side at kickoff',
+      tags: ['retro'],
+      updatedAt: iso(-14),
+    }),
+    kb({
+      id: 'kb-proposal-prompt',
+      folderId: 'kb-prompts',
+      kind: 'prompt',
+      title: 'Proposal first draft',
+      summary: 'Turns discovery notes into a first draft of the scope.',
+      body: 'You are writing the scope section of a proposal for a {service} project.\n\nUse these discovery notes:\n\n```\n{notes}\n```\n\nWrite the goals, what is in scope, what is out of scope and the timeline in plain English. Keep it under 400 words.',
+      tags: ['ai', 'proposals'],
+      updatedAt: iso(-1),
+      updatedBy: OWNER,
+    }),
+    kb({
+      id: 'kb-followup-prompt',
+      folderId: 'kb-prompts',
+      kind: 'prompt',
+      title: 'Follow-up email after a quiet week',
+      summary: 'My draft, not shared yet.',
+      body: 'Write a short, friendly follow-up to {name} about the proposal we sent on {date}.',
+      tags: ['ai', 'sales'],
+      visibility: 'private',
+      status: 'draft',
+      updatedAt: todayAt(9, 120),
+    }),
+    kb({
+      id: 'kb-figma',
+      folderId: 'kb-design',
+      kind: 'tool',
+      title: 'Figma',
+      summary: 'Where every design lives. Ask Ananya for access.',
+      url: 'https://www.figma.com',
+      tags: ['design', 'tools'],
+      updatedAt: iso(-20),
+      updatedBy: DESIGNER,
+      createdBy: DESIGNER,
+    }),
+    kb({
+      id: 'kb-pricing-block',
+      folderId: 'kb-design',
+      kind: 'component',
+      title: 'Pricing table block',
+      summary: 'The three-column pricing table we reuse on landing pages.',
+      body: '## When to use it\n\nLanding pages with up to three plans.\n\n## Rules\n\n- Highlight one plan only\n- Prices include GST, and say so',
+      tags: ['design', 'components'],
+      updatedAt: iso(-11),
+      updatedBy: DESIGNER,
+      createdBy: DESIGNER,
+    }),
+    kb({
+      id: 'kb-inspiration',
+      folderId: 'kb-design',
+      kind: 'website',
+      title: 'Landing page references',
+      summary: 'Sites we point clients to for direction.',
+      url: 'https://www.example.com/references',
+      tags: ['design', 'inspiration'],
+      updatedAt: iso(-25),
+      updatedBy: DESIGNER,
+      createdBy: DESIGNER,
+    }),
+    kb({
+      id: 'kb-feedback-guide',
+      folderId: 'kb-guides',
+      kind: 'process',
+      title: 'How to give feedback on designs',
+      summary: 'One round, one list, in your portal.',
+      body: '## How it works\n\n1. Open the design from your portal\n2. Write all your comments in one message\n3. Tell us which ones are must-haves\n\nWe reply within one working day. If something blocks you, message us in the portal.',
+      tags: ['clients'],
+      visibility: 'clients',
+      allClients: true,
+      updatedAt: iso(-4),
+      updatedBy: PM,
+      createdBy: PM,
+    }),
+    kb({
+      id: 'kb-acme-login',
+      folderId: 'kb-guides',
+      kind: 'process',
+      title: 'Logging in to your website',
+      summary: 'Where to sign in and how to edit your pages.',
+      body: "## Signing in\n\nGo to your site's admin page and sign in with the email we set up for you.\n\n## Editing a page\n\n- Open **Pages**\n- Choose the page\n- Press **Publish** when you are done",
+      tags: ['clients', 'handoff'],
+      visibility: 'clients',
+      clientIds: ['acme'],
+      updatedAt: iso(-1, 15),
+      updatedBy: DEVELOPER,
+      createdBy: DEVELOPER,
+    }),
+    kb({
+      id: 'kb-sprint-board',
+      folderId: 'kb-delivery',
+      kind: 'board',
+      title: 'Sprint planning board',
+      summary: 'The board we copy for each two-week sprint.',
+      url: 'https://www.example.com/boards/sprint',
+      tags: ['planning'],
+      roles: ['owner', 'admin', 'project_lead'],
+      updatedAt: iso(-8),
+      updatedBy: PM,
+      createdBy: PM,
+    }),
+  ];
+
   const store: ExampleStore = {
     settings: {
       name: 'One Stop Solutions',
@@ -762,6 +977,8 @@ function seed(): ExampleStore {
     audit,
     savedViews: [],
     profile: { name: OWNER, phone: null },
+    knowledgeFolders,
+    knowledgeItems,
   };
   for (const list of EXAMPLE_LISTS) for (const record of store[list]) record.example = true;
   return store;
@@ -778,6 +995,8 @@ export const EXAMPLE_LISTS = [
   'proposals',
   'notifications',
   'messages',
+  'knowledgeFolders',
+  'knowledgeItems',
 ] as const;
 
 /** A fresh copy of the example records, for "Load example data". */

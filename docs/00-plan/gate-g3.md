@@ -8,7 +8,7 @@ G3 opens the beta to One Stop and then 5 to 10 agencies. This page collects what
 
 | Pass line (`build-plan.md`) | Where it stands |
 | --- | --- |
-| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-071). |
+| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-072). |
 | One Stop has run real work on it for 2 weeks | **Not started.** Needs a deployed environment and the keys in "Waiting on the founder". |
 | A chartered accountant has reviewed invoices | **Not started.** Blocking (open question 10). |
 | Legal documents ready | **Not started.** Blocking (open question 11): terms, privacy policy, DPA, click-to-sign. |
@@ -69,6 +69,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 - **Get found and win the work:** a leads board and table with your own stages, filters that stay and saved views, follow-ups in Today, lost reasons, CSV import and export, a public enquiry form, quotes with GST worked out by state, proposals from a template with a link the client opens, signs with an emailed code, asks a question, or declines.
 - **Deliver:** projects from the seven-phase template, sign-offs the client approves in their portal, tasks on a board, a table or a calendar, with subtasks, comments and @mentions, daily updates, and a team page.
 - **Get paid:** tax invoices, bills of supply, exports under LUT and proformas, numbered per financial year with no gaps; payments, part payments and a pay link; reminders before and after the due date; PDFs.
+- **Knowledge base:** the agency's processes, prompts, tools, templates and learnings in folders, each shared with exactly the right people, and guides for clients in their portal.
 - **The client portal:** projects, approvals, invoices and messages on a phone, in the agency's colours, with no password.
 - **Running the agency:** a dashboard with money, pipeline, win rate, projects at risk and team load; Today; notifications in the app and by email; a daily digest; members and roles; plans and limits; the audit log; data export.
 
@@ -79,7 +80,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 - **Dev database:** apply the migrations to the dev database: `DATABASE_URL_DIRECT` in the GitHub `dev` environment, then the "Migrate database" workflow. Until then no signed-in screen has been checked in a browser.
 - **Reviewers:** a chartered accountant (question 10) and a lawyer (question 11).
 - **Beta:** the beta agencies (question 15), the product name and domain (question 2).
-- **Wording to approve:** the signing code email (question 20), the other email bodies (question 21) and the proposal question notification (question 22).
+- **Wording to approve:** the signing code email (question 20), the other email bodies (question 21), the proposal question notification (question 22) and the knowledge base words (question 24).
 
 **Not built yet:** nothing that needs no input. Two-factor login is built but switched off until it can be checked against the Supabase dev project (D-071).
 

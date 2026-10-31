@@ -1,6 +1,6 @@
 'use client';
 
-import { ChatCircleDots, FolderSimple, House, Receipt } from '@phosphor-icons/react';
+import { Books, ChatCircleDots, FolderSimple, House, Receipt } from '@phosphor-icons/react';
 import { ExampleBadge, PortalShell } from '@agency-os/ui';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -45,6 +45,7 @@ export function PortalFrame({
           { value: 'projects', label: 'Projects', icon: FolderSimple, href: `${base}/projects` },
           { value: 'payments', label: 'Payments', icon: Receipt, href: `${base}/payments` },
           { value: 'messages', label: 'Messages', icon: ChatCircleDots, href: `${base}/messages` },
+          { value: 'knowledge', label: 'Guides', icon: Books, href: `${base}/knowledge` },
         ]}
       >
         {example ? (

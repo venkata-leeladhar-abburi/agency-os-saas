@@ -287,6 +287,7 @@ export async function listKnowledgeItems(tx: Tx, workspaceId: string, f: Knowled
               ilike(knowledgeItems.title, `%${term}%`),
               ilike(knowledgeItems.summary, `%${term}%`),
               ilike(knowledgeItems.body, `%${term}%`),
+              ilike(sql`${knowledgeItems.kind}::text`, `%${term}%`),
               sql`exists (select 1 from unnest(${knowledgeItems.tags}) t where t ilike ${`%${term}%`})`,
             )
           : undefined,
@@ -313,6 +314,15 @@ export async function getKnowledgeItem(tx: Tx, itemId: string) {
     .from(knowledgeItemClients)
     .where(eq(knowledgeItemClients.itemId, itemId));
   return { ...item, clientIds: clients.map((c) => c.clientId) };
+}
+
+/** How many items the person can see in the workspace. */
+export async function countKnowledgeItems(tx: Tx, workspaceId: string) {
+  const [row] = await tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(knowledgeItems)
+    .where(and(eq(knowledgeItems.workspaceId, workspaceId), isNull(knowledgeItems.deletedAt)));
+  return row?.n ?? 0;
 }
 
 /** Tags in use, with how many items (that the person can see) carry each. */
