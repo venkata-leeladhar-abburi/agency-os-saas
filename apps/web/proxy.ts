@@ -1,10 +1,12 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { needsSecondStep } from './lib/auth/helpers';
 import { contentSecurityPolicy, makeNonce } from './lib/security-headers';
 
 /**
  * Every page: a fresh CSP nonce (Next adds it to its own scripts). Then, with Supabase set
- * up, keeps the session fresh and sends signed-out visitors to sign-in.
+ * up, keeps the session fresh, sends signed-out visitors to sign-in, and sends anyone with
+ * two-factor login on to enter their code before anything else (D-071).
  */
 export async function proxy(request: NextRequest) {
   const nonce = makeNonce();
@@ -51,6 +53,17 @@ export async function proxy(request: NextRequest) {
     url.pathname = '/sign-in';
     url.search = `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
+  }
+  // Signed in with two-factor on but no code yet: every page but the code page and signing
+  // out waits for it. Read from the session itself, so no extra request to Supabase.
+  if (data.user && !/^\/(two-factor|sign-in|auth\/)/.test(path)) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal && needsSecondStep(aal)) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/two-factor';
+      url.search = `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
+      return NextResponse.redirect(url);
+    }
   }
   return response;
 }

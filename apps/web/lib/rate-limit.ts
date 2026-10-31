@@ -13,6 +13,8 @@ export const LIMITS = {
   signingCodeRequests: { max: 5, windowMs: 60 * 60_000 },
   /** Code requests and signing tries from one network, across proposals. */
   signingFromNetwork: { max: 30, windowMs: 60 * 60_000 },
+  /** Two-factor codes from one network: slows guessing a 6-digit code. */
+  twoFactorTries: { max: 10, windowMs: 10 * 60_000 },
   /** Questions on proposals from one network, so a link can't be used to flood the agency. */
   proposalQuestions: { max: 10, windowMs: 60 * 60_000 },
   /** Enquiries from one network, so a form left open to bots can't flood the board. */

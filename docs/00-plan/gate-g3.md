@@ -8,11 +8,11 @@ G3 opens the beta to One Stop and then 5 to 10 agencies. This page collects what
 
 | Pass line (`build-plan.md`) | Where it stands |
 | --- | --- |
-| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-070). |
+| R0 and R1 built | Built and on the database, except the items under "Not built yet" below. Every screen reads and writes Postgres when signed in (D-050 to D-058, D-063 to D-071). |
 | One Stop has run real work on it for 2 weeks | **Not started.** Needs a deployed environment and the keys in "Waiting on the founder". |
 | A chartered accountant has reviewed invoices | **Not started.** Blocking (open question 10). |
 | Legal documents ready | **Not started.** Blocking (open question 11): terms, privacy policy, DPA, click-to-sign. |
-| Security review done | **Part 1 done** (`../04-engineering/hardening-2026-10.md`). Still to do: the OWASP ZAP baseline on the preview, the RLS review against the live database, two-factor login. |
+| Security review done | **Part 1 done** (`../04-engineering/hardening-2026-10.md`). Still to do: the OWASP ZAP baseline on the preview, the RLS review against the live database, checking two-factor login against Supabase. |
 | All PRD acceptance criteria | Most met; see the table below. |
 | CI green | Green on the current head. |
 | Performance budgets met | Met locally with 4G throttling (LCP 1.8 to 2.1 s); Lighthouse CI on the Vercel preview waits for Vercel (open question 7). |
@@ -27,7 +27,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 | E0.1 Sign-in | Sign-up in no more than 2 screens before setup | Met (email link or Google, then setup) |
 | | Phone OTP for +91, 10-minute expiry, 5 tries | Waits: behind a flag until an SMS provider is chosen (question 12) |
 | | 30-day sessions, sign out of all devices from settings | Met in code (D-068); the global sign-out is checked once the dev project is reachable |
-| | Two-factor login (authenticator app) for owners | Not built |
+| | Two-factor login (authenticator app) for owners | Built, switched off until checked against Supabase (D-071); lost-phone recovery is question 23 |
 | E0.2 Workspaces | India defaults INR, en-IN and IST; other countries their own; every step but the name can be skipped | Met |
 | | Invites expire in 7 days, can be resent or revoked | Met; the invitation email waits for Resend |
 | | Plan limits enforced with a clear upgrade message | Met (members, portal clients, open leads, quotes, proposals, invoices) |
@@ -81,7 +81,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 - **Beta:** the beta agencies (question 15), the product name and domain (question 2).
 - **Wording to approve:** the signing code email (question 20), the other email bodies (question 21) and the proposal question notification (question 22).
 
-**Not built yet:** two-factor login. It's built next, once a signed-in browser check against the Supabase dev project is possible, since it changes how every sign-in works.
+**Not built yet:** nothing that needs no input. Two-factor login is built but switched off until it can be checked against the Supabase dev project (D-071).
 
 **Known limits:**
 - Logos, files and stored PDFs need Storage.

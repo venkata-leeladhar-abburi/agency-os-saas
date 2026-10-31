@@ -20,6 +20,32 @@ export function phoneOtpEnabled(): boolean {
   return process.env.NEXT_PUBLIC_PHONE_OTP === 'true';
 }
 
+/**
+ * Two-factor login (authenticator app) can be turned on in Settings once this is set (D-071).
+ * Off until it has been checked against the Supabase project; anyone who already has it is
+ * still asked for their code either way.
+ */
+export function twoFactorEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_TWO_FACTOR === 'true';
+}
+
+/** A code from an authenticator app: 6 digits, spaces allowed ("482 915"). */
+export function totpCode(input: string): string | null {
+  const code = input.replace(/\s/g, '');
+  return /^\d{6}$/.test(code) ? code : null;
+}
+
+/**
+ * Whether this session still owes its second step: the person has two-factor on (the next
+ * level is aal2) and hasn't entered a code since signing in.
+ */
+export function needsSecondStep(aal: {
+  currentLevel: string | null;
+  nextLevel: string | null;
+}): boolean {
+  return aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2';
+}
+
 /** +919014952056 → "+91 90149 52056" (content-style.md); other numbers are shown as stored. */
 export function formatPhone(phone: string): string {
   const m = /^\+91([6-9]\d{4})(\d{5})$/.exec(phone);
