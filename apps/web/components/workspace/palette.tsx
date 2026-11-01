@@ -143,6 +143,12 @@ export function useWorkspacePalette(slug: string) {
           onSelect: () => go(ws('/tasks?who=me')),
         },
         {
+          id: 'go-knowledge',
+          icon: Books,
+          label: 'Knowledge base',
+          onSelect: () => go(ws('/knowledge')),
+        },
+        {
           id: 'go-settings',
           icon: GearSix,
           label: 'Settings',

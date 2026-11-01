@@ -21,6 +21,7 @@ import {
   saveKnowledgeItemFor,
   sharingClientsFor,
 } from './knowledge';
+import { searchFor } from './search';
 
 const run = describe.skipIf(!process.env.TEST_DATABASE_URL);
 let t: TestDb;
@@ -155,5 +156,42 @@ run('the knowledge base on the database', () => {
     });
     await deleteKnowledgeItemFor(owner, sop!.id);
     expect((await knowledgeFor(owner, {})).items.map((i) => i.title)).toEqual(['Example guide']);
+  });
+
+  it('finds items in the command palette, as each person sees them', async () => {
+    const draft = await saveKnowledgeItemFor(
+      owner,
+      input({
+        title: 'Example kickoff checklist',
+        kind: 'checklist',
+        summary: 'Before the first call',
+        tags: ['onboarding'],
+        status: 'draft',
+      }),
+    );
+    const knowledge = async (ctx: WorkspaceCtx, words: string) =>
+      (await searchFor(ctx, 'one-stop', words)).filter((i) => i.kind === 'knowledge');
+
+    // By title, summary, tag and kind, with the kind (and the folder, when it has one).
+    for (const words of ['kickoff', 'first call', 'onboard', 'checklist'])
+      expect(await knowledge(owner, words)).toEqual([
+        {
+          id: `knowledge-${draft}`,
+          kind: 'knowledge',
+          label: 'Example kickoff checklist',
+          meta: 'Knowledge · Checklist',
+          href: `/w/one-stop/knowledge/${draft}`,
+          keywords: [],
+        },
+      ]);
+    // Drafts only for those who can edit them, private items only for their writer.
+    expect(await knowledge(member, 'kickoff')).toEqual([]);
+    expect((await knowledge(member, 'my prompt')).map((i) => i.meta)).toEqual([
+      'Knowledge · Prompt',
+    ]);
+    expect(await knowledge(owner, 'my prompt')).toEqual([]);
+    // Deleted items aren't found.
+    await deleteKnowledgeItemFor(owner, draft);
+    expect(await knowledge(owner, 'kickoff')).toEqual([]);
   });
 });
