@@ -2,7 +2,8 @@
 import { formatMoney, LEAD_SOURCE_LABELS } from '@agency-os/core';
 import { ctxFor } from './ctx';
 import { searchFor } from './db/search';
-import { store } from './shared';
+import { KIND_LABELS } from './knowledge-types';
+import { EXAMPLE_USER, store } from './shared';
 import {
   invoiceState,
   invoiceTotals,
@@ -13,7 +14,8 @@ import {
   stageName,
 } from './views';
 
-export type SearchKind = 'lead' | 'client' | 'project' | 'invoice' | 'proposal' | 'task';
+export type SearchKind =
+  'lead' | 'client' | 'project' | 'invoice' | 'proposal' | 'task' | 'knowledge';
 
 export type SearchItem = {
   id: string;
@@ -117,6 +119,19 @@ function exampleIndex(slug: string): SearchItem[] {
       meta: `Task · ${project?.name ?? ''} · ${t.assignee}`,
       href: ws(`/tasks/${t.id}`),
       keywords: [t.assignee, project?.name ?? ''],
+    });
+  }
+  for (const k of s.knowledgeItems) {
+    // Like the database: other people's private items never show.
+    if (k.visibility === 'private' && k.createdBy !== EXAMPLE_USER.name) continue;
+    const folder = s.knowledgeFolders.find((f) => f.id === k.folderId);
+    items.push({
+      id: `knowledge-${k.id}`,
+      kind: 'knowledge',
+      label: k.title,
+      meta: ['Knowledge', KIND_LABELS[k.kind], folder?.name].filter(Boolean).join(' · '),
+      href: ws(`/knowledge/${k.id}`),
+      keywords: [k.summary ?? '', k.kind, ...k.tags].filter(Boolean),
     });
   }
   return items;

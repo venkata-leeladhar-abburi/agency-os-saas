@@ -3,6 +3,7 @@
 import { formatMoney } from '@agency-os/core';
 import { searchRecords, type SearchRow } from '@agency-os/db';
 import { asMember, type WorkspaceCtx } from '../../server/workspace';
+import { KIND_LABELS, type KnowledgeKind } from '../knowledge-types';
 import type { SearchItem } from '../search';
 
 const INVOICE_STATUS: Record<string, string> = {
@@ -63,6 +64,13 @@ function itemOf(r: SearchRow, ws: (p: string) => string): SearchItem {
         label: r.label,
         meta: line('Proposal', PROPOSAL_STATUS[r.detail ?? ''] ?? null, money()),
         href: ws(`/sales/proposals/${r.id}`),
+      };
+    case 'knowledge':
+      return {
+        ...base,
+        label: r.label,
+        meta: line('Knowledge', KIND_LABELS[r.detail as KnowledgeKind] ?? null, r.extra),
+        href: ws(`/knowledge/${r.id}`),
       };
     case 'task':
       return {

@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Books,
   CheckSquareOffset,
   FolderSimple,
   FunnelSimple,
@@ -27,6 +28,7 @@ const KIND: Record<SearchKind, { icon: Icon; group: string }> = {
   project: { icon: FolderSimple, group: 'Projects' },
   task: { icon: CheckSquareOffset, group: 'Tasks' },
   invoice: { icon: Receipt, group: 'Invoices' },
+  knowledge: { icon: Books, group: 'Knowledge base' },
 };
 
 // The palette (and its search library) loads once the page is idle, or on first use, so it

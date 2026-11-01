@@ -1,16 +1,20 @@
 import { sql } from 'drizzle-orm';
 import type { Tx } from './client';
 
-export type SearchKind = 'lead' | 'client' | 'project' | 'invoice' | 'proposal' | 'task';
+export type SearchKind =
+  'lead' | 'client' | 'project' | 'invoice' | 'proposal' | 'task' | 'knowledge';
 
 /** One match, with what each kind's line needs. Amounts are in minor units. */
 export type SearchRow = {
   kind: SearchKind;
   id: string;
   label: string;
-  /** Lead: stage. Client: main contact. Project, invoice: client. Proposal: status. Task: project. */
+  /**
+   * Lead: stage. Client: main contact. Project, invoice: client. Proposal: status. Task: project.
+   * Knowledge: its kind.
+   */
   detail: string | null;
-  /** Lead: email or phone. Invoice: status. Proposal: quote number. Task: assignee. */
+  /** Lead: email or phone. Invoice: status. Proposal: quote number. Task: assignee. Knowledge: folder. */
   extra: string | null;
   amountMinor: bigint | null;
   currency: string | null;
@@ -95,6 +99,15 @@ export async function searchRecords(
       where t.workspace_id = ${workspaceId} and t.deleted_at is null
         and t.title ilike ${any}
       order by (t.title ilike ${start}) desc, t.created_at desc
+      limit ${perKind})
+    union all
+    (select 'knowledge', k.id, k.title, k.kind::text,
+        (select f.name from knowledge_folders f where f.id = k.folder_id), null, null
+      from knowledge_items k
+      where k.workspace_id = ${workspaceId} and k.deleted_at is null
+        and (k.title ilike ${any} or k.summary ilike ${any} or k.kind::text ilike ${any}
+          or exists (select 1 from unnest(k.tags) tag where tag ilike ${any}))
+      order by (k.title ilike ${start}) desc, k.updated_at desc
       limit ${perKind})
   `);
   return rows.map((r) => ({
