@@ -280,6 +280,48 @@ function Column({
 }
 
 /** The leads board: drag cards between stages with a pointer or the keyboard; moves are announced. */
+/**
+ * dnd-kit starts listening for keys a moment after a card is picked up (on a timer, so the key
+ * that picked it up isn't read twice). Browsers handle typing before timers, so on a slow phone
+ * an arrow pressed straight away was lost. Keys pressed in that moment are held and played back,
+ * in order, once dnd-kit is listening.
+ */
+function holdKeys({ event }: { event: KeyboardEvent }) {
+  const doc = (event.target as Node | null)?.ownerDocument ?? document;
+  const win = doc.defaultView ?? window;
+  const held: KeyboardEvent[] = [];
+  const replayed = new WeakSet<Event>();
+  const hold = (e: KeyboardEvent) => {
+    if (replayed.has(e)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    held.push(e);
+  };
+  // Capture, so nothing else sees the keys first; added during the pick-up key's own dispatch, so
+  // that key isn't caught. Keys keep queueing until the last one has played, so the order holds.
+  doc.addEventListener('keydown', hold, true);
+  // One key a frame, so the board shows each move before the next key (a drop lands where it shows).
+  const replay = () => {
+    const e = held.shift();
+    if (!e) {
+      doc.removeEventListener('keydown', hold, true);
+      return;
+    }
+    const again = new KeyboardEvent('keydown', {
+      key: e.key,
+      code: e.code,
+      shiftKey: e.shiftKey,
+      bubbles: true,
+      cancelable: true,
+    });
+    replayed.add(again);
+    doc.dispatchEvent(again);
+    win.requestAnimationFrame(() => setTimeout(replay));
+  };
+  // dnd-kit's own timer is set after this call returns; a timer set inside one set now runs after it.
+  setTimeout(() => setTimeout(replay));
+}
+
 export function PipelineBoard({
   columns,
   onMove,
@@ -334,7 +376,7 @@ export function PipelineBoard({
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: keyboardCoordinates }),
+    useSensor(KeyboardSensor, { coordinateGetter: keyboardCoordinates, onActivation: holdKeys }),
   );
   const leadName = (id: string) =>
     Object.values(board)
