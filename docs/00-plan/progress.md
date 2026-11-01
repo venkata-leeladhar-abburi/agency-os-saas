@@ -41,6 +41,8 @@ Updated by Claude at the end of every working session. The founder can read this
 
 Newest first. One short entry per session: what was done, what is next, blockers.
 
+- **1 Nov 2026 (home page views):** ran the project locally (local Postgres with all migrations, dev server, health check) and gave the founder the commands to run it. At the founder's request, the home page now opens a view per role (owner, project lead, team member, finance, client), and the chosen role stays while moving around the prototype (D-042). Checks: lint, typecheck, design rules, Prettier, 66 e2e tests incl. 7 new role tests and axe on the home page. Note: this environment's `DATABASE_URL` points at the Supabase pooler, which cloud sessions can't reach, so local runs set it to the local database. Next: M5 part 2 (Supabase keys are now set; run the Migrate database workflow first). Blockers: Vercel (question 7).
+
 - **26 Oct 2026 (prototype refresh):** the founder noted the prototype wasn't fully up to date. Audited all 42 screens against D-029 to D-040 and updated 12 (D-041), with the rules read from core where they live there. Added the message notification to core and the defaults (D-040). Checks: lint, typecheck, design rules, core tests, 119 database tests and 43 prototype axe checks (light and dark) pass. Next: M5 part 2 once the Supabase dev project is connected. Blockers unchanged (question 7).
 
 - **25 Oct 2026 (build, M4 hi-fi):** G1 approved and merged; G0 waived in writing. Hi-fi of all 42 screens with clickable task flows (T1 to T10, T12), 58 e2e tests and 82 Storybook checks green. **Stopped at G2.** Needs from the founder: run round R2 and the tree test (script ready), approve G2, Supabase dev project and Vercel for M5.
