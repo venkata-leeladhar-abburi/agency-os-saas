@@ -23,6 +23,9 @@ export type KnowledgeView = {
   rights: { add: boolean; manage: boolean };
 };
 
+/** A list shows this many items at most; the page says so when there are more. */
+export const KNOWLEDGE_LIST_LIMIT = 500;
+
 export type KnowledgeQuery = {
   /** undefined: every item; null: items in no folder. */
   folderId?: string | null;
@@ -63,6 +66,7 @@ export async function knowledge(slug: string, f: KnowledgeQuery = {}): Promise<K
       kind: f.kind,
       tag: f.tag,
       search: f.q,
+      limit: KNOWLEDGE_LIST_LIMIT,
     });
     return { ...view, rights: dbKb.knowledgeRightsFor(ctx) };
   }
@@ -78,6 +82,7 @@ export async function knowledge(slug: string, f: KnowledgeQuery = {}): Promise<K
     items: visible
       .filter((i) => matches(i, f))
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .slice(0, KNOWLEDGE_LIST_LIMIT)
       .map(withEdit),
     tags: [...tags]
       .map(([tag, items]) => ({ tag, items }))
@@ -258,4 +263,25 @@ export async function portalGuides(session: PortalSession): Promise<PortalGuide[
       folder: folderName(i.folderId),
     }))
     .sort((a, b) => a.title.localeCompare(b.title));
+}
+
+/** Every item the person can see, with its content, for the data export. */
+export async function knowledgeForExport(slug?: string): Promise<{
+  folders: KnowledgeFolder[];
+  items: KnowledgeItem[];
+}> {
+  const ctx = await ctxFor(slug);
+  if (ctx) {
+    const view = await dbKb.knowledgeFor(ctx, { withBody: true });
+    return { folders: view.folders, items: view.items };
+  }
+  const s = store();
+  const visible = s.knowledgeItems.filter(seen);
+  return {
+    folders: s.knowledgeFolders.map((folder) => ({
+      ...folder,
+      items: visible.filter((i) => i.folderId === folder.id).length,
+    })),
+    items: visible.map(withEdit),
+  };
 }

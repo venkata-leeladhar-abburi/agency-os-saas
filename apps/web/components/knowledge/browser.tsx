@@ -8,7 +8,11 @@ import {
 import { ROLE_LABELS } from '@agency-os/core';
 import { Badge, Button, Card, EmptyState, ExampleBadge, Input, Select } from '@agency-os/ui';
 import Link from 'next/link';
-import type { KnowledgeQuery, KnowledgeView } from '@/lib/data/knowledge';
+import {
+  KNOWLEDGE_LIST_LIMIT,
+  type KnowledgeQuery,
+  type KnowledgeView,
+} from '@/lib/data/knowledge';
 import {
   audienceText,
   folderTree,
@@ -359,6 +363,12 @@ export function KnowledgeBrowser({
               <h2 id="kb-items" className="text-title-sm">
                 {filtering ? 'Results' : folder ? 'Items' : 'Recently updated'}
               </h2>
+              {view.items.length >= KNOWLEDGE_LIST_LIMIT ? (
+                <p className="text-body-sm text-muted-foreground">
+                  Showing the {KNOWLEDGE_LIST_LIMIT} most recently updated. Search, or open a
+                  folder, to find the others.
+                </p>
+              ) : null}
               {view.items.length ? (
                 <ItemsTable
                   base={base}

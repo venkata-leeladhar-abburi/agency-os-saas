@@ -363,6 +363,10 @@ async function moreTables(tx: Tx, workspaceId: string) {
     invoice_items: await all('invoice_items'),
     payments: await all('payments'),
     reminders: await all('reminders'),
+    // As the person exporting sees them: other people's private items stay private.
+    knowledge_folders: await all('knowledge_folders'),
+    knowledge_items: await all('knowledge_items'),
+    knowledge_item_clients: await all('knowledge_item_clients'),
   };
 }
 

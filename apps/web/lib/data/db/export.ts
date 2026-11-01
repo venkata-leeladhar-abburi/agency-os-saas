@@ -5,8 +5,13 @@ import type { ExportSource } from '../export';
 import { asMember, type WorkspaceCtx } from '../../server/workspace';
 import { snapshot } from './snapshot';
 
-/** The records the CSV files are made from, or null when the member may not export. */
-export async function exportSource(ctx: WorkspaceCtx): Promise<ExportSource | null> {
+/**
+ * The records the CSV files are made from (the knowledge base is added by the caller), or null
+ * when the member may not export.
+ */
+export async function exportSource(
+  ctx: WorkspaceCtx,
+): Promise<Omit<ExportSource, 'knowledge'> | null> {
   if (!(await asMember(ctx, (tx) => canExport(tx, ctx.workspaceId)))) return null;
   const s = await snapshot(ctx);
   return { ...s, projects: s.projects.map((p) => p.project) };

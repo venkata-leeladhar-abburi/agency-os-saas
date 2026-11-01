@@ -10,7 +10,15 @@ import {
 } from '@agency-os/core';
 import { ctxFor } from './ctx';
 import * as dbExport from './db/export';
-import { store } from './shared';
+import { knowledgeForExport } from './knowledge';
+import {
+  audienceText,
+  folderPath,
+  KIND_LABELS,
+  type KnowledgeFolder,
+  type KnowledgeItem,
+} from './knowledge-types';
+import { EXAMPLE_USER, store } from './shared';
 import {
   STAGES,
   TASK_STATUSES,
@@ -33,6 +41,7 @@ export const EXPORTS = {
   invoices: 'Invoices',
   payments: 'Payments',
   members: 'Team',
+  knowledge: 'Knowledge base',
 } as const;
 export type ExportKind = keyof typeof EXPORTS;
 
@@ -45,9 +54,11 @@ export type ExportSource = {
   quotes: { quote: Quote; totals: InvoiceTotals }[];
   invoices: { invoice: Invoice; client: Client; totals: InvoiceTotals; state: InvoiceState }[];
   members: Member[];
+  /** As the person exporting sees it: other people's private items stay out. */
+  knowledge: { folders: KnowledgeFolder[]; items: KnowledgeItem[] };
 };
 
-function exampleSource(): ExportSource {
+function exampleSource(knowledge: ExportSource['knowledge']): ExportSource {
   const s = store();
   return {
     leads: s.leads,
@@ -61,13 +72,16 @@ function exampleSource(): ExportSource {
       return { invoice, client, totals, state: invoiceState(invoice, totals.total.amountMinor) };
     }),
     members: s.members,
+    knowledge,
   };
 }
 
 /** The example store, or the database (only for roles that may export; null otherwise). */
 async function sourceFor(slug?: string): Promise<ExportSource | null> {
   const ctx = await ctxFor(slug);
-  return ctx ? dbExport.exportSource(ctx) : exampleSource();
+  if (!ctx) return exampleSource(await knowledgeForExport(slug));
+  const src = await dbExport.exportSource(ctx);
+  return src ? { ...src, knowledge: await knowledgeForExport(slug) } : null;
 }
 
 const amount = (minor: bigint, currency: string) => toDecimalString(minor, minorDigits(currency));
@@ -191,6 +205,25 @@ function csvOf(kind: ExportKind, src: ExportSource): string {
           Joined: m.joinedAt,
         })),
       );
+    case 'knowledge':
+      return toCsv(
+        src.knowledge.items.map((i) => ({
+          Title: i.title,
+          Kind: KIND_LABELS[i.kind],
+          Folder: folderPath(src.knowledge.folders, i.folderId)
+            .map((f) => f.name)
+            .join(' / '),
+          Summary: i.summary ?? '',
+          Link: i.url ?? '',
+          Tags: i.tags.join(', '),
+          'Who sees it': audienceText(i, ROLE_LABELS),
+          Status: i.status === 'draft' ? 'Draft' : 'Published',
+          Updated: i.updatedAt,
+          'Updated by': i.updatedBy,
+          Content: i.body,
+          Example: i.example ? 'Yes' : '',
+        })),
+      );
   }
 }
 
@@ -230,6 +263,12 @@ export async function exportJson(slug?: string): Promise<string | null> {
       messages: plain(s.messages),
       members: plain(s.members),
       dailyUpdates: plain(s.dailyUpdates),
+      knowledgeFolders: plain(s.knowledgeFolders),
+      knowledgeItems: plain(
+        s.knowledgeItems.filter(
+          (i) => i.visibility !== 'private' || i.createdBy === EXAMPLE_USER.name,
+        ),
+      ),
     },
     null,
     2,
@@ -249,5 +288,6 @@ export async function exportCounts(slug?: string): Promise<Record<ExportKind, nu
     invoices: src.invoices.length,
     payments: src.invoices.reduce((n, i) => n + i.invoice.payments.length, 0),
     members: src.members.length,
+    knowledge: src.knowledge.items.length,
   };
 }

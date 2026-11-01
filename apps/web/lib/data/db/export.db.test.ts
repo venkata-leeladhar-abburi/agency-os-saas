@@ -13,6 +13,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { WorkspaceCtx } from '../../server/workspace';
 import { exportAll, exportSource } from './export';
 import { createInvoiceFor, invoiceRows, recordPaymentFor } from './invoices';
+import { knowledgeFor, saveKnowledgeItemFor } from './knowledge';
 import { createClientFor, createLeadFor } from './people';
 import { createQuoteFor } from './sales';
 import { auditFor } from './team';
@@ -160,6 +161,33 @@ run('data export on the database', () => {
   });
 
   it('exports everything as JSON with the money tables and no secrets, and logs it', async () => {
+    const item = {
+      folderId: null,
+      kind: 'process' as const,
+      summary: null,
+      url: null,
+      tags: [],
+      roles: [],
+      allClients: false,
+      clientIds: [],
+      status: 'published' as const,
+    };
+    await saveKnowledgeItemFor(owner, {
+      ...item,
+      title: 'Example SOP',
+      body: '# Steps',
+      visibility: 'team',
+    });
+    await saveKnowledgeItemFor(member, {
+      ...item,
+      title: 'Example private note',
+      body: 'mine',
+      visibility: 'private',
+    });
+    // The export reads items with their content; lists leave it out.
+    const full = await knowledgeFor(owner, { withBody: true });
+    expect(full.items.map((i) => [i.title, i.body])).toEqual([['Example SOP', '# Steps']]);
+    expect((await knowledgeFor(owner, {})).items[0]!.body).toBe('');
     const json = (await exportAll(owner))!;
     const data = JSON.parse(json);
     expect(data.format).toBe('agency-os-export');
@@ -169,6 +197,11 @@ run('data export on the database', () => {
     // Reminder rows are written as the daily job sends them; the table is there, empty for now.
     expect(data.tables.reminders).toEqual([]);
     expect(json).not.toMatch(/public_token_hash|token_hash|code_hash/);
+    // The knowledge base, without other people's private items.
+    expect(data.tables.knowledge_items.map((i: { title: string }) => i.title)).toEqual([
+      'Example SOP',
+    ]);
+    expect(data.tables.knowledge_folders).toEqual([]);
     const logged = (await auditFor(owner, { action: 'data.exported' })).rows;
     expect(logged[0]).toMatchObject({ actor: 'Kiran Rao', subject: 'Everything (JSON)' });
   });

@@ -238,6 +238,8 @@ export type KnowledgeFilter = {
   /** Words in the title, summary, body or tags. */
   search?: string;
   limit?: number;
+  /** Include each item's body (the data export); lists leave it out. */
+  withBody?: boolean;
 };
 
 const updatedByName = sql<string | null>`(select p.full_name from profiles p
@@ -257,6 +259,7 @@ export async function listKnowledgeItems(tx: Tx, workspaceId: string, f: Knowled
       kind: knowledgeItems.kind,
       title: knowledgeItems.title,
       summary: knowledgeItems.summary,
+      body: f.withBody ? knowledgeItems.body : sql<string>`''`,
       url: knowledgeItems.url,
       tags: knowledgeItems.tags,
       visibility: knowledgeItems.visibility,
@@ -294,7 +297,7 @@ export async function listKnowledgeItems(tx: Tx, workspaceId: string, f: Knowled
       ),
     )
     .orderBy(desc(knowledgeItems.updatedAt), asc(knowledgeItems.id))
-    .limit(f.limit ?? 200);
+    .limit(f.limit ?? (f.withBody ? 100_000 : 200));
 }
 
 /** One item with the clients it's shared with, or null when it isn't there for this person. */

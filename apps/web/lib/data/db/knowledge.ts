@@ -48,7 +48,7 @@ export async function knowledgeFor(ctx: WorkspaceCtx, filter: KnowledgeFilter) {
       kind: r.kind,
       title: r.title,
       summary: r.summary,
-      body: '',
+      body: r.body,
       url: r.url,
       tags: r.tags,
       visibility: r.visibility,
