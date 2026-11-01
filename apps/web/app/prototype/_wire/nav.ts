@@ -19,8 +19,9 @@ import {
   Wallet,
 } from '@phosphor-icons/react';
 import type { SidebarGroup, SidebarItem } from '@agency-os/ui';
+import type { Role } from './role';
 
-export type Role = 'owner' | 'lead' | 'member' | 'finance';
+export { isRole, ROLE_COOKIE, type Role } from './role';
 
 export const ROLE_LABEL: Record<Role, string> = {
   owner: 'Owner',

@@ -7,6 +7,7 @@ import {
   MagnifyingGlass,
   Plus,
   SquaresFour,
+  UsersThree,
 } from '@phosphor-icons/react';
 import {
   AppShell,
@@ -18,9 +19,9 @@ import {
 } from '@agency-os/ui';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { PEOPLE, WORKSPACE } from '@agency-os/ui/example';
-import { FOOTER, NAV, PORTAL_TABS, ROLE_LABEL, type Role } from './nav';
+import { FOOTER, NAV, PORTAL_TABS, ROLE_COOKIE, ROLE_LABEL, type Role } from './nav';
 import { findScreen, SCREENS } from './registry';
 
 const subscribe = () => () => {};
@@ -49,6 +50,10 @@ function Toolbar({ slug, state }: { slug: string; state: string }) {
         <span className="font-mono text-mono-sm">{screen.id}</span>
         <span className="max-w-40 truncate max-sm:hidden">{screen.name}</span>
       </Link>
+      {/* Hidden on phones, where one more button would wrap the bar over the page's own buttons. */}
+      <Button asChild size="sm" variant="ghost" icon={UsersThree} className="max-sm:hidden">
+        <Link href="/">Roles</Link>
+      </Button>
       <label className="sr-only" htmlFor="state">
         State
       </label>
@@ -105,11 +110,18 @@ export function PrototypeScreen({
   slug,
   state: requested,
   chrome,
+  role: chosen,
 }: {
   slug: string;
   state: string;
   chrome: boolean;
+  /** The role picked on the home page; otherwise each screen shows its own role. */
+  role?: Role;
 }) {
+  // Remember the choice for this visit, so buttons inside screens keep the same view.
+  useEffect(() => {
+    if (chosen) document.cookie = `${ROLE_COOKIE}=${chosen}; path=/; SameSite=Lax`;
+  }, [chosen]);
   const screen = findScreen(slug);
   if (!screen) {
     return (
@@ -124,12 +136,22 @@ export function PrototypeScreen({
     );
   }
   const state = screen.states.some((s) => s.id === requested) ? requested : 'default';
+  const role: Role =
+    screen.id === 'S04' && state in NAV ? (state as Role) : (chosen ?? screen.role ?? 'owner');
+  const person =
+    role === 'member'
+      ? PEOPLE.developer
+      : role === 'lead'
+        ? PEOPLE.designer
+        : role === 'finance'
+          ? PEOPLE.pm
+          : PEOPLE.owner;
   // Room below the content so the prototype controls never cover the last button.
   const content = (
-    <div className={chrome ? 'pb-28 md:pb-16' : undefined}>{screen.render({ state })}</div>
+    <div className={chrome ? 'pb-28 md:pb-16' : undefined}>
+      {screen.render({ state, firstName: person.split(' ')[0]! })}
+    </div>
   );
-  const role: Role =
-    screen.id === 'S04' && state in NAV ? (state as Role) : (screen.role ?? 'owner');
 
   let framed;
   if (screen.frame === 'app') {
@@ -140,17 +162,7 @@ export function PrototypeScreen({
           groups: NAV[role],
           footerItems: FOOTER,
           active: screen.active,
-          user: {
-            name:
-              role === 'member'
-                ? PEOPLE.developer
-                : role === 'lead'
-                  ? PEOPLE.designer
-                  : role === 'finance'
-                    ? PEOPLE.pm
-                    : PEOPLE.owner,
-            role: ROLE_LABEL[role],
-          },
+          user: { name: person, role: ROLE_LABEL[role] },
           linkAs: Link,
         }}
         topbar={{

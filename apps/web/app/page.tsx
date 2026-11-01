@@ -1,17 +1,20 @@
+import { RolePicker } from './role-picker';
 import { ThemeSwitch } from './theme-switch';
 
 export default function HomePage() {
+  // The views open the prototype, which is off when PROTOTYPE=off (and removed after G3).
+  const views = process.env.PROTOTYPE !== 'off';
   return (
-    <main className="mx-auto flex min-h-dvh max-w-prose flex-col justify-center gap-6 px-4 py-16">
-      <div className="flex flex-col gap-2">
+    <main className="mx-auto flex min-h-dvh max-w-content flex-col justify-center gap-10 px-6 py-16 max-md:px-4">
+      <div className="flex max-w-prose flex-col gap-2">
         <p className="text-overline-caps text-muted-foreground">One Stop Solutions</p>
         <h1 className="text-title-xl text-foreground">Agency OS</h1>
         <p className="text-body-lg text-muted-foreground">
-          Get found, win the work, deliver, get paid and hand over. The product screens arrive with
-          the next milestones.
+          Get found, win the work, deliver, get paid and hand over.
         </p>
       </div>
-      <div className="rounded-lg border border-border bg-card p-5 shadow-xs">
+      {views ? <RolePicker /> : null}
+      <div className="max-w-prose rounded-lg border border-border bg-card p-5 shadow-xs">
         <h2 className="text-title-sm text-card-foreground">Theme</h2>
         <p className="mb-4 text-body-sm text-muted-foreground">
           Light, dark or follow your device setting.

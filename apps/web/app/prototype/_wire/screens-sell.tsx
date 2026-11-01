@@ -142,11 +142,11 @@ export const SELL_SCREENS: ScreenDef[] = [
     purpose:
       'Everything due today in one list: follow-ups, tasks, approvals, dues, meetings. Each row opens its record.',
     states: STANDARD,
-    render: ({ state }) => (
+    render: ({ state, firstName }) => (
       <>
         <PageHeader
           greeting
-          title="Good morning, Kiran"
+          title={`Good morning, ${firstName}`}
           subtitle="Sunday 25 Oct · 6 things today"
         />
         <StateView
@@ -219,11 +219,11 @@ export const SELL_SCREENS: ScreenDef[] = [
     purpose:
       'How is the agency doing: money in, money owed, pipeline, risk, load. Every number links to its list.',
     states: STANDARD,
-    render: ({ state }) => (
+    render: ({ state, firstName }) => (
       <>
         <PageHeader
           greeting
-          title="Good morning, Kiran"
+          title={`Good morning, ${firstName}`}
           subtitle="Sunday 25 Oct · 3 things need you today"
           actions={
             <Segmented

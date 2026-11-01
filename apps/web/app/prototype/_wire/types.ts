@@ -4,7 +4,11 @@ import type { Role } from './nav';
 /** Standard states every screen designs, plus screen-specific ones such as "signed". */
 export type StateId = 'default' | 'loading' | 'empty' | 'error' | 'no-access' | (string & {});
 
-export type ScreenProps = { state: StateId };
+export type ScreenProps = {
+  state: StateId;
+  /** First name of the person signed in, which follows the role picked on the home page. */
+  firstName: string;
+};
 
 export type ScreenDef = {
   id: string;
