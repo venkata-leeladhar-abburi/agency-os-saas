@@ -20,6 +20,12 @@ describe('content security policy', () => {
     expect(csp).toContain("'unsafe-eval'");
     expect(csp).not.toContain('upgrade-insecure-requests');
   });
+  it('upgrades requests only on pages served over https', () => {
+    expect(contentSecurityPolicy('n', { https: true })).toMatch(/upgrade-insecure-requests$/);
+    // A production build opened over plain http (a phone on the same network): no upgrade, or
+    // every script and stylesheet would fail with an SSL error.
+    expect(contentSecurityPolicy('n', { https: false })).not.toContain('upgrade-insecure');
+  });
   it('makes a different 128-bit nonce each time', () => {
     const a = makeNonce();
     expect(Buffer.from(a, 'base64')).toHaveLength(16);

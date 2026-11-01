@@ -12,6 +12,9 @@ export async function proxy(request: NextRequest) {
   const nonce = makeNonce();
   const csp = contentSecurityPolicy(nonce, {
     dev: process.env.NODE_ENV === 'development',
+    https:
+      request.nextUrl.protocol === 'https:' ||
+      request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() === 'https',
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
   });
   const headers = new Headers(request.headers);
