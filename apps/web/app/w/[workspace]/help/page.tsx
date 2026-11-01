@@ -37,7 +37,7 @@ export default async function HelpPage({ params }: { params: Promise<{ workspace
         description={
           o.hasExample
             ? 'Example leads, clients, projects and invoices are in your workspace, marked “Example data”.'
-            : 'Load example leads, clients, a project and invoices to look around.'
+            : 'Load example leads, clients, a project, invoices and knowledge base items to look around.'
         }
       >
         <div className="grid gap-3">
