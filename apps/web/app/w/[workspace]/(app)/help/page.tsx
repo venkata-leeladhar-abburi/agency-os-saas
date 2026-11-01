@@ -1,7 +1,7 @@
 import { Card, Kbd, PageHeader } from '@agency-os/ui';
 import { Submit } from '@/components/workspace/form-bits';
 import { onboarding } from '@/lib/data/onboarding';
-import { loadExampleAction, showOnboardingAction } from '../onboarding-actions';
+import { loadExampleAction, showOnboardingAction } from '../../onboarding-actions';
 import { RemoveExampleButton } from './remove-example';
 
 export const metadata = { title: 'Help · Agency OS' };
