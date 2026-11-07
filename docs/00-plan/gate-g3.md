@@ -77,7 +77,7 @@ Status: **Met** (built and tested), **Partly** (what's missing is named), **Wait
 
 **Waiting on the founder** (`open-questions.md`):
 - **Keys:** `LINK_SIGNING_SECRET` (question 17), Resend, Inngest, Razorpay test keys, Supabase Storage, Vercel, PostHog, Sentry, Upstash (question 7).
-- **Dev database:** apply the migrations to the dev database: `DATABASE_URL_DIRECT` in the GitHub `dev` environment, then the "Migrate database" workflow. Until then no signed-in screen has been checked in a browser.
+- **Dev database:** migrated on 7 Nov 2026 (all 30 migrations). Signed-in screens still need checking in a browser, which needs a Vercel preview or the founder's computer, since cloud sessions can't open Postgres connections.
 - **Reviewers:** a chartered accountant (question 10) and a lawyer (question 11).
 - **Beta:** the beta agencies (question 15), the product name and domain (question 2).
 - **Wording to approve:** the signing code email (question 20), the other email bodies (question 21), the proposal question notification (question 22) and the knowledge base words (question 24).

@@ -14,7 +14,7 @@ export type EmptyStateProps = {
   secondary?: ReactNode;
   /** Smaller, for use inside cards. */
   compact?: boolean;
-  as?: 'h2' | 'h3';
+  as?: 'h1' | 'h2' | 'h3';
   className?: string;
 };
 

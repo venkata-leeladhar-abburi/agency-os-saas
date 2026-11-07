@@ -12,10 +12,16 @@ export async function proxy(request: NextRequest) {
   const nonce = makeNonce();
   const csp = contentSecurityPolicy(nonce, {
     dev: process.env.NODE_ENV === 'development',
+    https:
+      request.nextUrl.protocol === 'https:' ||
+      request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() === 'https',
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
   });
   const headers = new Headers(request.headers);
   headers.set('x-nonce', nonce);
+  // For the workspace pages' record check (app/w/[workspace]/(app)/layout.tsx); set here, so a
+  // visitor can't supply their own.
+  headers.set('x-pathname', request.nextUrl.pathname);
   headers.set('Content-Security-Policy', csp);
   // Routes that answer with their own document (the email preview, PDFs) set a stricter
   // policy themselves; the proxy's header would replace it.

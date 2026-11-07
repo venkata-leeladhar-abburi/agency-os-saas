@@ -1,5 +1,5 @@
-// Example data in a real workspace (M7, D-063): a few labelled records to look around with, and
-// one call to remove them. Loading runs as the member through the usual create functions;
+// Example data in a real workspace (M7, D-063): a few labelled records, and knowledge base folders
+// and items (D-072), to look around with, and one call to remove them. Loading runs as the member through the usual create functions;
 // removing is one guarded database function (remove_example_data). No example quote or issued
 // invoice is made, so the numbering series never has a gap.
 import { and, eq, sql } from 'drizzle-orm';
@@ -7,9 +7,10 @@ import { AccountError, call } from './accounts';
 import type { Tx } from './client';
 import { createClient } from './clients';
 import { createInvoice, localDate } from './invoices';
+import { createKnowledgeFolder, createKnowledgeItem } from './knowledge';
 import { createLead, listStages } from './leads';
 import { createProject } from './projects';
-import { clients, leads } from './schema';
+import { clients, knowledgeItems, leads } from './schema';
 import { createTask } from './tasks';
 
 const DAY = 86_400_000;
@@ -33,12 +34,18 @@ export async function hasExampleData(tx: Tx, workspaceId: string) {
     .from(clients)
     .where(and(eq(clients.workspaceId, workspaceId), eq(clients.isExample, true)))
     .limit(1);
-  return Boolean(lead || client);
+  const [item] = await tx
+    .select({ id: knowledgeItems.id })
+    .from(knowledgeItems)
+    .where(and(eq(knowledgeItems.workspaceId, workspaceId), eq(knowledgeItems.isExample, true)))
+    .limit(1);
+  return Boolean(lead || client || item);
 }
 
 /**
- * Loads the example leads, a client with a project and tasks, and a draft invoice, all marked
- * as examples. Owners and admins only; nothing happens if examples are already there.
+ * Loads the example leads, a client with a project and tasks, a draft invoice, and two knowledge
+ * base folders with three items (one a guide shared with the example client), all marked as
+ * examples. Owners and admins only; nothing happens if examples are already there.
  */
 export async function loadExampleData(
   tx: Tx,
@@ -160,6 +167,71 @@ export async function loadExampleData(
     now,
   );
   added++;
+
+  const onboarding = await createKnowledgeFolder(
+    tx,
+    workspaceId,
+    { name: 'Client onboarding', description: 'From signed proposal to kickoff.', isExample: true },
+    actorId,
+  );
+  const guides = await createKnowledgeFolder(
+    tx,
+    workspaceId,
+    {
+      name: 'Client guides',
+      description: 'Shared with clients in their portal.',
+      isExample: true,
+    },
+    actorId,
+  );
+  added += 2;
+  const knowledge = [
+    {
+      folderId: onboarding,
+      kind: 'checklist',
+      title: 'Kickoff call checklist',
+      summary: 'Everything to cover in the first call after the proposal is signed.',
+      body: '## Before the call\n\n- [ ] Send the intake questionnaire\n- [ ] Share the agenda with the invite\n\n## On the call\n\n1. Introduce the team and who to contact for what\n2. Walk through the phases and sign-offs\n3. Confirm the first deadline\n\n> Send the recap within 24 hours.',
+      tags: ['onboarding', 'calls'],
+      visibility: 'team',
+      status: 'published',
+    },
+    {
+      folderId: onboarding,
+      kind: 'process',
+      title: 'How we run a discovery call',
+      summary: 'Questions to ask, and what to write down, before we quote.',
+      body: "## Questions\n\n- What does success look like in six months?\n- Who decides, and who signs?\n- What is the budget range and the deadline?\n\n## After the call\n\nWrite the recap in the lead's notes and set a follow-up.",
+      tags: ['sales', 'calls'],
+      visibility: 'team',
+      status: 'published',
+    },
+    {
+      folderId: guides,
+      kind: 'process',
+      title: 'How to give feedback on designs',
+      summary: 'One round, one list, in your portal.',
+      body: '## How it works\n\n1. Open the design from your portal\n2. Write all your comments in one message\n3. Tell us which ones are must-haves\n\nWe reply within one working day.',
+      tags: ['clients'],
+      visibility: 'clients',
+      clientIds: [clientId],
+      status: 'published',
+    },
+  ] as const;
+  for (const item of knowledge) {
+    await createKnowledgeItem(
+      tx,
+      workspaceId,
+      {
+        ...item,
+        tags: [...item.tags],
+        clientIds: 'clientIds' in item ? [...item.clientIds] : [],
+        isExample: true,
+      },
+      actorId,
+    );
+    added++;
+  }
   return added;
 }
 
