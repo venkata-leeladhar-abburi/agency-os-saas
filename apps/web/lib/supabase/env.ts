@@ -11,7 +11,8 @@ export function supabaseEnv() {
 }
 
 export function appUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+  const vercel = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
+  return (process.env.NEXT_PUBLIC_APP_URL || vercel || 'http://localhost:3000').replace(/\/$/, '');
 }
 
 /** Only same-site paths are allowed after sign-in, so a link can't send people elsewhere. */

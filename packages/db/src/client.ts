@@ -14,7 +14,9 @@ export function connect(url = process.env.DATABASE_URL): Connection {
     throw new Error(
       'DATABASE_URL is not set. Add it to the environment (see docs/04-engineering/environments-and-deploy.md).',
     );
-  const client = postgres(url, { max: 5, prepare: false });
+  // Each serverless instance holds its own pool, so keep it small on Vercel; use the pooled (transaction) URL.
+  const max = Number(process.env.DB_POOL_MAX) || (process.env.VERCEL ? 1 : 5);
+  const client = postgres(url, { max, prepare: false });
   return { db: drizzle(client, { schema }), close: () => client.end() };
 }
 

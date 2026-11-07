@@ -68,3 +68,37 @@ To decide (open question). Suggested shape: marketing at the root domain, the ap
 - Sentry alerts to the founder's email; PostHog dashboards from `../02-product/metrics.md`.
 - A status page and an in-app support chat are added before G4.
 - Weekly: review errors, slow queries (Supabase advisors), failed jobs and webhook errors.
+
+## Deploying to Vercel (checklist)
+
+**Project settings** (Vercel, Add New, Project, import the repository):
+
+| Setting | Value |
+| --- | --- |
+| Framework preset | Next.js (detected) |
+| Root Directory | `apps/web`, with "Include source files outside of the Root Directory" **on** (the default) so the workspace packages are found |
+| Install and build commands | Leave the defaults. Vercel detects pnpm from `packageManager` and the lockfile; the workspace packages are compiled by Next (`transpilePackages`), so no extra build step |
+| Node.js version | 22.x (also pinned in `engines`) |
+| Production branch | `main` |
+| Function region | Mumbai (`bom1`), set in `apps/web/vercel.json`, next to the Supabase database |
+
+**Environment variables** (Settings, Environment Variables). Add each for **Production** and **Preview** unless noted:
+
+| Name | Notes |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Dev project for Preview; prod project for Production |
+| `SUPABASE_SERVICE_ROLE_KEY` | Sensitive. Server only |
+| `DATABASE_URL` | The **pooled** (transaction, port 6543) connection string. Not the direct one; `DATABASE_URL_DIRECT` is for the migrate workflow and is not needed on Vercel |
+| `NEXT_PUBLIC_APP_URL` | Production: the real domain. Preview: leave **unset**; the app then uses the deployment's own URL |
+| `NEXT_PUBLIC_GOOGLE_AUTH` | `1` once Google is enabled in Supabase Auth. Needs a redeploy (read at build time) |
+| `RAZORPAY_*` | Test keys on Preview, live keys on Production only after G3 |
+
+**Supabase, Authentication, URL Configuration:** set the Site URL to the production domain; add Redirect URLs for `https://<domain>/**` and the preview pattern `https://*-<team-slug>.vercel.app/**`.
+
+**Before the first production deploy (G3):**
+1. `/api/health` returns `ok` on a preview.
+2. Email sign-in and an invite work on a preview.
+3. Production variables use the production Supabase project; never reuse the dev keys.
+4. `/prototype` is public today (for design review). Decide whether to keep it on the production domain.
+5. Add the Razorpay webhook URL `https://<domain>/api/webhooks/razorpay` in Razorpay with its secret.
+
