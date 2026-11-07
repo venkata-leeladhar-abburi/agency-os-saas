@@ -233,6 +233,15 @@ export async function myTasks(
     .orderBy(sql`${tasks.dueOn} asc nulls last`, asc(tasks.id));
 }
 
+/** One task (not in the trash), or null when it doesn't exist or RLS hides it. */
+export async function getTask(tx: Tx, taskId: string): Promise<Task | null> {
+  const [task] = await tx
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, taskId), isNull(tasks.deletedAt)));
+  return task ?? null;
+}
+
 export async function subtasks(tx: Tx, taskId: string) {
   return tx
     .select()
@@ -319,6 +328,28 @@ export async function listComments(
       ),
     )
     .orderBy(asc(comments.createdAt), asc(comments.id));
+}
+
+/** How many comments each subject has, in one query (for lists). */
+export async function commentCounts(
+  tx: Tx,
+  workspaceId: string,
+  subjectType: string,
+  subjectIds: string[],
+): Promise<Map<string, number>> {
+  if (subjectIds.length === 0) return new Map();
+  const rows = await tx
+    .select({ subjectId: comments.subjectId, n: sql<number>`count(*)::int` })
+    .from(comments)
+    .where(
+      and(
+        eq(comments.workspaceId, workspaceId),
+        eq(comments.subjectType, subjectType),
+        inArray(comments.subjectId, subjectIds),
+      ),
+    )
+    .groupBy(comments.subjectId);
+  return new Map(rows.map((r) => [r.subjectId, r.n]));
 }
 
 export async function editComment(tx: Tx, commentId: string, body: string) {

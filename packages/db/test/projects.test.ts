@@ -29,6 +29,13 @@ import {
   startPhase,
   updateProject,
 } from '../src/projects';
+import {
+  messagePostedEvent,
+  portalWorkspace,
+  postMessage,
+  projectMessages,
+  updateMyContact,
+} from '../src/portal';
 import { createProposal, requestSigningCode, sendProposal, signProposal } from '../src/sales-docs';
 import { gates, phases, projects } from '../src/schema';
 import { createTestDb, type TestDb } from './db';
@@ -44,6 +51,7 @@ let portal: Session;
 let ws: string;
 let clientId: string;
 let projectId: string;
+let contactId: string;
 
 const as = <T>(s: Session, fn: Parameters<typeof withUser<T>>[2]) => withUser(t.db, s, fn);
 const pgError = (pattern: RegExp) => ({
@@ -88,7 +96,7 @@ beforeAll(async () => {
       owner.userId,
     ),
   );
-  const contactId = (await as(owner, (tx) => getClient(tx, clientId)))!.contacts[0]!.id;
+  contactId = (await as(owner, (tx) => getClient(tx, clientId)))!.contacts[0]!.id;
   await as(owner, (tx) => invitePortalContact(tx, contactId, owner.userId));
   await as(portal, (tx) => claimPortalAccess(tx));
   projectId = await as(owner, (tx) =>
@@ -467,6 +475,110 @@ describe('templates', () => {
     ).rejects.toMatchObject({
       code: 'template_not_found',
     });
+  });
+});
+
+describe('the portal: messages, the agency and the contact', () => {
+  it('keeps one thread per project for the team and the client, and no one else', async () => {
+    await t.admin`update profiles set full_name = 'Ravi Kumar' where id = ${lead.userId}`;
+    await as(lead, (tx) =>
+      postMessage(
+        tx,
+        { workspaceId: ws, projectId, body: ' The homepage is ready. ' },
+        lead.userId,
+      ),
+    );
+    await as(portal, (tx) =>
+      postMessage(
+        tx,
+        { workspaceId: ws, projectId, body: 'Looks good, thank you.', contactId },
+        portal.userId,
+      ),
+    );
+    const thread = await as(portal, (tx) => projectMessages(tx, projectId));
+    expect(thread.map((m) => [m.authorName, m.fromClient, m.body])).toEqual([
+      ['Ravi Kumar', false, 'The homepage is ready.'],
+      ['Example Client', true, 'Looks good, thank you.'],
+    ]);
+    expect(await as(member, (tx) => projectMessages(tx, projectId))).toHaveLength(2);
+    expect(await as(outsider, (tx) => projectMessages(tx, projectId))).toEqual([]);
+    expect(await as(bystander, (tx) => projectMessages(tx, projectId))).toEqual([]);
+
+    // Writing as someone else, or on a project that isn't theirs, is refused.
+    await expect(
+      as(outsider, (tx) =>
+        postMessage(tx, { workspaceId: ws, projectId, body: 'Hi', contactId }, outsider.userId),
+      ),
+    ).rejects.toMatchObject(pgError(/row-level security/));
+    await expect(
+      as(bystander, (tx) =>
+        postMessage(tx, { workspaceId: ws, projectId, body: 'Hi' }, bystander.userId),
+      ),
+    ).rejects.toMatchObject(pgError(/row-level security/));
+    await expect(
+      as(portal, (tx) =>
+        postMessage(tx, { workspaceId: ws, projectId, body: 'Hi' }, portal.userId),
+      ),
+    ).rejects.toMatchObject(pgError(/row-level security/));
+    await expect(
+      as(portal, (tx) =>
+        postMessage(tx, { workspaceId: ws, projectId, body: '  ', contactId }, portal.userId),
+      ),
+    ).rejects.toMatchObject({ code: 'message_required' });
+    await expect(
+      as(portal, (tx) =>
+        postMessage(
+          tx,
+          { workspaceId: ws, projectId, body: 'x'.repeat(4001), contactId },
+          portal.userId,
+        ),
+      ),
+    ).rejects.toMatchObject({ code: 'message_too_long' });
+  });
+
+  it('tells the project team about a client message', async () => {
+    const ev = await withService(t.db, ws, (tx) =>
+      messagePostedEvent(tx, projectId, 'Example Client'),
+    );
+    expect(ev).toMatchObject({
+      kind: 'message.posted',
+      payload: { projectId, project: 'Example Website', name: 'Example Client' },
+    });
+    expect([...ev.userIds].sort()).toEqual([lead.userId, member.userId].sort());
+  });
+
+  it('shows the agency’s invoice details only to its clients’ contacts', async () => {
+    const w = await as(portal, (tx) => portalWorkspace(tx, ws));
+    expect(w).toMatchObject({ id: ws, name: 'One Stop Solutions', plan: 'growth' });
+    expect(await as(outsider, (tx) => portalWorkspace(tx, ws))).toBeNull();
+    const [site] = (await as(portal, (tx) => portalProjects(tx))).filter((p) => p.id === projectId);
+    expect(site!.leadName).toBe('Ravi Kumar');
+  });
+
+  it('lets the contact keep their own details up to date, and nobody else’s', async () => {
+    await as(portal, (tx) =>
+      updateMyContact(tx, contactId, {
+        name: ' Example Client Name ',
+        email: 'Client@Kite.example',
+        phone: '+919014952056',
+      }),
+    );
+    const c = (await as(owner, (tx) => getClient(tx, clientId)))!.contacts[0]!;
+    expect(c).toMatchObject({
+      name: 'Example Client Name',
+      email: 'client@kite.example',
+      phone: '+919014952056',
+    });
+    await expect(
+      as(outsider, (tx) =>
+        updateMyContact(tx, contactId, { name: 'Taken', email: 'a@b.in', phone: null }),
+      ),
+    ).rejects.toMatchObject({ code: 'contact_not_found' });
+    await expect(
+      as(portal, (tx) =>
+        updateMyContact(tx, contactId, { name: ' ', email: 'a@b.in', phone: null }),
+      ),
+    ).rejects.toMatchObject({ code: 'contact_name_required' });
   });
 });
 

@@ -93,12 +93,12 @@ export { Checklist, type ChecklistItem, type ChecklistProps } from './patterns/c
 export {
   CommandMenu,
   CommandPalette,
-  useCommandShortcut,
   type CommandGroup,
   type CommandItem,
   type CommandLabels,
   type CommandPaletteProps,
 } from './patterns/command-palette';
+export { useCommandShortcut } from './patterns/command-shortcut';
 export {
   CellMain,
   DataTable,

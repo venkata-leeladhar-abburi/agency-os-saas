@@ -181,7 +181,13 @@ export function DataTable<TData>({
           ) : null}
         </div>
       )}
-      <div className="overflow-x-auto rounded-lg border border-border bg-card">
+      <div
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region must be reachable by keyboard (WCAG 2.1.1)
+        tabIndex={0}
+        role="region"
+        aria-label={caption}
+        className="overflow-x-auto rounded-lg border border-border bg-card"
+      >
         <table className="w-full border-collapse text-body">
           <caption className="sr-only">{caption}</caption>
           <thead>

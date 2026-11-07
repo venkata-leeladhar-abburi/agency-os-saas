@@ -16,7 +16,8 @@ import { AccountError, call } from './accounts';
 import { withService, type Db, type Tx } from './client';
 import { checkPlanLimit, notify } from './platform';
 import { activities, enquiryForms, leads, memberships, pipelineStages, workspaces } from './schema';
-import { hashToken, newToken } from './tokens';
+import { queueEventEmails } from './email';
+import { hashToken, linkToken, newToken } from './tokens';
 
 export type Stage = typeof pipelineStages.$inferSelect;
 export type Lead = typeof leads.$inferSelect;
@@ -350,6 +351,15 @@ async function trash(tx: Tx, leadId: string, at: Date | null) {
   await tx.update(leads).set({ deletedAt: at }).where(eq(leads.id, leadId));
 }
 
+/** One lead (not in the trash), or null when it doesn't exist or RLS hides it. */
+export async function getLead(tx: Tx, leadId: string): Promise<Lead | null> {
+  const [lead] = await tx
+    .select()
+    .from(leads)
+    .where(and(eq(leads.id, leadId), isNull(leads.deletedAt)));
+  return lead ?? null;
+}
+
 // ---- Activity ----
 
 export type ActivityKind = 'note' | 'call' | 'email' | 'whatsapp' | 'meeting';
@@ -466,7 +476,8 @@ export type LeadSort = 'created' | 'name' | 'value' | 'follow_up';
 export async function listLeads(
   tx: Tx,
   workspaceId: string,
-  filters: LeadFilters & { sort?: LeadSort; limit?: number; offset?: number } = {},
+  /** limit: null lists every lead (for the board, export and dashboard); 100 by default. */
+  filters: LeadFilters & { sort?: LeadSort; limit?: number | null; offset?: number } = {},
 ) {
   const order = {
     created: [desc(leads.createdAt)],
@@ -474,14 +485,16 @@ export async function listLeads(
     value: [sql`${leads.valueMinor} desc nulls last`],
     follow_up: [sql`${leads.nextFollowUpAt} asc nulls last`],
   }[filters.sort ?? 'created'];
-  return tx
+  const query = tx
     .select({ lead: leads, stageName: pipelineStages.name, stageKind: pipelineStages.kind })
     .from(leads)
     .innerJoin(pipelineStages, eq(pipelineStages.id, leads.stageId))
     .where(filterWhere(workspaceId, filters))
     .orderBy(...order, asc(leads.id))
-    .limit(filters.limit ?? 100)
-    .offset(filters.offset ?? 0);
+    .$dynamic();
+  return filters.limit === null
+    ? query
+    : query.limit(filters.limit ?? 100).offset(filters.offset ?? 0);
 }
 
 /** Follow-ups due by `until` (for Today), oldest first; optionally only one owner's. */
@@ -596,16 +609,73 @@ export async function exportLeads(tx: Tx, workspaceId: string) {
 
 // ---- Enquiry form ----
 
-/** Creates (or replaces) the workspace's public form link; returns the token for the URL. */
-export async function createEnquiryForm(tx: Tx, workspaceId: string) {
-  const { token, hash } = newToken();
+const ENQUIRY_SCOPE = 'enquiry';
+
+/**
+ * Creates (or replaces) the workspace's public form link; returns the token for the URL. With
+ * the link secret the token is made from it, so Settings can show the link again later while
+ * only its hash is stored; without it the token is random and shows once.
+ */
+export async function createEnquiryForm(
+  tx: Tx,
+  workspaceId: string,
+  { secret }: { secret?: string | null } = {},
+) {
+  const id = uuidv7();
+  const { token, hash } = secret
+    ? (() => {
+        const t = linkToken(secret, ENQUIRY_SCOPE, id, 1);
+        return { token: t, hash: hashToken(t) };
+      })()
+    : newToken();
   await tx
     .update(enquiryForms)
     .set({ isActive: false })
     .where(eq(enquiryForms.workspaceId, workspaceId));
-  const id = uuidv7();
   await call(() => tx.insert(enquiryForms).values({ id, workspaceId, publicTokenHash: hash }));
   return { id, token };
+}
+
+/**
+ * The workspace's form link for Settings, made from the link secret: the active form's, or a
+ * new form's when there is none (or its link was made without this secret).
+ */
+export async function enquiryFormLink(tx: Tx, workspaceId: string, secret: string) {
+  const [form] = await tx
+    .select()
+    .from(enquiryForms)
+    .where(and(eq(enquiryForms.workspaceId, workspaceId), eq(enquiryForms.isActive, true)))
+    .limit(1);
+  if (form) {
+    const token = linkToken(secret, ENQUIRY_SCOPE, form.id, 1);
+    if (hashToken(token) === form.publicTokenHash) return token;
+  }
+  return (await createEnquiryForm(tx, workspaceId, { secret })).token;
+}
+
+/** The agency's name and look for its public form, or null when the link is closed. */
+export async function enquiryFormBrand(db: Db, token: string) {
+  const workspaceId = await db.transaction(async (tx) => {
+    await tx.execute(sql`set local role anon`);
+    const [row] = await tx.execute<{ ws: string | null }>(
+      sql`select enquiry_form_workspace(${hashToken(token)}) as ws`,
+    );
+    return row?.ws ?? null;
+  });
+  if (!workspaceId) return null;
+  return withService(db, workspaceId, async (tx, ws) => {
+    const [w] = await tx
+      .select({
+        name: workspaces.name,
+        logoPath: workspaces.logoPath,
+        brandColor: workspaces.brandColor,
+        plan: workspaces.plan,
+        services: workspaces.services,
+      })
+      .from(workspaces)
+      .where(eq(workspaces.id, ws));
+    return w ?? null;
+  });
 }
 
 export type Enquiry = {
@@ -671,12 +741,16 @@ export async function submitEnquiry(db: Db, token: string, enquiry: Enquiry, now
           eq(memberships.status, 'active'),
         ),
       );
-    await notify(tx, {
+    const event = {
+      kind: 'lead.enquiry' as const,
+      key: leadId,
       workspaceId: ws,
       userIds: owners.map((o) => o.userId),
-      kind: 'lead.enquiry',
-      payload: { leadId, name: enquiry.name },
-    });
+      contactEmails: [],
+      payload: { leadId, name: enquiry.name, company: enquiry.company ?? null },
+    };
+    const sent = await notify(tx, event);
+    await queueEventEmails(tx, event, sent.email);
     return leadId;
   });
 }

@@ -14,7 +14,8 @@ export function connect(url = process.env.DATABASE_URL): Connection {
     throw new Error(
       'DATABASE_URL is not set. Add it to the environment (see docs/04-engineering/environments-and-deploy.md).',
     );
-  const client = postgres(url, { max: 5, prepare: false });
+  // Fail in seconds, not the driver's 30, when the database can't be reached.
+  const client = postgres(url, { max: 5, prepare: false, connect_timeout: 10 });
   return { db: drizzle(client, { schema }), close: () => client.end() };
 }
 

@@ -15,6 +15,8 @@ Follows the deck's build order ("we run our own agency on it first, then fill th
 
 ## Changes from the deck, and why
 
+- **The Playbook's first part moves into R1** (founder, 31 Oct 2026, D-072): the knowledge base with folders, the nine item kinds, visibility (private, team or chosen roles, clients) and client guides in the portal. Public items, phase templates as projects and embedded boards stay in R2 and R3.
+
 - **GST invoices move into R1** (deck question Q3). Indian clients expect GST-ready invoices from the first invoice, and fixing tax later means migrating data. Basic export invoices under LUT and per-invoice currency come with it, because the tax engine handles both at little extra cost (research assumption A10). Full international mode stays in R5.
 - **Team basics move into R1** (members and roles), because a project needs people. HR features stay in R4.
 - **The client portal is in R1,** not later, because it is the moment that sells the product to clients (assumption A3).

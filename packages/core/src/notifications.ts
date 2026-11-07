@@ -45,6 +45,15 @@ export const NOTIFICATION_KINDS = {
     email: 'on',
     subject: '[client] signed the proposal',
   },
+  // Proposed (open question 22): not in the defaults table yet.
+  'proposal.question': {
+    label: 'Question about a proposal',
+    area: 'sales',
+    recipients: 'Sender, owners',
+    inApp: 'on',
+    email: 'on',
+    subject: '[client] asked about your proposal',
+  },
   'gate.requested': {
     label: 'Gate approval requested',
     area: 'delivery',

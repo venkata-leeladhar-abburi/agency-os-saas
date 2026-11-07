@@ -37,6 +37,8 @@ export type SidebarProps = {
     searchShortcut?: string;
     switchWorkspace?: string;
     navigation?: string;
+    /** Names the sidebar landmark. */
+    sidebar?: string;
   };
   className?: string;
   /** Extra content above the footer, such as the onboarding checklist link. */
@@ -114,7 +116,9 @@ export function Sidebar({
   children,
 }: SidebarProps) {
   return (
-    <div
+    // A landmark, so the workspace switcher and the signed-in person aren't outside every region.
+    <aside
+      aria-label={labels?.sidebar ?? 'Sidebar'}
       className={cn(
         'flex h-full flex-col gap-4 border-r border-border bg-sidebar p-3 text-sidebar-foreground',
         collapsed ? 'w-sidebar-collapsed items-stretch' : 'w-sidebar-width',
@@ -224,6 +228,6 @@ export function Sidebar({
           )}
         </div>
       ) : null}
-    </div>
+    </aside>
   );
 }

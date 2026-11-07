@@ -11,6 +11,7 @@ import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { AccountError, call } from './accounts';
 import type { Tx } from './client';
+import { queueEventEmails } from './email';
 import { notify } from './platform';
 import {
   activities,
@@ -20,6 +21,7 @@ import {
   gates,
   phases,
   phaseTemplates,
+  profiles,
   projectMembers,
   projects,
   proposals,
@@ -50,9 +52,11 @@ export type NotificationEvent = {
   kind: NotificationKey;
   workspaceId: string;
   userIds: string[];
-  /** Portal contacts to email (client gates). */
+  /** Portal contacts to email (client gates, the team's messages). */
   contactEmails: string[];
   payload: Record<string, unknown>;
+  /** Identifies the event, so delivering it twice sends each email once. */
+  key?: string;
 };
 
 async function templateFor(tx: Tx, key = 'seven_phases'): Promise<PhaseTemplate> {
@@ -186,45 +190,77 @@ async function checklistCounts(tx: Tx, phaseIds: string[]) {
 
 /** The project with its phases (checklist and gate each), members and progress. */
 export async function getProject(tx: Tx, projectId: string) {
-  const [project] = await tx.select().from(projects).where(eq(projects.id, projectId));
-  if (!project) return null;
-  const phaseRows = await tx
-    .select()
-    .from(phases)
-    .where(eq(phases.projectId, projectId))
-    .orderBy(asc(phases.position));
+  return (await getProjects(tx, [projectId]))[0] ?? null;
+}
+
+/** Projects with their phases, checklists, gates and members, in five queries however many. */
+export async function getProjects(tx: Tx, projectIds: string[]) {
+  if (projectIds.length === 0) return [];
+  const rows = await tx.select().from(projects).where(inArray(projects.id, projectIds));
+  if (rows.length === 0) return [];
+  const found = rows.map((p) => p.id);
+  const [phaseRows, members] = await Promise.all([
+    tx.select().from(phases).where(inArray(phases.projectId, found)).orderBy(asc(phases.position)),
+    tx.select().from(projectMembers).where(inArray(projectMembers.projectId, found)),
+  ]);
   const ids = phaseRows.map((p) => p.id);
-  const items = ids.length
-    ? await tx
-        .select()
-        .from(checklistItems)
-        .where(inArray(checklistItems.phaseId, ids))
-        .orderBy(asc(checklistItems.position))
-    : [];
-  const gateRows = ids.length
-    ? await tx.select().from(gates).where(inArray(gates.phaseId, ids))
-    : [];
-  const members = await tx
-    .select()
-    .from(projectMembers)
-    .where(eq(projectMembers.projectId, projectId));
-  const withParts = phaseRows.map((p) => ({
-    ...p,
-    checklist: items.filter((i) => i.phaseId === p.id),
-    gate: gateRows.find((g) => g.phaseId === p.id) ?? null,
-  }));
-  return {
-    ...project,
-    phases: withParts,
-    members,
-    progress: projectProgress(
-      withParts.map((p) => ({
-        skipped: p.status === 'skipped',
-        checklistTotal: p.checklist.length,
-        checklistDone: p.checklist.filter((i) => i.doneAt).length,
-      })),
-    ),
-  };
+  const [items, gateRows] = ids.length
+    ? await Promise.all([
+        tx
+          .select()
+          .from(checklistItems)
+          .where(inArray(checklistItems.phaseId, ids))
+          .orderBy(asc(checklistItems.position)),
+        tx.select().from(gates).where(inArray(gates.phaseId, ids)),
+      ])
+    : [[], []];
+  const itemsOf = groupBy(items, (i) => i.phaseId);
+  const gateOf = new Map(gateRows.map((g) => [g.phaseId, g]));
+  const phasesOf = groupBy(phaseRows, (p) => p.projectId);
+  const membersOf = groupBy(members, (m) => m.projectId);
+  const order = new Map(projectIds.map((id, n) => [id, n]));
+  return rows
+    .sort((a, b) => order.get(a.id)! - order.get(b.id)!)
+    .map((project) => {
+      const withParts = (phasesOf.get(project.id) ?? []).map((p) => ({
+        ...p,
+        checklist: itemsOf.get(p.id) ?? [],
+        gate: gateOf.get(p.id) ?? null,
+      }));
+      return {
+        ...project,
+        phases: withParts,
+        members: membersOf.get(project.id) ?? [],
+        progress: projectProgress(
+          withParts.map((p) => ({
+            skipped: p.status === 'skipped',
+            checklistTotal: p.checklist.length,
+            checklistDone: p.checklist.filter((i) => i.doneAt).length,
+          })),
+        ),
+      };
+    });
+}
+
+function groupBy<T, K>(list: T[], key: (item: T) => K): Map<K, T[]> {
+  const out = new Map<K, T[]>();
+  for (const item of list) {
+    const k = key(item);
+    const group = out.get(k);
+    if (group) group.push(item);
+    else out.set(k, [item]);
+  }
+  return out;
+}
+
+/** Phase id to name for these projects, in one query (for task lists). */
+export async function phaseNames(tx: Tx, projectIds: string[]): Promise<Map<string, string>> {
+  if (projectIds.length === 0) return new Map();
+  const rows = await tx
+    .select({ id: phases.id, name: phases.name })
+    .from(phases)
+    .where(inArray(phases.projectId, projectIds));
+  return new Map(rows.map((r) => [r.id, r.name]));
 }
 
 export async function listProjects(
@@ -420,6 +456,7 @@ export async function requestGateApproval(
   }
   return {
     kind: 'gate.requested',
+    key: `${g!.id}:${g!.requestedAt?.toISOString() ?? ''}`,
     workspaceId: g!.workspaceId,
     userIds: g!.approverType === 'internal' && g!.approverUserId ? [g!.approverUserId] : [],
     contactEmails,
@@ -429,8 +466,14 @@ export async function requestGateApproval(
       projectId: project.id,
       project: project.name,
       message: g!.requestMessage,
+      lead: await leadName(tx, project.leadMemberId),
     },
   };
+}
+
+/** The project lead's notification for a client's decision; jobs deliver it (service role). */
+export async function gateDecidedEvent(tx: Tx, gateId: string): Promise<NotificationEvent> {
+  return decided(tx, gateId);
 }
 
 async function decided(tx: Tx, gateId: string): Promise<NotificationEvent> {
@@ -442,6 +485,7 @@ async function decided(tx: Tx, gateId: string): Promise<NotificationEvent> {
     .where(eq(clients.id, project.clientId));
   return {
     kind: 'gate.decided',
+    key: `${g!.id}:${g!.decidedAt?.toISOString() ?? ''}`,
     workspaceId: g!.workspaceId,
     userIds: project.leadMemberId ? [project.leadMemberId] : [],
     contactEmails: [],
@@ -449,6 +493,7 @@ async function decided(tx: Tx, gateId: string): Promise<NotificationEvent> {
       gateId: g!.id,
       gate: g!.title,
       projectId: project.id,
+      project: project.name,
       client: client?.name ?? null,
       outcome: g!.status,
       comment: g!.decisionComment,
@@ -481,14 +526,28 @@ export async function decideGateAsClient(
   return { gateId: row!.id, workspaceId: row!.workspace_id, kind: 'gate.decided' as const };
 }
 
-/** Jobs deliver a member's or client's event as the service role (see NotificationEvent). */
+/**
+ * Jobs deliver a member's or client's event as the service role (see NotificationEvent): the
+ * in-app notifications now, and the emails into the outbox for the email job.
+ */
 export async function deliverEvent(tx: Tx, event: NotificationEvent) {
-  return notify(tx, {
+  const result = await notify(tx, {
     workspaceId: event.workspaceId,
     userIds: event.userIds,
     kind: event.kind,
     payload: event.payload,
   });
+  await queueEventEmails(tx, event, result.email);
+  return result;
+}
+
+async function leadName(tx: Tx, userId: string | null) {
+  if (!userId) return null;
+  const [p] = await tx
+    .select({ name: profiles.fullName })
+    .from(profiles)
+    .where(eq(profiles.id, userId));
+  return p?.name ?? null;
 }
 
 export type PortalProject = {
@@ -497,6 +556,7 @@ export type PortalProject = {
   clientId: string;
   status: string;
   dueOn: string | null;
+  leadName: string | null;
   progress: number;
   phases: {
     name: string;

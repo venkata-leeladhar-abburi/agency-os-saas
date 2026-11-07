@@ -28,6 +28,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Dependency audit (fails on high or critical)
+        run: pnpm audit --prod --audit-level=high
       - name: Lint, typecheck, unit tests, token and contrast check, design rules, format
         run: pnpm check
       - run: pnpm build

@@ -2,3 +2,12 @@
 @import '@agency-os/ui/styles.css';
 
 @source '../../../packages/ui/src';
+
+/* Client-facing pages (portal, pay link, proposal link, enquiry form): body text is 16px on
+   phones (accessibility checklist). The text-body utility reads these variables. */
+@media (max-width: 40rem) {
+  [data-client] {
+    --text-body: var(--text-body-lg);
+    --text-body--line-height: var(--text-body-lg--line-height);
+  }
+}

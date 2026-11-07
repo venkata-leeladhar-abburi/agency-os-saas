@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { financialYear, formatDate } from './dates';
-import { gstinCheckCharacter, isValidStateCode, validateGstin } from './gstin';
+import {
+  GST_STATES,
+  gstinCheckCharacter,
+  isValidStateCode,
+  stateLabel,
+  validateGstin,
+} from './gstin';
 import { formatInvoiceNumber, validateInvoicePrefix } from './numbering';
 
 describe('K. GSTIN validation', () => {
@@ -86,5 +92,19 @@ describe('M. dates', () => {
   });
   it('rejects invalid dates', () => {
     expect(() => formatDate('not a date')).toThrow('Not a date');
+  });
+});
+
+describe('GST state names', () => {
+  it('names every valid state code and nothing else', () => {
+    for (let n = 0; n <= 99; n++) {
+      const code = String(n).padStart(2, '0');
+      expect(code in GST_STATES).toBe(isValidStateCode(code));
+    }
+  });
+  it('labels a place of supply', () => {
+    expect(stateLabel('29')).toBe('Karnataka (29)');
+    expect(stateLabel('37')).toBe('Andhra Pradesh (37)');
+    expect(stateLabel('99')).toBe('99');
   });
 });

@@ -5,12 +5,12 @@ import {
   workspaceDefaults,
   type Role,
 } from '@agency-os/core';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import type { Tx } from './client';
 import { auditLog, invitations, memberships, profiles, workspaces } from './schema';
 import { checkPlanLimit } from './platform';
-import { hashToken, newToken } from './tokens';
+import { hashToken, linkToken, newToken } from './tokens';
 
 /** Errors the account functions raise, with the words the app shows. */
 export const ACCOUNT_ERRORS: Record<string, string> = {
@@ -48,6 +48,25 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   quote_invalid: 'Check the items.',
   quote_not_found: 'That quote doesn’t exist or was deleted.',
   quote_locked: 'This quote was sent, so it can’t change. Make a new version instead.',
+  invoice_prefix_invalid: 'Use letters, numbers and dashes for the prefix, like OSS.',
+  payment_terms_invalid: 'Use a whole number of days from 0 to 120.',
+  brand_color_invalid: 'Use a hex colour with 6 digits, like #0F766E.',
+  invoice_items_required: 'Add at least one line.',
+  invoice_invalid: 'Check the lines.',
+  invoice_not_found: 'That invoice doesn’t exist or was deleted.',
+  invoice_locked:
+    'This invoice was issued, so it can’t change. Cancel it and issue a new one if it’s wrong.',
+  invoice_number_required: 'Issue the invoice to give it a number.',
+  invoice_not_payable:
+    'Issue the invoice before recording a payment. Cancelled invoices take none.',
+  invoice_has_payments: 'This invoice has payments, so it can’t be cancelled.',
+  invoice_no_link: 'Issue the invoice to get its pay link.',
+  invoice_link_invalid: 'This link doesn’t work. Ask the agency for a new one.',
+  exchange_rate_required: 'Add the exchange rate on the invoice date.',
+  payment_currency: 'Record the payment in the invoice’s currency.',
+  payment_amount: 'Enter an amount above zero.',
+  overpayment: 'This is more than the amount due. Check the amount.',
+  payment_locked: 'Payments can’t be changed or deleted once recorded.',
   proposal_not_found: 'That proposal doesn’t exist or was deleted.',
   proposal_locked: 'This proposal was sent, so it can’t change. Make a new version instead.',
   proposal_link_invalid: 'This link doesn’t work. Ask the agency for a new one.',
@@ -79,7 +98,29 @@ export const ACCOUNT_ERRORS: Record<string, string> = {
   task_not_found: 'That task doesn’t exist or you’re not on its project.',
   task_mismatch: 'Pick a phase, parent task and assignee from this project and workspace.',
   comment_required: 'Write a comment first.',
+  message_required: 'Write a message first.',
+  example_invoice_draft: 'Example invoices can’t be issued. Create your own invoice to send.',
+  message_too_long: 'Keep messages under 4,000 characters.',
   comment_not_found: 'That comment doesn’t exist or isn’t yours.',
+  question_required: 'Write your question first.',
+  question_too_long: 'Keep your question under 2,000 characters.',
+  too_many_questions:
+    'You’ve sent a lot of questions in the last hour. Wait a little, or contact the agency directly.',
+  profile_name_required: 'Add your name. Clients and your team see it.',
+  profile_name_too_long: 'Keep your name under 80 characters.',
+  profile_phone_too_long: 'Keep the phone number under 20 characters.',
+  knowledge_title_required: 'Give the item a title.',
+  knowledge_url_invalid: 'Enter a web address starting with https://.',
+  knowledge_clients_required: 'Pick at least one client, or share it with all clients.',
+  knowledge_not_found: 'That item doesn’t exist, or you can’t see it.',
+  knowledge_folder_name_required: 'Give the folder a name.',
+  knowledge_folder_not_empty: 'Move or delete what’s in this folder first.',
+  knowledge_folder_parent_invalid: 'A folder can’t go inside itself.',
+  knowledge_mismatch: 'Pick a folder and clients from this workspace.',
+  knowledge_author_locked: 'The author of an item can’t be changed.',
+  view_name_required: 'Give the view a name.',
+  view_name_too_long: 'Keep view names under 60 characters.',
+  too_many_views: 'You can keep up to 20 saved views here. Delete one to save another.',
   daily_update_empty: 'Add what you did, what’s next or what’s blocking you.',
   portal_email_required: 'Add an email for this contact. The portal sign-in link goes to it.',
   portal_user_locked:
@@ -164,16 +205,37 @@ export type NewInvitation = {
   invitedBy: string;
 };
 
-/** Creates an invitation and returns the token for the link (only its hash is stored). */
-export async function inviteMember(tx: Tx, input: NewInvitation) {
+/** The scope of invite links made from LINK_SIGNING_SECRET. */
+const INVITE_SCOPE = 'invite';
+
+/** An invite link's token, worked out again from the secret (for the invitation email). */
+export function inviteLinkToken(secret: string, invitationId: string) {
+  return linkToken(secret, INVITE_SCOPE, invitationId, 1);
+}
+
+/**
+ * Creates an invitation and returns the token for the link (only its hash is stored). With the
+ * link secret the token is made from it, so the email job can rebuild the link; without it the
+ * token is random and the link shows only once.
+ */
+export async function inviteMember(
+  tx: Tx,
+  input: NewInvitation,
+  { secret }: { secret?: string | null } = {},
+) {
   if (!input.email && !input.phone)
     throw new Error('An invitation needs an email or a phone number');
   if (input.role === 'owner')
     throw new Error('Owners are made from the members list, not by invitation');
   const limit = await checkPlanLimit(tx, input.workspaceId, 'members');
   if (!limit.allowed) throw new AccountError('plan_limit', limit.message);
-  const { token, hash } = newToken();
   const id = uuidv7();
+  const { token, hash } = secret
+    ? (() => {
+        const t = inviteLinkToken(secret, id);
+        return { token: t, hash: hashToken(t) };
+      })()
+    : newToken();
   await tx.insert(invitations).values({
     id,
     workspaceId: input.workspaceId,
@@ -219,11 +281,68 @@ export async function listMembers(tx: Tx, workspaceId: string) {
       role: memberships.role,
       status: memberships.status,
       name: profiles.fullName,
+      joinedAt: memberships.createdAt,
     })
     .from(memberships)
     .leftJoin(profiles, eq(profiles.id, memberships.userId))
     .where(eq(memberships.workspaceId, workspaceId))
     .orderBy(asc(memberships.createdAt));
+}
+
+/** Members' sign-in emails, by user id (only for roles that can see members). */
+export async function memberEmails(tx: Tx, workspaceId: string): Promise<Map<string, string>> {
+  const rows = await tx.execute<{ user_id: string; email: string | null }>(
+    sql`select * from workspace_member_emails(${workspaceId}::uuid)`,
+  );
+  return new Map(rows.flatMap((r) => (r.email ? [[r.user_id, r.email] as const] : [])));
+}
+
+/** Invitations not yet accepted or cancelled, newest first (expired ones included). */
+export async function listInvitations(tx: Tx, workspaceId: string) {
+  return tx
+    .select()
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.workspaceId, workspaceId),
+        isNull(invitations.acceptedAt),
+        isNull(invitations.revokedAt),
+      ),
+    )
+    .orderBy(desc(invitations.createdAt));
+}
+
+/** Sends an invite again: the old link stops working and a new one works for 7 days. */
+export async function resendInvitation(
+  tx: Tx,
+  invitationId: string,
+  actorId: string,
+  opts: { secret?: string | null } = {},
+) {
+  const [old] = await tx
+    .select()
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.id, invitationId),
+        isNull(invitations.acceptedAt),
+        isNull(invitations.revokedAt),
+      ),
+    );
+  if (!old) throw new AccountError('invite_not_found');
+  await revokeInvitation(tx, old.id);
+  const { id, token } = await inviteMember(
+    tx,
+    {
+      workspaceId: old.workspaceId,
+      email: old.email ?? undefined,
+      phone: old.phone ?? undefined,
+      role: old.role,
+      invitedBy: actorId,
+    },
+    opts,
+  );
+  return { id, token, email: old.email ?? old.phone ?? '' };
 }
 
 export async function changeRole(tx: Tx, membershipId: string, role: Role) {
@@ -243,4 +362,74 @@ export async function removeMember(tx: Tx, membershipId: string) {
       .where(eq(memberships.id, membershipId))
       .returning({ id: memberships.id }),
   );
+}
+
+export type WorkspaceSetup = {
+  services: string[];
+  gstin: string | null;
+  stateCode: string | null;
+  lutArn: string | null;
+};
+
+/** Saves the optional answers from workspace setup and returns the workspace's slug. */
+export async function saveWorkspaceSetup(tx: Tx, workspaceId: string, setup: WorkspaceSetup) {
+  const [row] = await tx
+    .update(workspaces)
+    .set(setup)
+    .where(eq(workspaces.id, workspaceId))
+    .returning({ slug: workspaces.slug });
+  return row!.slug;
+}
+
+/**
+ * What the invitation email says: who invited them, where, as what. Null once it can't be used
+ * (accepted, cancelled or expired). Service role only.
+ */
+export async function invitationEmailFacts(tx: Tx, invitationId: string, now = new Date()) {
+  const [i] = await tx.select().from(invitations).where(eq(invitations.id, invitationId));
+  if (!i || i.acceptedAt || i.revokedAt || i.expiresAt <= now) return null;
+  const [w] = await tx
+    .select({ name: workspaces.name })
+    .from(workspaces)
+    .where(eq(workspaces.id, i.workspaceId));
+  const [by] = i.invitedBy
+    ? await tx
+        .select({ name: profiles.fullName })
+        .from(profiles)
+        .where(eq(profiles.id, i.invitedBy))
+    : [];
+  return {
+    id: i.id,
+    tokenHash: i.tokenHash,
+    role: i.role,
+    expiresAt: i.expiresAt,
+    workspace: w?.name ?? '',
+    invitedBy: by?.name ?? null,
+  };
+}
+
+// ---- Your own profile ----
+
+export type MyProfile = { fullName: string | null; phone: string | null };
+
+/** The signed-in person's own name and phone (RLS: only their own row is written). */
+export async function myProfile(tx: Tx, userId: string): Promise<MyProfile> {
+  const [p] = await tx
+    .select({ fullName: profiles.fullName, phone: profiles.phone })
+    .from(profiles)
+    .where(eq(profiles.id, userId));
+  return p ?? { fullName: null, phone: null };
+}
+
+/** Changes your name (shown to your team and clients) and phone. */
+export async function updateMyProfile(tx: Tx, userId: string, input: MyProfile) {
+  const fullName = input.fullName?.trim().replace(/\s+/g, ' ') ?? '';
+  if (fullName.length < 2) throw new AccountError('profile_name_required');
+  if (fullName.length > 80) throw new AccountError('profile_name_too_long');
+  const phone = input.phone?.trim() || null;
+  if (phone && phone.length > 20) throw new AccountError('profile_phone_too_long');
+  await tx
+    .insert(profiles)
+    .values({ id: userId, fullName, phone })
+    .onConflictDoUpdate({ target: profiles.id, set: { fullName, phone } });
 }

@@ -3,9 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles.css",
+    "./command-palette": "./src/patterns/command-palette.tsx",
     "./example": "./src/example/data.ts"
   },
   "scripts": {

@@ -3,7 +3,7 @@
 import { ArrowRight, MagnifyingGlass, type Icon } from '@phosphor-icons/react';
 import { Command, useCommandState } from 'cmdk';
 import { Dialog as DialogPrimitive } from 'radix-ui';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Kbd } from '../components/kbd';
 import { cn } from '../lib/cn';
 
@@ -176,16 +176,4 @@ export function CommandPalette({ open, onOpenChange, labels, ...menu }: CommandP
   );
 }
 
-/** Opens the palette with Ctrl+K or Cmd+K anywhere in the app. */
-export function useCommandShortcut(toggle: () => void) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        toggle();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [toggle]);
-}
+export { useCommandShortcut } from './command-shortcut';

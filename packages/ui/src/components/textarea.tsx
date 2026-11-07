@@ -1,3 +1,5 @@
+'use client';
+
 import type { ReactNode, TextareaHTMLAttributes } from 'react';
 import { cn } from '../lib/cn';
 import { Field, type FieldLabels } from './field';
