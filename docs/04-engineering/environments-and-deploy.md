@@ -99,6 +99,6 @@ To decide (open question). Suggested shape: marketing at the root domain, the ap
 1. `/api/health` returns `ok` on a preview.
 2. Email sign-in and an invite work on a preview.
 3. Production variables use the production Supabase project; never reuse the dev keys.
-4. `/prototype` is public today (for design review). Decide whether to keep it on the production domain.
+4. `/prototype` returns 404 on the production domain (D-043). Set `PROTOTYPE_PUBLIC=1` there only if you want it public.
 5. Add the Razorpay webhook URL `https://<domain>/api/webhooks/razorpay` in Razorpay with its secret.
 

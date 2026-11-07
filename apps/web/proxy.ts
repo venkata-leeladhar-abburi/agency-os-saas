@@ -16,6 +16,16 @@ const PUBLIC = [
 
 /** Refreshes the Supabase session cookie on every request and sends signed-out visitors to sign in. */
 export async function proxy(request: NextRequest) {
+  // The clickable prototype is for design review: open on previews and locally, hidden on the
+  // production domain unless PROTOTYPE_PUBLIC=1 is set (D-043).
+  if (
+    /^\/prototype/.test(request.nextUrl.pathname) &&
+    process.env.VERCEL_ENV === 'production' &&
+    process.env.PROTOTYPE_PUBLIC !== '1'
+  ) {
+    return NextResponse.rewrite(new URL('/_not-found', request.url), { status: 404 });
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) return NextResponse.next();

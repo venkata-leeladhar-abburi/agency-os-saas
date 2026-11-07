@@ -236,3 +236,8 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Workspace setup:** the workspace is created at step 1 (so the name is kept if someone stops), steps 2 and 3 save separately and can be skipped. GSTIN is checked with the core validator and fills the state.
 - **Left for later in M5:** logo upload (needs a Storage bucket), phone OTP and authenticator-app two-factor (owner setting, M6 Settings).
 
+### D-043 Prototype hidden on the production domain
+**Status:** Accepted, reversible · **Date:** 7 Nov 2026
+- **Decision:** `/prototype` stays open locally and on Vercel previews, and returns 404 on the production domain unless `PROTOTYPE_PUBLIC=1` is set there. This keeps unfinished screens out of the live product while round R2 and the tree test can still use a preview link.
+- **To change it:** set or remove `PROTOTYPE_PUBLIC` in Vercel (Production) and redeploy. No code change.
+
