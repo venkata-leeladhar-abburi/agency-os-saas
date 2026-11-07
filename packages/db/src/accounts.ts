@@ -244,3 +244,50 @@ export async function removeMember(tx: Tx, membershipId: string) {
       .returning({ id: memberships.id }),
   );
 }
+
+export type WorkspaceSetup = {
+  services?: string[];
+  gstin?: string | null;
+  stateCode?: string | null;
+  lutArn?: string | null;
+};
+
+/** Saves the optional setup steps (services, GST details). RLS lets only `workspace.manage` through. */
+export async function updateWorkspaceSetup(tx: Tx, workspaceId: string, input: WorkspaceSetup) {
+  const set: Partial<typeof workspaces.$inferInsert> = {};
+  if (input.services) set.services = input.services;
+  if (input.gstin !== undefined) set.gstin = input.gstin;
+  if (input.stateCode !== undefined) set.stateCode = input.stateCode;
+  if (input.lutArn !== undefined) set.lutArn = input.lutArn;
+  if (Object.keys(set).length === 0) return true;
+  const rows = await tx
+    .update(workspaces)
+    .set(set)
+    .where(eq(workspaces.id, workspaceId))
+    .returning({ id: workspaces.id });
+  if (rows.length !== 1) throw new AccountError('no_access', ACCOUNT_ERRORS.no_access!);
+  return true;
+}
+
+/** Invitations that are still open (not accepted, not cancelled), newest first. Expired ones are marked. */
+export async function listInvitations(tx: Tx, workspaceId: string) {
+  const rows = await tx
+    .select({
+      id: invitations.id,
+      email: invitations.email,
+      phone: invitations.phone,
+      role: invitations.role,
+      expiresAt: invitations.expiresAt,
+    })
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.workspaceId, workspaceId),
+        isNull(invitations.acceptedAt),
+        isNull(invitations.revokedAt),
+      ),
+    )
+    .orderBy(sql`${invitations.createdAt} desc`);
+  const now = Date.now();
+  return rows.map((r) => ({ ...r, expired: r.expiresAt.getTime() < now }));
+}

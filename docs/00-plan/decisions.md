@@ -226,3 +226,13 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Screens changed:** S06 and S07 (message notifications from D-040; a Notifications tab in Settings, with in-app and email switches per event), S09 (prices confirmed, the "proposal" note removed), S14 (a note is required when the lost reason is Other, D-031), S15 (sources from core), S18 (quote number `OSS/Q26-27/018` given on send, D-033), S19 (the link works for 14 days), S20 (the signer asks for a 6-digit code that works for 10 minutes; the signed record, D-033), S23 (primary contact; portal access by the invited email, D-032), S27 (who approves a gate, the full Design checklist, the next phase waits for the sign-off, D-034), S39 (asking for changes needs a note, D-034), S41 (the team gets the client's messages by email, D-040).
 - **Message notifications:** the `message.posted` kind is added to core's notification defaults and to `defaults-and-content.md` §7 now rather than with M14, so Settings and the prototype show it. Delivery still comes with M14.
 - **Consequences:** a later change to one of these rules in core shows in the prototype on its own.
+
+### D-042 M5 part 2: sign-in, setup, invitations and the switcher
+**Status:** Accepted · **Date:** 7 Nov 2026
+- **Sign-in:** an email link works today (the Supabase project has email on). Google sits behind `NEXT_PUBLIC_GOOGLE_AUTH=1` and is hidden until the provider is enabled, so no button fails. Phone code stays off (open question 12).
+- **Session and route guard:** `proxy.ts` refreshes the Supabase session on every request and sends signed-out visitors to `/sign-in?next=…`. Public paths are listed in that file. `next` is only ever a same-site path, so a link can't send people elsewhere.
+- **Database access in the app:** pages and actions call `withUser()` with the verified Supabase user. The active workspace is an `httpOnly` cookie, checked against the user's memberships on every request, never trusted on its own.
+- **Invites without email:** invite links are shown to copy, because Resend isn't connected yet. Tokens are stored only as hashes, so Resend cancels the old invite and issues a new link. Sending the email comes with the emails work in M16.
+- **Workspace setup:** the workspace is created at step 1 (so the name is kept if someone stops), steps 2 and 3 save separately and can be skipped. GSTIN is checked with the core validator and fills the state.
+- **Left for later in M5:** logo upload (needs a Storage bucket), phone OTP and authenticator-app two-factor (owner setting, M6 Settings).
+

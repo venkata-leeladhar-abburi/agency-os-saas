@@ -7,10 +7,12 @@ import {
   changeRole,
   createWorkspace,
   inviteMember,
+  listInvitations,
   listMembers,
   myWorkspaces,
   removeMember,
   revokeInvitation,
+  updateWorkspaceSetup,
 } from '../src/accounts';
 import { withService, withUser, type Session } from '../src/client';
 import {
@@ -362,5 +364,70 @@ describe('invitations', () => {
 
   it('gives each error a message that says what to do', () => {
     expect(new AccountError('invite_expired').message).toContain('ask for a new one');
+  });
+});
+
+describe('workspace setup and open invitations', () => {
+  it('lets an owner save services and GST details, and nobody else', async () => {
+    await as(kiran, (tx) =>
+      updateWorkspaceSetup(tx, wsA, {
+        services: ['Website', 'SEO'],
+        gstin: '37ABCDE1234F1Z5',
+        stateCode: '37',
+        lutArn: null,
+      }),
+    );
+    const [row] =
+      await t.admin`select services, gstin, state_code from workspaces where id = ${wsA}`;
+    expect(row).toMatchObject({
+      services: ['Website', 'SEO'],
+      gstin: '37ABCDE1234F1Z5',
+      state_code: '37',
+    });
+
+    // A member has no workspace.manage; another tenant's owner can't see the row at all.
+    await expect(
+      as(arjun, (tx) => updateWorkspaceSetup(tx, wsA, { services: ['x'] })),
+    ).rejects.toBeInstanceOf(AccountError);
+    await expect(
+      as(sarah, (tx) => updateWorkspaceSetup(tx, wsA, { services: ['x'] })),
+    ).rejects.toBeInstanceOf(AccountError);
+    const [after] = await t.admin`select services from workspaces where id = ${wsA}`;
+    expect(after!.services).toEqual(['Website', 'SEO']);
+  });
+
+  it('lists only open invitations, marks expired ones, and hides them from other tenants', async () => {
+    const open = await as(kiran, (tx) =>
+      inviteMember(tx, {
+        workspaceId: wsA,
+        email: 'open@onestop.in',
+        role: 'finance',
+        invitedBy: kiran.userId,
+      }),
+    );
+    const cancelled = await as(kiran, (tx) =>
+      inviteMember(tx, {
+        workspaceId: wsA,
+        email: 'gone@onestop.in',
+        role: 'member',
+        invitedBy: kiran.userId,
+      }),
+    );
+    await as(kiran, (tx) => revokeInvitation(tx, cancelled.id));
+    await t.admin`update invitations set expires_at = now() - interval '1 day' where id = ${open.id}`;
+
+    const list = await as(kiran, (tx) => listInvitations(tx, wsA));
+    const emails = list.map((i) => i.email);
+    expect(emails).toContain('open@onestop.in');
+    expect(emails).not.toContain('gone@onestop.in');
+    const rows =
+      await t.admin`select id, accepted_at, revoked_at from invitations where id in ${t.admin(list.map((i) => i.id))}`;
+    expect(rows.every((r) => r.accepted_at === null && r.revoked_at === null)).toBe(true);
+    expect(list.find((i) => i.email === 'open@onestop.in')).toMatchObject({
+      expired: true,
+      role: 'finance',
+    });
+
+    expect(await as(sarah, (tx) => listInvitations(tx, wsA))).toEqual([]);
   });
 });
