@@ -12,6 +12,7 @@ import { createTestDb, type TestDb } from '@agency-os/db/testing';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { WorkspaceCtx } from '../../server/workspace';
 import { invoiceRows } from './invoices';
+import { knowledgeFor } from './knowledge';
 import { onboardingFor, loadExamplesFor, removeExamplesFor } from './onboarding';
 import { clientList, leadList } from './people';
 import { projectList } from './work';
@@ -70,7 +71,7 @@ run('example data on the database', () => {
     });
     expect(await onboardingFor(member)).toMatchObject({ canManageExamples: false });
     await expect(loadExamplesFor(member)).rejects.toMatchObject({ code: 'no_access' });
-    expect(await loadExamplesFor(owner)).toBe(10);
+    expect(await loadExamplesFor(owner)).toBe(15);
 
     const leads = await leadList(owner);
     expect(leads.map((l) => l.company).sort()).toEqual([
@@ -87,6 +88,14 @@ run('example data on the database', () => {
     expect((await invoiceRows(owner)).map((i) => [i.number, i.status])).toEqual([
       ['Draft', 'draft'],
     ]);
+    // The knowledge base has labelled folders and items too.
+    const kb = await knowledgeFor(owner, {});
+    expect(kb.folders.map((f) => [f.name, f.example, f.items])).toEqual([
+      ['Client guides', true, 1],
+      ['Client onboarding', true, 2],
+    ]);
+    expect(kb.items.every((i) => i.example)).toBe(true);
+    expect(kb.items).toHaveLength(3);
 
     const o = await onboardingFor(owner);
     expect(o).toMatchObject({ hasExample: true, allExamples: true });
@@ -95,7 +104,8 @@ run('example data on the database', () => {
   });
 
   it('removes it in one go, leaving an empty workspace', async () => {
-    expect(await removeExamplesFor(owner)).toEqual({ removed: 10, kept: [] });
+    expect(await removeExamplesFor(owner)).toEqual({ removed: 15, kept: [] });
+    expect((await knowledgeFor(owner, {})).items).toEqual([]);
     expect(await leadList(owner)).toEqual([]);
     expect(await clientList(owner)).toEqual([]);
     expect(await onboardingFor(owner)).toMatchObject({ hasExample: false });

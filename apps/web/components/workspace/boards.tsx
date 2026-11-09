@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import type { TaskRow } from '@/lib/data/tasks';
-import { moveLeadAction } from '@/app/w/[workspace]/leads/actions';
+import { moveLeadAction } from '@/app/w/[workspace]/(app)/leads/actions';
 
 /** The leads board: open a card, add a lead, move a card to change its stage. */
 export function LeadsBoard({

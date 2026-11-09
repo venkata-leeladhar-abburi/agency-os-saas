@@ -6,10 +6,18 @@
  * ('strict-dynamic' lets Next's own chunks load); styles allow inline because React style
  * attributes and the portal's brand colour sheet are inline. Images allow data: (logos in
  * example mode) and https: (signed storage URLs).
+ *
+ * upgrade-insecure-requests only when the page itself came over https: on a plain-http server
+ * (a production build opened from a phone on the same network) it would turn every script,
+ * stylesheet and font into an https request that fails with an SSL error.
  */
 export function contentSecurityPolicy(
   nonce: string,
-  { dev = false, supabaseUrl }: { dev?: boolean; supabaseUrl?: string } = {},
+  {
+    dev = false,
+    https = true,
+    supabaseUrl,
+  }: { dev?: boolean; https?: boolean; supabaseUrl?: string } = {},
 ): string {
   const supabase = supabaseUrl ? new URL(supabaseUrl).origin : null;
   const directives: [string, ...string[]][] = [
@@ -36,7 +44,7 @@ export function contentSecurityPolicy(
     ['object-src', "'none'"],
   ];
   const policy = directives.map((d) => d.join(' ')).join('; ');
-  return dev ? policy : `${policy}; upgrade-insecure-requests`;
+  return dev || !https ? policy : `${policy}; upgrade-insecure-requests`;
 }
 
 /** A fresh 128-bit nonce, base64. Works in the edge and Node runtimes. */

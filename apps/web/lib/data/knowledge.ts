@@ -37,7 +37,9 @@ export type KnowledgeQuery = {
 type Stored = Omit<KnowledgeItem, 'canEdit' | 'clientCount'>;
 
 /** Example mode: the owner sees everything but other people's private items. */
-const seen = (i: Stored) => i.visibility !== 'private' || i.createdBy === EXAMPLE_USER.name;
+export const seenInExample = (i: Stored) =>
+  i.visibility !== 'private' || i.createdBy === EXAMPLE_USER.name;
+const seen = seenInExample;
 const withEdit = (i: Stored): KnowledgeItem => ({
   ...i,
   canEdit: true,

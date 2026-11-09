@@ -1,5 +1,6 @@
-// The command palette at 10,000 records (PRD E0.3: results in under 300 ms). Slow to seed (about
-// 7 minutes), so it runs only with BENCH=1 and TEST_DATABASE_URL:
+// The command palette at 10,000 records, plus 1,000 knowledge base items (PRD E0.3: results in
+// under 300 ms). Slow to seed (about a minute to 7 minutes), so it runs only with BENCH=1 and
+// TEST_DATABASE_URL:
 //   BENCH=1 pnpm vitest run search.bench
 // BENCH_KEEP=1 keeps the seeded database and prints how to reuse it (BENCH_DB_URL and BENCH_IDS).
 import { randomBytes } from 'node:crypto';
@@ -29,7 +30,14 @@ let t: TestDb | undefined;
 let close: (() => Promise<void>) | undefined;
 let ctx: WorkspaceCtx;
 
-const COUNTS = { leads: 4000, clients: 2000, projects: 200, tasks: 2800, invoices: 1000 };
+const COUNTS = {
+  leads: 4000,
+  clients: 2000,
+  projects: 200,
+  tasks: 2800,
+  invoices: 1000,
+  knowledge: 1000,
+};
 
 /** Straight to the terminal: vitest hides a passing test's console. */
 const log = (...parts: unknown[]) =>
@@ -142,6 +150,16 @@ run('the command palette at 10,000 records', () => {
       }),
     );
     log(`seeded 10,000 records in ${seeded.ms} ms`);
+    // Knowledge items, written straight in: a third for everyone, a third for some roles, a
+    // third private, so the palette's search pays for every visibility rule.
+    await tdb.admin`insert into knowledge_items
+        (id, workspace_id, kind, title, summary, body, tags, visibility, roles, created_by, updated_by)
+      select gen_random_uuid(), ${ws}, 'process', 'Example Guide ' || n, 'Example summary ' || n,
+        repeat('Example step. ', 200), array['example', 'tag' || (n % 50)],
+        (case n % 3 when 2 then 'private' else 'team' end)::knowledge_visibility,
+        case n % 3 when 1 then array['admin', 'project_lead'] else '{}'::text[] end,
+        ${kiran.userId}, ${kiran.userId}
+      from generate_series(0, ${COUNTS.knowledge - 1}) n`;
     if (process.env.BENCH_KEEP)
       log(`kept: BENCH_DB_URL=${tdb.url} BENCH_IDS=${ws}:${kiran.userId}`);
   }, 900_000);
@@ -183,6 +201,8 @@ run('the command palette at 10,000 records', () => {
       'example',
       'lead 39',
       'Example Client 1999',
+      'guide 99',
+      'tag7',
       'nothing like it',
       'lead3999@',
       '98480',

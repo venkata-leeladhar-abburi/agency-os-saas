@@ -131,7 +131,7 @@ export function ExampleDataBanner({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           title="Remove the example data?"
-          description="This removes the example leads, clients, projects, tasks, quotes and invoices. Your own records stay. You can load the examples again from Help."
+          description="This removes the example leads, clients, projects, tasks, quotes, invoices and knowledge base items. Your own records stay. You can load the examples again from Help."
           footer={
             <>
               <Button onClick={() => setOpen(false)}>Keep it</Button>
@@ -161,7 +161,7 @@ export function LoadExampleCard({ slug }: { slug: string }) {
   return (
     <Card
       title="Look around first"
-      description="Load example leads, clients, a project and invoices. Remove them in one click."
+      description="Load example leads, clients, a project, invoices and knowledge base items. Remove them in one click."
     >
       <Button loading={pending} onClick={() => start(() => loadExampleAction(slug))}>
         Load example data

@@ -26,5 +26,6 @@ export * from './email';
 export * from './digest';
 export * from './example-data';
 export * from './saved-views';
+export * from './exists';
 export * from './search';
 export * from './knowledge';
