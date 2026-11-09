@@ -527,3 +527,10 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Decision:** `apps/web/vercel.json` sets `regions: ["bom1"]`. A response's `x-vercel-id` should start with `bom1` after the deploy.
 - **Not changed:** the database connection pool and the per-request statements in `withUser()` are left as they are until measured from Mumbai.
 
+### D-076 Vercel production settings
+**Status:** Accepted, reversible · **Date:** 9 Nov 2026
+- **Node:** pinned to 22.x (was `>=22`), the version CI tests, so a Vercel default change can't move it.
+- **Database pool:** 3 connections per serverless instance on Vercel (was 5), 5 elsewhere; `DB_POOL_MAX` overrides. Not load-tested: a pool of 1 would have serialised queries inside one request, so it is only reduced a little. Revisit with real traffic.
+- **Links in emails:** `NEXT_PUBLIC_APP_URL`, else the deployment's own `VERCEL_URL`, so previews don't send relative links (`lib/app-url.ts`).
+- **Prototype:** `/prototype` is hidden on the production domain unless `PROTOTYPE_PUBLIC=1` (open on previews and locally for round R2). It was public.
+
