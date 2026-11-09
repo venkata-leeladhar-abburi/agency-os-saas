@@ -70,3 +70,8 @@ To decide (open question). Suggested shape: marketing at the root domain, the ap
 - Sentry alerts to the founder's email; PostHog dashboards from `../02-product/metrics.md`.
 - A status page and an in-app support chat are added before G4.
 - Weekly: review errors, slow queries (Supabase advisors), failed jobs and webhook errors.
+
+## Where the app runs (D-075)
+
+Vercel Functions run in Mumbai (`bom1`), set in `apps/web/vercel.json`, because the Supabase database and pooler are in Mumbai (`ap-south-1`). Without it Vercel defaults to Washington DC (`iad1`), and every database call crosses the world: measured at about 0.4 to 0.6 s for `/api/health` against about 0.2 s for a page with no database call, and a page that makes several calls in a row multiplies it. After a deploy, `x-vercel-id` on a response should start with `bom1`. If a plan can't use Mumbai, the setting is under Settings, Functions, Function Region.
+

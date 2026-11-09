@@ -520,3 +520,10 @@ Add new decisions below this line, numbered D-018 onward. Record gate approvals 
 - **Found:** a CI run failed the board's keyboard test once (green on re-run). Slowing the browser's CPU 8 times, about a low-cost Android phone, made it fail every time: the board's drag library starts listening for keys on a timer after a card is picked up, browsers handle typing before timers, so an arrow pressed straight away was lost and the card stayed where it was.
 - **Fix:** keys pressed in that moment are held and played back in order once the board listens, one a frame so each move shows before the next key (`pipeline-board.tsx`). Uses the library's public hook only.
 - **Test:** a story test at 8 times slower CPU picks up, moves and drops a card with the keyboard; it failed before the fix and passes 15 of 15 runs after. Checked on the leads board in the app at normal speed and 8 times slower.
+
+### D-075 Run the app's functions in Mumbai
+**Status:** Accepted, reversible · **Date:** 9 Nov 2026
+- **Why:** pages were slow. The live site's functions ran in Washington DC (`iad1`) while the database pooler is in Mumbai (`ap-south-1`), so each database call crossed the world. `/api/health` took about 0.4 to 0.6 s against about 0.2 s for a page with no database call, and pages make several calls in a row.
+- **Decision:** `apps/web/vercel.json` sets `regions: ["bom1"]`. A response's `x-vercel-id` should start with `bom1` after the deploy.
+- **Not changed:** the database connection pool and the per-request statements in `withUser()` are left as they are until measured from Mumbai.
+
