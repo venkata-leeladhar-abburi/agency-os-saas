@@ -70,3 +70,23 @@ To decide (open question). Suggested shape: marketing at the root domain, the ap
 - Sentry alerts to the founder's email; PostHog dashboards from `../02-product/metrics.md`.
 - A status page and an in-app support chat are added before G4.
 - Weekly: review errors, slow queries (Supabase advisors), failed jobs and webhook errors.
+
+## Where the app runs (D-075)
+
+Vercel Functions run in Mumbai (`bom1`), set in `apps/web/vercel.json`, because the Supabase database and pooler are in Mumbai (`ap-south-1`). Without it Vercel defaults to Washington DC (`iad1`), and every database call crosses the world: measured at about 0.4 to 0.6 s for `/api/health` against about 0.2 s for a page with no database call, and a page that makes several calls in a row multiplies it. After a deploy, `x-vercel-id` on a response should start with `bom1`. If a plan can't use Mumbai, the setting is under Settings, Functions, Function Region.
+
+## Deploying to Vercel (checklist)
+
+**Project settings:** framework Next.js; Root Directory `apps/web` with "Include source files outside of the Root Directory" on; Node.js 22.x (pinned in `engines`); production branch `main`; function region Mumbai (set in `apps/web/vercel.json`, D-075).
+
+**Variables** (Production and Preview unless noted): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (secret), `DATABASE_URL` (the pooled, port 6543 string), `LINK_SIGNING_SECRET` (secret), `RESEND_API_KEY` (secret) and `EMAIL_FROM` once the sending domain is verified.
+- `NEXT_PUBLIC_APP_URL`: the real domain on Production. Leave it unset on Preview; links then use that deployment's own address.
+- `DB_POOL_MAX`: optional. The default is 3 connections per instance on Vercel, 5 elsewhere.
+- `EXAMPLE_MODE` must be unset or `false` in production: it skips sign-in.
+- `PROTOTYPE_PUBLIC=1` shows `/prototype` on the production domain (D-076); `PROTOTYPE=off` hides it everywhere.
+- Not needed on Vercel: `DATABASE_URL_DIRECT` (only the migrate workflow), `NEXT_PUBLIC_GOOGLE_AUTH`.
+
+**Supabase, Authentication:** Site URL is the production domain; Redirect URLs include `https://<domain>/**`, the preview pattern `https://*-<team-slug>.vercel.app/**` and `http://localhost:3000/**`. Set Email OTP Expiration to 600 s, and Custom SMTP with Resend so sign-in emails reach everyone.
+
+**After a deploy:** `/api/health` returns `ok`; a response's `x-vercel-id` has `bom1` in it.
+

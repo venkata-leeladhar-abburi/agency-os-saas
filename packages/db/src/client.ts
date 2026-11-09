@@ -15,7 +15,10 @@ export function connect(url = process.env.DATABASE_URL): Connection {
       'DATABASE_URL is not set. Add it to the environment (see docs/04-engineering/environments-and-deploy.md).',
     );
   // Fail in seconds, not the driver's 30, when the database can't be reached.
-  const client = postgres(url, { max: 5, prepare: false, connect_timeout: 10 });
+  // Each serverless instance keeps its own pool, so use fewer connections on Vercel (with the pooled
+  // URL). DB_POOL_MAX overrides it.
+  const max = Number(process.env.DB_POOL_MAX) || (process.env.VERCEL ? 3 : 5);
+  const client = postgres(url, { max, prepare: false, connect_timeout: 10 });
   return { db: drizzle(client, { schema }), close: () => client.end() };
 }
 

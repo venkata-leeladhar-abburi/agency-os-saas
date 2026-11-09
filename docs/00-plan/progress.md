@@ -41,6 +41,8 @@ Updated by Claude at the end of every working session. The founder can read this
 
 Newest first. One short entry per session: what was done, what is next, blockers.
 
+- **9 Nov 2026 (speed):** the founder reported slow data. Measured it: the live functions ran in Washington DC (`iad1`), the database pooler is in Mumbai. Added `apps/web/vercel.json` with `bom1` (D-075). To check after the deploy: `x-vercel-id` starts with `bom1` and `/api/health` gets faster. Next: measure again from Mumbai before touching the connection pool or `withUser()`.
+
 - **7 Nov 2026 (dev database migrated):** The founder fixed `DATABASE_URL_DIRECT` in the GitHub `dev` environment, and the "Migrate database" workflow applied all 30 migrations (0000 to 0029) from `claude/quirky-hopper-sydm9c` (run 5; runs 2 to 4 had failed on the password). Checked through Supabase's API: the tables and functions are there, up to the knowledge base and `remove_example_data`. Still blocked: signed-in browser checks, as cloud sessions reach the database only over HTTPS (Postgres connections time out), so the app can't run against it here. They need a Vercel preview (question 7) or a run on the founder's computer.
 
 - **1 Nov 2026 (keyboard on the board, slow phones):** Watching PR #15, CI failed the board's keyboard test once. Reproduced with an 8 times slower CPU: an arrow pressed straight after picking a card up was lost. Fixed and tested (D-074). Also checked: the dev database still has no tables (Supabase answers that `workspaces` doesn't exist) and the "Migrate database" workflow last ran on 26 Oct and failed, so signed-in checks still wait on it. Checks: typecheck, lint, Prettier, design rules, all package tests, 83 story tests.
