@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@agency-os/config": "workspace:*",
-    "eslint": "9.39.5",
+    "eslint": "10.14.0",
     "typescript": "5.9.3"
   }
 }
